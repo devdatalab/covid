@@ -184,16 +184,11 @@ foreach x of var pmed_* doctors_* clinics_* beds_*{
   gen pc_`x'=(`x'/pc11_pca_tot_p)*1000
   }
 
-/* check distributions of per 1000 capacity vars */
 
-foreach x of var pc_*{
-  kdensity `x'
-  graphout `x'_dist
-  }
 
 /* save dataset */
 
-save $tmp/health_capacity_subdistrict_clean.dta, replace
+save $iec/health/hosp/pc_hospitals_subdist_clean.dta, replace
 
 restore
 
@@ -243,16 +238,10 @@ foreach x of var pmed_* doctors_* clinics_* beds_*{
   gen pc_`x'=(`x'/pc11_pca_tot_p)*1000
   }
 
-/* check distributions of per 1000 capacity vars */
-
-foreach x of var pc_*{
-  kdensity `x'
-  graphout `x'_dist
-  }
 
 /* save dataset */
 
-save $tmp/health_capacity_district_clean.dta, replace
+save $iec/health/pc_hospitals_dist.dta, replace
 
 restore
 
