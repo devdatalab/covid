@@ -60,10 +60,10 @@ replace match_sector = "matched to town" if _merge_t == 3
 replace match_sector = "unmatched" if _merge_t == 1 & _merge_v == 1
 drop _merge*
 
-save $tmp/ec_hospitals_tv, replace
+save $hosp/ec_hospitals_tv, replace
 
 /* COLLAPSE TO DISTRICT LEVEL */
-use $tmp/ec_hospitals_tv, clear
+use $hosp/ec_hospitals_tv, clear
 
 /* get district ids (can't use village/town match since we had some missing locations) */
 ren pc11_state_id tmp_pc11_state_id
@@ -86,4 +86,7 @@ list *hosp* if mi(pc11_district_id)
 replace pc11_district_id = "" if ec13_state_id == "07"
 collapse (sum) *hosp*, by(pc11_state_id pc11_district_id)
 
-save $tmp/ec_hospitals_dist, replace
+/* prefix all vars with EC prefix */
+ren *hosp* ec_*hosp*
+
+save $hosp/ec_hospitals_dist, replace
