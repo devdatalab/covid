@@ -7,7 +7,7 @@ use $pc11/pc11_vd_clean.dta, clear
 
 
 /* check missing data percent for various health center variables */
-mdesc pc11_vd_nc_icds pc11_vd_nc_agwd pc11_vd_asha pc11_vd_med_in_out_pat pc11_vd_med_c_hosp_home pc11_vd_med_prac_* pc11_vd_med_trad_fth pc11_vd_fwc_cntr pc11_vd_mh_cln pc11_vd_disp pc11_vd_altmed_hosp pc11_vd_all_hosp pc11_vd_tb_cln pc11_vd_mcw_cntr pc11_vd_phs_cntr pc11_vd_ph_cntr pc11_vd_ch_cntr
+desc pc11_vd_nc_icds pc11_vd_nc_agwd pc11_vd_asha pc11_vd_med_in_out_pat pc11_vd_med_c_hosp_home pc11_vd_med_prac_* pc11_vd_med_trad_fth pc11_vd_fwc_cntr pc11_vd_mh_cln pc11_vd_disp pc11_vd_altmed_hosp pc11_vd_all_hosp pc11_vd_tb_cln pc11_vd_mcw_cntr pc11_vd_phs_cntr pc11_vd_ph_cntr pc11_vd_ch_cntr
 
 /* merge with pca data */
 isid pc11_state_id pc11_district_id pc11_subdistrict_id pc11_village_id
@@ -130,8 +130,8 @@ gen allhospitals_r = pc11_td_all_hosp if urban==0
 gen allhospitals_u = pc11_td_all_hospital if urban==1
 
 /* beds (total and allopathic)*/
-egen beds_tot = rowtotal(*_beds)
-egen beds_all = rowtotal(*_allh_beds)
+egen beds_urb_tot = rowtotal(*_beds)
+egen beds_urb_allo = rowtotal(*_allh_beds)
 
 
 
@@ -147,8 +147,8 @@ collapse (sum) allhosp* pmed_* doctors_* clinics_* beds_* pc11_pca_tot_p, by(pc1
 
 /* label vars */
 /* note beds data only available for urban areas */
-la var beds_tot "No. of beds across all hospitals/facilities"
-la var beds_all "No. of beds across allopathic facilities"
+la var beds_urb_tot "No. of beds across all hospitals/facilities"
+la var beds_urb_all "No. of beds across allopathic facilities"
 la var doctors_pos_r "No. of doctors in position - rural"
 la var doctors_pos_u "No. of doctors in position - urban"
 la var doctors_tot_r "No. of doctors (total)- rural"
@@ -171,7 +171,7 @@ egen doctors_tot = rowtotal(doctors_tot_*)
 egen pmed_tot = rowtotal(pmed_tot_*)
 egen doctors_pos = rowtotal(doctors_pos_*)
 egen pmed_pos = rowtotal(pmed_pos_*)
-egen num_all_hospitals = rowtotal(allhospitals_*)
+egen num_allo_hospitals = rowtotal(allhospitals_*)
 
 /* label new vars */
 la var clinics "Total clinics in subdistrict"
@@ -179,7 +179,7 @@ la var doctors_tot "Total doctors in subdistrict"
 la var pmed_tot "Total paramedics in subdistrict"
 la var pmed_pos "Total paramedics in position in subdistrict"
 la var doctors_pos "Total doctors in position in subdistrict"
-la var num_all_hospitals "Total allopathic hospitals in subdistrict"
+la var num_allo_hospitals "Total allopathic hospitals in subdistrict"
 
 /* generate per 1000 capacity vars */
 
@@ -199,11 +199,11 @@ la var perk_doctors_pos_u "Paramedics per thousand urban - in position"
 la var perk_clinics_r "Clinics per thousand - rural"
 la var perk_clinics_u "Clinics per thousand - urban"
 la var perk_clinics "Clinics per thousand"
-la var perk_beds_tot "Beds per thousand - urban only"
-la var perk_beds_all "Beds per thousand - allopathic hosp - urban only"
+la var perk_beds_urb_tot "Beds per thousand - urban only"
+la var perk_beds_urb_all "Beds per thousand - allopathic hosp - urban only"
 la var perk_allhospitals_r "Allopathic hosp per thousand - rural"
 la var perk_allhospitals_u "Allopathic hosp per thousand - urban"
-la var perk_num_all_hospitals "Allopathic hosp per thousand"
+la var perk_num_allo_hospitals "Allopathic hosp per thousand"
 la var perk_doctors_pos_r "Doctors per thousand - rural - in position"
 la var perk_doctors_pos_u "Doctors per thousand - urban - in position"
 la var perk_doctors_pos "Doctors per thousand in position"
@@ -227,8 +227,8 @@ collapse (sum) allhosp* pmed_* doctors_* clinics_* beds_* pc11_pca_tot_p, by(pc1
 
 /* label vars */
 /* note beds data only available for urban areas */
-la var beds_tot "No. of beds across all hospitals/facilities"
-la var beds_all "No. of beds across allopathic facilities"
+la var beds_urb_tot "No. of beds across all urban hospitals/facilities"
+la var beds_urb_allo "No. of beds across urban allopathic facilities"
 la var doctors_pos_r "No. of doctors in position - rural"
 la var doctors_pos_u "No. of doctors in position - urban"
 la var doctors_tot_r "No. of doctors (total)- rural"
@@ -251,7 +251,7 @@ egen doctors_tot = rowtotal(doctors_tot_*)
 egen pmed_tot = rowtotal(pmed_tot_*)
 egen doctors_pos = rowtotal(doctors_pos_*)
 egen pmed_pos = rowtotal(pmed_pos_*)
-egen num_all_hospitals = rowtotal(allhospitals_*)
+egen num_allo_hospitals = rowtotal(allhospitals_*)
 
 /* label new vars */
 la var clinics "Total clinics in district"
@@ -259,7 +259,7 @@ la var doctors_tot "Total doctors in district"
 la var pmed_tot "Total paramedics in district"
 la var pmed_pos "Total paramedics in position in district"
 la var doctors_pos "Total doctors in position in district"
-la var num_all_hospitals "Total allopathic hospitals in district"
+la var num_allo_hospitals "Total allopathic hospitals in district"
 
 /* generate per 1000 capacity vars */
 
@@ -279,11 +279,11 @@ la var perk_doctors_pos_u "Paramedics per thousand urban - in position"
 la var perk_clinics_r "Clinics per thousand - rural"
 la var perk_clinics_u "Clinics per thousand - urban"
 la var perk_clinics "Clinics per thousand"
-la var perk_beds_tot "Beds per thousand - urban only"
-la var perk_beds_all "Beds per thousand - allopathic hosp - urban only"
+la var perk_beds_urb_tot "Beds per thousand - urban only"
+la var perk_beds_urb_allo "Beds per thousand - allopathic hosp - urban only"
 la var perk_allhospitals_r "Allopathic hosp per thousand - rural"
 la var perk_allhospitals_u "Allopathic hosp per thousand - urban"
-la var perk_num_all_hospitals "Allopathic hosp per thousand"
+la var perk_num_allo_hospitals "Allopathic hosp per thousand"
 la var perk_doctors_pos_r "Doctors per thousand - rural - in position"
 la var perk_doctors_pos_u "Doctors per thousand - urban - in position"
 la var perk_doctors_pos "Doctors per thousand in position"
@@ -292,11 +292,11 @@ la var perk_doctors_tot_u "Doctors per thousand - urban"
 la var perk_doctors_tot "Doctors per thousand"
 
 ren * pc_*
-
+ren pc_pc11* pc11*
 
 /* save dataset */
 
-save $iec/health/pc_hospitals_dist.dta, replace
+save $iec/health/hosp/pc_hospitals_dist.dta, replace
 
 restore
 
