@@ -100,15 +100,15 @@ tempfile covid_case_data
 save `covid_case_data'
 
 /* run masala merge */
-masala_merge pc11_state_id using `pc11_district_keys_merge', s1(pc11_district_name) idmaster(idm) idusing(idu) minbigram(0.1) minscore(0.5) manual_file($tmp/manual_covid_case_district_match.csv) nonameclean
+masala_merge pc11_state_id using `pc11_district_keys_merge', s1(pc11_district_name) idmaster(idm) idusing(idu) minbigram(0.1) minscore(0.5) manual_file($iec/health/covid_data/manual_covid_case_district_match.csv) nonameclean
 
 /* PAUSE HERE AND ADD CORRECTIONS YOU WANT TO THE UNMATCHED FILE 
    fill in the unmatched observation file name below- unmatched_observations_78494.csv is a placeholder */
-cap process_manual_matches, infile($tmp/unmatched_observations_78494.csv) outfile($tmp/manual_covid_case_district_match.csv) s1(pc11_district_name) idmaster(idm_master) idusing(idu_using) charsep("-")
+cap process_manual_matches, infile($tmp/unmatched_observations_78494.csv) outfile($iec/health/covid_data/manual_covid_case_district_match.csv) s1(pc11_district_name) idmaster(idm_master) idusing(idu_using) charsep("-")
 
 /* re-run masala merge again with manual matches*/
 use `covid_case_data', clear
-masala_merge pc11_state_id using `pc11_district_keys_merge', s1(pc11_district_name) idmaster(idm) idusing(idu) minbigram(0.1) minscore(0.5)  nonameclean
+masala_merge pc11_state_id using `pc11_district_keys_merge', s1(pc11_district_name) idmaster(idm) idusing(idu) minbigram(0.1) minscore(0.5) manual_file($iec/health/covid_data/manual_covid_case_district_match.csv) nonameclean
 
 /* drop unmatched from using */
 drop if match_source == 7
