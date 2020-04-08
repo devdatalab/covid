@@ -19,7 +19,7 @@ gen idu = pc11_state_id + "-" + pc11_district_name
 
 /* save as a tempfile */
 tempfile pc11_district_keys_merge
-save `pc11_district_keys_merge'
+save $tmp/pc11_district_keys_merge, replace
 
 /**********************************/
 /* RETRIEVE MOST RECENT CASE DATA */
@@ -97,19 +97,18 @@ duplicates drop
 gen idm = pc11_state_id + "-" + pc11_district_name
 
 /* merge with pc11 codes */
-tempfile covid_case_data
-save `covid_case_data'
+save $tmp/covid_case_data, replace
 
 /* run masala merge */
-masala_merge pc11_state_id using `pc11_district_keys_merge', s1(pc11_district_name) idmaster(idm) idusing(idu) minbigram(0.1) minscore(0.5) manual_file($iec/health/covid_data/manual_covid_case_district_match.csv) nonameclean
+masala_merge pc11_state_id using $tmp/pc11_district_keys_merge, s1(pc11_district_name) idmaster(idm) idusing(idu) minbigram(0.1) minscore(0.5) manual_file($iec/health/covid_data/manual_covid_case_district_match.csv) nonameclean
 
 /* PAUSE HERE AND ADD CORRECTIONS YOU WANT TO THE UNMATCHED FILE 
    fill in the unmatched observation file name below- unmatched_observations_78494.csv is a placeholder */
-cap process_manual_matches, infile($tmp/unmatched_observations_78494.csv) outfile($iec/health/covid_data/manual_covid_case_district_match.csv) s1(pc11_district_name) idmaster(idm_master) idusing(idu_using) charsep("-")
+process_manual_matches, infile($tmp/unmatched_observations_7894.csv) outfile($iec/health/covid_data/manual_covid_case_district_match.csv) s1(pc11_district_name) idmaster(idm_master) idusing(idu_using) charsep("-")
 
 /* re-run masala merge again with manual matches*/
-use `covid_case_data', clear
-masala_merge pc11_state_id using `pc11_district_keys_merge', s1(pc11_district_name) idmaster(idm) idusing(idu) minbigram(0.1) minscore(0.5) manual_file($iec/health/covid_data/manual_covid_case_district_match.csv) nonameclean
+use $tmp/covid_case_data, clear
+masala_merge pc11_state_id using $tmp/pc11_district_keys_merge, s1(pc11_district_name) idmaster(idm) idusing(idu) minbigram(0.1) minscore(0.5) manual_file($iec/health/covid_data/manual_covid_case_district_match.csv) nonameclean
 
 /* drop unmatched from using */
 drop if match_source == 7
