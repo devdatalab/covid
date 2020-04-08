@@ -31,6 +31,7 @@ shell python -c "from b.retrieve_case_data import retrieve_case_data; retrieve_c
 
 /* import the data we just pulled */
 import delimited using $tmp/covid_case_data.csv, clear
+drop v1
 
 /* drop missing data */
 drop if mi(detectedstate)
