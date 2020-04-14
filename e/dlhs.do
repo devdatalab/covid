@@ -62,73 +62,40 @@ forval i = 2/36 {
 
 
 
-/* merge everything together at district level */
-
-use $iec/health/hosp/dlhs4_hospitals_dist.dta, clear
-merge 1:1 pc11_state_id pc11_district_id using $iec/health/hosp/ec_hospitals_dist.dta, gen(_m_ec13)
-merge 1:1 pc11_state_id pc11_district_id using $iec/health/hosp/pc_hospitals_dist.dta, gen(_m_pc11)
-
-/* key variables */
-/* dlhs: dlhs4_total_beds, dlhs4_total_count, dlhs4_total_staff */
-/* ec13: ec_emp_hosp_priv, ec_emp_hosp_gov */
-/* pc11: pc_beds_urb_tot pc_beds_urb_allo*/
-
-/* generate private share from EC */
-gen ec_priv_hosp_share = ec_emp_hosp_priv / (ec_emp_hosp_priv + ec_emp_hosp_gov)
-sum ec_priv_hosp_share,d
-/* tons of variation, from 0 to 1, med .52, close to uniform */
-
-/* generate total ec emp in hospitals */
-gen ec_emp_hosp_tot = ec_emp_hosp_priv + ec_emp_hosp_gov
-
-/* gen rural to urban doctor share */
-gen pc_doc_u_share = pc_doctors_pos_u / (pc_doctors_pos_r + pc_doctors_pos_u)
-
-/* scale up urban beds in pc by rural share */
-gen pc_beds_tot = pc_beds_urb_tot / pc_doc_u_share
-gen pc_beds_allo = pc_beds_urb_allo / pc_doc_u_share
-
-
-/* everything scaled to per 1k */
-
-/* dlhs4 */
-foreach y in total_beds total_facilities total_staff {
-  gen dlhs4_perk_`y' = dlhs4_`y' / pc11_pca_tot_p * 1000
-}
-
-/* pop census */
-foreach y in beds_tot beds_allo {
-  gen pc_perk_`y' = pc_`y' / pc11_pca_tot_p * 1000
-}
-
-/* economic census */
-foreach y in emp_hosp_priv emp_hosp_gov emp_hosp_tot {
-  gen ec_perk_`y' = ec_`y' / pc11_pca_tot_p * 1000
-}
-
-/* generate rankings */
-foreach y in dlhs4_perk_total_beds dlhs4_perk_total_facilities dlhs4_perk_total_staff pc_perk_beds_tot pc_perk_beds_allo ec_perk_emp_hosp_priv ec_perk_emp_hosp_gov ec_perk_emp_hosp_tot {
-  egen rank_`y' = rank(`y')
-  gen bot_`y' = rank_`y' > 450 if !mi(rank_`y')
-}
-
-/* save */
-save $tmp/hospitals_dist, replace
-
+use $iec/health/hosp/hospitals_dist, clear
 
 /* sum vars */
 sum dlhs4_perk_total_beds dlhs4_perk_total_facilities dlhs4_perk_total_staff , d
-sum pc_perk_beds_tot pc_perk_beds_allo  , d
+sum pc_perk_beds_tot pc_perk_beds_allo pc_perk_beds_urb_tot pc_perk_beds_urb_allo , d
 sum ec_perk_emp_hosp_priv ec_perk_emp_hosp_gov ec_perk_emp_hosp_tot , d
 
 /* compare beds vars */
 corr dlhs4_perk_total_beds pc_perk_beds_tot
+corr dlhs4_perk_total_beds pc_perk_beds_urb_tot
 reg dlhs4_perk_total_beds pc_perk_beds_tot
+reg dlhs4_perk_total_beds pc_perk_beds_urb_tot
 
 /* compare rank vars */
 corr rank_dlhs4_perk_total_beds rank_pc_perk_beds_tot
 reg rank_dlhs4_perk_total_beds rank_pc_perk_beds_tot
 
+scatter rank_dlhs4_perk_total_beds rank_pc_perk_beds_tot
+graphout ranks
+
 /* compare bottom vars */
+corr bot_dlhs4_perk_total_beds bot_pc_perk_beds_tot
 reg bot_dlhs4_perk_total_beds bot_pc_perk_beds_tot
 tab bot_dlhs4_perk_total_beds bot_pc_perk_beds_tot
+
+/* pc vs dlhs bed count */
+gen pc_dlhs_beds_ratio = pc_beds_tot / dlhs4_total_beds
+gen pc_dlhs_priv_share = (pc_beds_tot - dlhs4_total_beds) / pc_beds_tot
+sum pc_dlhs_beds_ratio ec_priv_hosp_share, d
+corr pc_dlhs_beds_ratio ec_priv_hosp_share
+
+/* is pc capturing private hospitals? */
+tabstat ec_priv_hosp_share pc_dlhs_priv_share [aw=pc11_pca_tot_p], by(pc11_state_name ) 
+corr ec_priv_hosp_share pc_dlhs_priv_share [aw=pc11_pca_tot_p]
+/* doesn't look like it, since ec_priv_share seems more correlated */
+
+
