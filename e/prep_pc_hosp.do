@@ -168,7 +168,7 @@ foreach x of var *_beds{
 
 /* have not flagged because as you will see in code output, outliers are major cities */
 
-
+la var flag "Right tail outlier values for beds & centers"
 
 /************************************/
 /* create health capacity variables */
