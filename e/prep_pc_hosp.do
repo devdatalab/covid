@@ -13,8 +13,8 @@ mdesc pc11_vd_nc_icds pc11_vd_nc_agwd pc11_vd_asha pc11_vd_med_in_out_pat pc11_v
 isid pc11_state_id pc11_district_id pc11_subdistrict_id pc11_village_id
 
 /* merge with pca clean data at village level */
-merge 1:1 pc11_state_id pc11_district_id pc11_subdistrict_id pc11_village_id using $pc11/pc11r_pca_clean.dta, update
-keep if _merge>2
+merge 1:1 pc11_state_id pc11_district_id pc11_subdistrict_id pc11_village_id using $pc11/pc11r_pca_clean.dta
+keep if _merge==3
 drop _merge
 
 /* drop unnecessary vars to make dataset manageable */
@@ -24,22 +24,6 @@ drop pc11_vd_mgt_inst_gov_status - pc11_vd_oth_sch_rang
 drop pc11_vd_wat_tap_trt - pc11_vd_poll_st_rang
 drop pc11_vd_agr_comm1- pc11_vd_hc_comm3
 
-
-/* drop outliers */
-
-sum pc11_vd_ph_cntr, d
-gen flag=1 if pc11_vd_ph_cntr >= 30000
-
-sum pc11_vd_phs_cntr, d
-replace flag=1 if pc11_vd_phs_cntr >= 70000
-
-sum pc11_vd_all_hosp, d
-replace flag=1 if pc11_vd_all_hosp >= 300
-
-sum pc11_pca_tot_p, d
-replace flag=1 if pc11_pca_tot_p >= 9039
-
-drop if flag==1
 
 /* rename vd vars for append with town data*/
 ren pc11_vd_* pc11_td_*
@@ -58,30 +42,14 @@ save $tmp/healthcare_pca_r.dta, replace
 use $pc11/pc11_td_clean.dta, clear
 
 /* merge with pca clean data at village level */
-merge 1:1 pc11_state_id pc11_district_id pc11_subdistrict_id pc11_town_id using $pc11/pc11u_pca_clean.dta, update
-keep if _merge>2
+merge 1:1 pc11_state_id pc11_district_id pc11_subdistrict_id pc11_town_id using $pc11/pc11u_pca_clean.dta
+keep if _merge == 3
 drop _merge
 
 /* drop unnecessary vars to make dataset manageable */
 drop pc11_pca_marg* pc11_pca_main* pc11_pca_non*
 drop pc11_td_sys_drain-pc11_td_el_others
 drop pc11_td_primary_gov_status-pc11_td_n_a_c_soc
-
-/* drop outliers */
-
-sum pc11_td_all_hospital, d
-gen flag=1 if pc11_td_all_hospital >= 100
-
-sum pc11_td_alt_hospital, d
-replace flag=1 if pc11_td_alt_hospital>=38
-
-sum pc11_td_disp, d
-replace flag=1 if pc11_td_disp>=341
-
-sum pc11_pca_tot_p, d
-replace flag=1 if pc11_pca_tot_p >= 505693
-
-drop if flag==1
 
 
 compress
@@ -101,7 +69,106 @@ gen urban = 1
 
 append using $tmp/healthcare_pca_r.dta
 
-replace urban = 0 if urban==.
+replace urban = 0 if urban == .
+
+/*****************************************/
+/* drop outliers after manual inspection */
+/*****************************************/
+
+local centers_r pc11_td_ch_cntr pc11_td_ph_cntr pc11_td_phs_cntr pc11_td_tb_cln pc11_td_all_hosp pc11_td_disp pc11_td_mh_cln pc11_td_med_in_out_pat pc11_td_med_c_hosp_home
+local centers_u pc11_td_all_hospital pc11_td_disp pc11_td_tb_clinic pc11_td_nur_homes pc11_td_mh_clinic pc11_td_in_out_pat pc11_td_c_hosp_home
+
+drop if pc11_pca_tot_p < 5
+/* 1718 such cases - all rural*/
+
+
+/* centers/clinics outliers */
+
+/* villages */
+foreach x of var `centers_r'{
+  gen pr_`x'=(`x'/pc11_pca_tot_p) if urban == 0
+}
+
+gen rflag = .
+
+/* general logic - you cannot have more centers than people */
+
+/* tagging villages where no. of centers to population ratio is more than 0.70 */
+foreach x of var `centers_r'{
+   disp_nice "`x'"  
+   replace rflag = 1 if pr_`x' >= .7 & pr_`x'!=. & urban == 0
+   list pr_`x' pc11_pca_tot_p pc11_village_name if rflag == 1 & pr_`x' > .7 & pr_`x'!=.
+}
+
+drop if rflag == 1
+/* 15 such cases */
+
+drop rflag
+drop pr_*
+
+/* towns */
+
+foreach x of var `centers_u'{
+  gen pr_`x'=(`x'/pc11_pca_tot_p) if urban == 1
+}
+
+gen uflag = .
+
+/* tagging towns where no. of centers to population ratio is more than 1 */
+foreach x of var `centers_u'{
+   disp_nice "`x'"  
+   replace uflag = 1 if pr_`x' >= .7 & pr_`x'!=. & urban == 1
+   list pr_`x' pc11_pca_tot_p pc11_town_name if uflag == 1 & pr_`x' > 1 & pr_`x'!=.
+}
+
+drop if uflag == 1
+/* 7 such obs - most in the north east */
+
+drop uflag
+drop pr_*
+
+/************************************/
+/* trimmming the extreme right tail */
+/************************************/
+
+gen tail = .
+gen flag = .
+
+/* rural centers */
+foreach x of var `centers_r'{
+  sum `x', d
+  replace  tail =  `x' - `r(p99)'
+  replace flag = 1 if tail > 500 & `x'!=. & urban == 0
+  replace tail = .
+}
+
+/* 13 obs flagged */
+/* flags coming from public health centers and sub centers */
+
+
+/* urban centers */
+foreach x of var `centers_u'{
+  sum `x', d
+  replace  tail =  `x' - `r(p99)'
+  replace flag = 1 if tail > 5000 & `x'!=. & urban == 1
+  list pc11_town_name if tail > 5000 & `x'!=. & urban == 1
+  replace tail = .
+}
+
+/* 14 obs flagged */
+/* flags coming from non-government charitable hosp & non gov in & out patient centers */
+/* have not dropped in this section because we would lose important cities such as ludhiana, jaipur, jammu etc */
+
+/* beds */
+foreach x of var *_beds{
+  sum `x', d
+  replace  tail =  `x' - `r(p99)'
+  list pc11_town_name if tail > 5000 & `x'!=. & urban == 1
+}
+
+/* have not flagged because as you will see in code output, outliers are major cities */
+
+
 
 /************************************/
 /* create health capacity variables */
@@ -132,7 +199,6 @@ gen allhospitals_u = pc11_td_all_hospital if urban==1
 /* beds (total and allopathic)*/
 egen beds_tot = rowtotal(*_beds)
 egen beds_all = rowtotal(*_allh_beds)
-
 
 
 /*******************************************/
