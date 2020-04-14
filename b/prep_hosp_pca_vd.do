@@ -6,7 +6,7 @@ use $pc11/pc11_vd_clean.dta, clear
 /* keep the demographic and health infrastructure variables */
 
 /* check missing data percent for various health center variables */
-keep *id pc11_vd_nc* pc11_vd_asha pc11_vd_med* pc11_vd_fwc_cntr pc11_vd_mh_cln pc11_vd_disp pc11_vd_altmed_hosp pc11_vd_all_hosp pc11_vd_tb_cln pc11_vd_mcw_cntr pc11_vd_phs_cntr pc11_vd_ph_cntr pc11_vd_ch_cntr  *_doc_* *_pmed_* pc11_td_ch_cntr pc11_td_ph_cntr pc11_td_phs_cntr pc11_td_tb_cln pc11_td_all_hosp pc11_td_disp pc11_td_mh_cln pc11_td_med_in_out_pat pc11_td_med_c_hosp_home
+keep *id pc11_vd_nc* pc11_vd_asha pc11_vd_med* pc11_vd_fwc_cntr pc11_vd_mh_cln pc11_vd_disp pc11_vd_altmed_hosp pc11_vd_all_hosp pc11_vd_tb_cln pc11_vd_mcw_cntr pc11_vd_phs_cntr pc11_vd_ph_cntr pc11_vd_ch_cntr  *_doc_* *_pmed_* pc11_vd_ch_cntr pc11_vd_ph_cntr pc11_vd_phs_cntr pc11_vd_tb_cln pc11_vd_all_hosp pc11_vd_disp pc11_vd_mh_cln pc11_vd_med_in_out_pat pc11_vd_med_c_hosp_home
 
 /* merge with pca data */
 isid pc11_state_id pc11_district_id pc11_subdistrict_id pc11_village_id
