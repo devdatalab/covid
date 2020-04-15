@@ -8,9 +8,6 @@ use $pc11/pc11_vd_clean.dta, clear
 /* check missing data percent for various health center variables */
 keep *id pc11_vd_nc* pc11_vd_asha pc11_vd_med* pc11_vd_fwc_cntr pc11_vd_mh_cln pc11_vd_disp pc11_vd_altmed_hosp pc11_vd_all_hosp pc11_vd_tb_cln pc11_vd_mcw_cntr pc11_vd_phs_cntr pc11_vd_ph_cntr pc11_vd_ch_cntr  *_doc_* *_pmed_* pc11_vd_ch_cntr pc11_vd_ph_cntr pc11_vd_phs_cntr pc11_vd_tb_cln pc11_vd_all_hosp pc11_vd_disp pc11_vd_mh_cln pc11_vd_med_in_out_pat pc11_vd_med_c_hosp_home
 
-/* merge with pca data */
-isid pc11_state_id pc11_district_id pc11_subdistrict_id pc11_village_id
-
 /* merge with pca clean data at village level */
 merge 1:1 pc11_state_id pc11_district_id pc11_subdistrict_id pc11_village_id using $pc11/pc11r_pca_clean.dta, keepusing(pc11_pca_tot_p)
 keep if _merge == 3
@@ -36,5 +33,3 @@ drop _merge
 /* save urban PCA and VD subset in git repo */
 compress
 save $covidpub/pc11u_hosp, replace
-
-do $ccode/b/prep_pc_hosp

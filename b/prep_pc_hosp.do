@@ -20,6 +20,9 @@ drop flag
 /* rename vd vars for append with town data*/
 ren pc11_vd_* pc11_td_*
 
+/* separate urban and rural populations */
+gen pc11_pca_tot_p_r = pc11_pca_tot_p
+
 compress
 
 /* save temp file ready to be merged with urban dataset */
@@ -46,17 +49,20 @@ replace flag = 1 if pc11_pca_tot_p >= 505693
 drop if flag == 1
 drop flag
 
+/* separate urban and rural populations */
+gen pc11_pca_tot_p_r = pc11_pca_tot_p
+
 compress
-save $tmp/healthcare_pca_u.dta, replace
+save $tmp/healthcare_pca_u, replace
 
 /*******************************************/
 /* combine rural and urban healthcare data */
 /*******************************************/
-use $tmp/healthcare_pca_u.dta, clear
+use $tmp/healthcare_pca_u, clear
 
 gen urban = 1
 
-append using $tmp/healthcare_pca_r.dta
+append using $tmp/healthcare_pca_r
 
 replace urban = 0 if mi(urban)
 
