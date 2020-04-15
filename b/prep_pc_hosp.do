@@ -1,23 +1,6 @@
 /* open rural hospital/clinic dataset */
 use $covidpub/pc11r_hosp, clear
 
-/* drop outliers */
-sum pc11_vd_ph_cntr, d
-gen flag = 1 if pc11_vd_ph_cntr >= 30000
-
-sum pc11_vd_phs_cntr, d
-replace flag = 1 if pc11_vd_phs_cntr >= 70000
-
-sum pc11_vd_all_hosp, d
-replace flag = 1 if pc11_vd_all_hosp >= 300
-
-sum pc11_pca_tot_p, d
-replace flag = 1 if pc11_pca_tot_p >= 9039
-
-drop if flag == 1
-drop flag
-
->>>>>>> master:b/prep_pc_hosp.do
 /* rename vd vars for append with town data*/
 ren pc11_vd_* pc11_td_*
 
@@ -35,25 +18,9 @@ save $tmp/healthcare_pca_r, replace
 
 use $covidpub/pc11u_hosp, clear
 
-/* drop outliers */
-sum pc11_td_all_hospital, d
-gen flag = 1 if pc11_td_all_hospital >= 100
-
-sum pc11_td_alt_hospital, d
-replace flag = 1 if pc11_td_alt_hospital >= 38
-
-sum pc11_td_disp, d
-replace flag = 1 if pc11_td_disp >= 341
-
-sum pc11_pca_tot_p, d
-replace flag = 1 if pc11_pca_tot_p >= 505693
-
-drop if flag == 1
-drop flag
-
 /* separate urban and rural populations */
 gen pc11_pca_tot_p_r = pc11_pca_tot_p
->>>>>>> master:b/prep_pc_hosp.do
+
 
 compress
 save $tmp/healthcare_pca_u, replace
@@ -69,7 +36,6 @@ gen urban = 1
 append using $tmp/healthcare_pca_r
 
 replace urban = 0 if mi(urban)
-
 
 
 /* drop the veterinary hospitals variables */
