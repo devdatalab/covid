@@ -71,6 +71,10 @@ append using $tmp/healthcare_pca_r.dta
 
 replace urban = 0 if urban == .
 
+/* drop the veterinary hospitals variables */
+drop pc11_td_veth_*
+
+
 /*****************************************/
 /* drop outliers after manual inspection */
 /*****************************************/
