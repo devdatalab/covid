@@ -1,19 +1,9 @@
-/* open partially cleaned EC13 */
-use /scratch/pn/ec13_precollapse_tmp.dta, clear
-
-/* keep healthcare activities */
-keep if inlist(nic, 861, 862, 869, 871, 872, 873, 879)
-
-drop *shric*
-
-save $tmp/ec13_hosp, replace
+use $covidpub/ec13_hosp_microdata, clear
 
 /* collapse count and employment in each type of facility, by ec13 code */
 /* note village id and town id are the same thing */
 destring sector, replace
 collapse (firstnm) sector (sum) count_all emp_all, by(gov nic ec13_state_id ec13_district_id ec13_subdistrict_id ec13_village_id ec13_town_id)
-
-save $tmp/ec13_hosp_tv, replace
 
 /* convert data into wide format so we can collapse to village/town level */
 gen class = string(nic) + "_" + string(gov)
@@ -25,7 +15,7 @@ ren *_1 *_gov
 ren *_0 *_priv
 
 /* get PC village codes */
-merge m:1 ec13_state_id ec13_district_id ec13_subdistrict_id ec13_village_id using $keys/pcec/pc11r_ec13r_key, keepusing(pc11_state_id pc11_district_id pc11_subdistrict_id pc11_village_id)
+merge m:1 ec13_state_id ec13_district_id ec13_subdistrict_id ec13_village_id using $covidkeys/pc11r_ec13r_key, keepusing(pc11_state_id pc11_district_id pc11_subdistrict_id pc11_village_id)
 drop if _merge == 2
 foreach v in state district subdistrict village {
   ren pc11_`v'_id tmp_pc11_`v'_id
@@ -33,7 +23,7 @@ foreach v in state district subdistrict village {
 ren _merge _merge_v
 
 /* get PC town codes */
-merge m:1 ec13_state_id ec13_district_id ec13_subdistrict_id ec13_town_id using $keys/pcec/pc11u_ec13u_key, keepusing(pc11_state_id pc11_district_id pc11_subdistrict_id pc11_town_id)
+merge m:1 ec13_state_id ec13_district_id ec13_subdistrict_id ec13_town_id using $covidkeys/pc11u_ec13u_key, keepusing(pc11_state_id pc11_district_id pc11_subdistrict_id pc11_town_id)
 drop if _merge == 2
 ren _merge _merge_t
 
@@ -48,8 +38,6 @@ drop tmp*
 ren emp_all_* emp_*
 ren count_all_* num_*
 
-sum *869* *861*
-
 /* drop outpatient practices, psych hospitals, etc.. */
 drop *862* *871* *872* *879* *869* *873*
 
@@ -60,17 +48,17 @@ replace match_sector = "matched to town" if _merge_t == 3
 replace match_sector = "unmatched" if _merge_t == 1 & _merge_v == 1
 drop _merge*
 
-save $hosp/ec_hospitals_tv, replace
+save $covidpub/ec_hospitals_tv, replace
 
 /* COLLAPSE TO DISTRICT LEVEL */
-use $hosp/ec_hospitals_tv, clear
+use $covidpub/ec_hospitals_tv, clear
 
 /* get district ids (can't use village/town match since we had some missing locations) */
 ren pc11_state_id tmp_pc11_state_id
 ren pc11_district_id tmp_pc11_district_id
 
 /* get pc11 district ids */
-merge m:1 ec13_state_id ec13_district_id using $keys/pc11_ec13_district_key, keepusing(pc11_state_id pc11_district_id)
+merge m:1 ec13_state_id ec13_district_id using $covidkeys/pc11_ec13_district_key, keepusing(pc11_state_id pc11_district_id)
 assert _merge == 3
 drop _merge
 
@@ -89,4 +77,4 @@ collapse (sum) *hosp*, by(pc11_state_id pc11_district_id)
 /* prefix all vars with EC prefix */
 ren *hosp* ec_*hosp*
 
-save $hosp/ec_hospitals_dist, replace
+save $covidpub/ec_hospitals_dist, replace
