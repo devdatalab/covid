@@ -48,6 +48,9 @@ do $ccode/b/prep_ec_hosp.do
 /***************************************/
 /* PART 3 ANALYTICAL RESULTS/ESTIMATES */
 /***************************************/
+
+/* combine PC and DLHS hospital capacity */
 do $ccode/a/estimate_hosp_capacity
 
-
+/* combine hospital capacity with estimated district mortality rates */
+do $ccode/a/export_hosp_cfr
