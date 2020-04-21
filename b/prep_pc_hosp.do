@@ -58,6 +58,7 @@ save $tmp/healthcare_pca_u, replace
 /*******************************************/
 /* combine rural and urban healthcare data */
 /*******************************************/
+
 use $tmp/healthcare_pca_u, clear
 
 gen urban = 1
@@ -175,7 +176,6 @@ ren * pc_*
 save $covidpub/pc_hospitals_subdist, replace
 
 restore
-
 preserve
 
 /* collapse to district level */

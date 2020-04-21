@@ -22,6 +22,7 @@ do $ccode/b/prep_hosp_pca_vd
 /* prepare EC microdata on hospitals */
 do $ccode/b/prep_ec_hosp_microdata
 
+
 /****************************************/
 /* PART 2 -- RUNS FROM DATA IN GIT REPO */
 /****************************************/
@@ -43,8 +44,6 @@ do $ccode/b/prep_ec_hosp.do
 // gen_urbanization_subdist -- subdistrict PCA urbanization
 
 
-
-
 /***************************************/
 /* PART 3 ANALYTICAL RESULTS/ESTIMATES */
 /***************************************/
@@ -54,3 +53,22 @@ do $ccode/a/estimate_hosp_capacity
 
 /* combine hospital capacity with estimated district mortality rates */
 do $ccode/a/export_hosp_cfr
+
+
+/*****************************/
+/* PART 4 -- DDL SERVER ONLY */
+/*****************************/
+
+/* push data to production */
+
+
+/* push metadata to production */
+
+
+
+
+- DLHS documentation as well as PC
+- integrate rclone and dropbox into the build
+- write readme describe metastructure of the code
+- covid deaths and cases (state and district); dist-level hospital
+  data; district age distributions and CFR predictions
