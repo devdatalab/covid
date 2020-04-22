@@ -17,7 +17,7 @@ further demographic and economics data; we have many variables and
 data sources we've identified and targeted for inclusion, but are
 limited by manpower.
 
-| [[assets/dlhs4_perk_beds_pubpriv.png]] | 
+| ![Hospital Beds by District](assets/dlhs4_perk_beds_pubpriv.png?raw=true "Hospital Beds") | 
 |:--:| 
 | *Hospital Bed Availability by District* |
 
