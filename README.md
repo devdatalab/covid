@@ -9,7 +9,7 @@ estimate the dangers. Economists need data to assess the tradeoffs
 between policy alternatives. 
 
 This repository represents an effort by the [Development Data
-Lab](devdatalab.org) to provide some these data in the form of an
+Lab](www.devdatalab.org) to provide some these data in the form of an
 administrative data backbone with local estimates of health system
 capacity and local economic conditions. We'll supplement what's here
 with additional information like real-time COVID-19 case data and
