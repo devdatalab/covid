@@ -54,8 +54,7 @@ foreach y in dlhs4_perk_total_beds dlhs4_perk_total_facilities dlhs4_perk_total_
   gen bot_`y' = rank_`y' > 450 if !mi(rank_`y')
 }
 
-/* update names */
-drop *name
+/* get names */
 merge 1:1 pc11_state_id pc11_district_id using $keys/pc11_district_key, keepusing(pc11_state_name pc11_district_name)
 drop if _merge == 2
 drop _merge

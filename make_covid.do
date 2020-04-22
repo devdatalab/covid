@@ -57,6 +57,8 @@ do $ccode/a/estimate_hosp_capacity
 /* combine hospital capacity with estimated district mortality rates */
 do $ccode/a/export_hosp_cfr
 
+/* export some additional stats that were asked for */
+do $ccode/a/impute_additional_fields
 
 /*****************************/
 /* PART 4 -- DDL SERVER ONLY */
