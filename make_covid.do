@@ -37,6 +37,9 @@ do $ccode/b/prep_pc_hosp.do
 /* prepare economic census (2013) hospital data */
 do $ccode/b/prep_ec_hosp.do
 
+/* create predicted mortality based on age distribution */
+do $ccode/b/gen_district_age_bins.do
+
 /* prepare SECC district-level poverty data [unfinished] */
 // do $ccode/b/prep_secc.do
 
