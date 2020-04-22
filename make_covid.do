@@ -68,12 +68,3 @@ do $ccode/a/impute_additional_fields
 
 
 /* push metadata to production */
-
-
-
-
-- DLHS documentation as well as PC
-- integrate rclone and dropbox into the build
-- write readme describe metastructure of the code
-- covid deaths and cases (state and district); dist-level hospital
-  data; district age distributions and CFR predictions

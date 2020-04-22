@@ -2,10 +2,6 @@
 global statelist andamannicobarislands andhrapradesh arunachalpradesh assam bihar chandigarh chhattisgarh dadranagarhaveli damananddiu goa gujarat haryana himachalpradesh jammukashmir jharkhand karnataka madhyapradesh maharashtra manipur meghalaya mizoram nagaland nctofdelhi odisha puducherry punjab rajasthan sikkim tamilnadu telangana tripura uttarakhand uttarpradesh westbengal
 global agebins age_0 age_5 age_10 age_15 age_20 age_25 age_30 age_35 age_40 age_45 age_50 age_55 age_60 age_65 age_70 age_75 age_80
 
-/* remove files that will store all age bins if it already exists */
-cap rm $tmp/secc_age_bins_r_tmp.dta
-cap rm $tmp/secc_age_bins_u_tmp.dta
-
 /************************************************/
 /* Calculate Rural and Urban Age Bins from SECC */
 /************************************************/
@@ -24,6 +20,10 @@ foreach level in district subdistrict {
     if "`sector'" == "urban" local l = "u"
     if "`sector'" == "rural" local l = "r"
     
+    /* save an empty output file so we can append to it state by state */
+    clear
+    save $tmp/secc_age_bins_`level'_`l'_tmp, emptyok replace
+
     /* cycle through each state */
     foreach state in $statelist {
       disp_nice "`sector'-`level'-`state'"
@@ -97,7 +97,7 @@ foreach level in district subdistrict {
       collapse (sum) age_, by(`ids' age_bin_`l')
 
       /* get total population */
-      bys `ids': egen secc_pop_`l' = sum(age_)
+      bys `ids': egen secc_pop_`l' = total(age_)
   
       /* reshape rural data to wide so that each age bin is a variable */
       reshape wide age_, i(`ids' secc_pop_`l') j(age_bin_`l')
@@ -119,27 +119,16 @@ foreach level in district subdistrict {
       /********/
       /* Save */
       /********/
-      /* check to see if the output file exists yet */
-      cap confirm file "$tmp/secc_age_bins_`level'_`l'_tmp.dta"
-      local output_exists = _rc
-  
-      /* if the output does not exist, write data to file */
-      if `output_exists' != 0 {
-        save $tmp/secc_age_bins_`level'_`l'_tmp
-      }
+      /* append the data to the file */
+      append using $tmp/secc_age_bins_`level'_`l'_tmp
 
-      /* if the output does exist, append the data to the file */
-      else {
-        append using $tmp/secc_age_bins_`level'_`l'_tmp
-        save $tmp/secc_age_bins_`level'_`l'_tmp, replace
+      /* drop a weird broken rural district (almost no data)  */
+      if "`l'" == "rural" {
+        drop if pc11_state_id == "12" & pc11_district_id == "246" & secc_pop_r == 198
       }
+      bys `ids': assert _N == 1
     }
 
-    /* drop a weird broken rural district (almost no data)  */
-    if "`level'" == "district" & "`l'" == "rural" {
-      drop if pc11_state_id == "12" & pc11_district_id == "246" & secc_pop_r == 198
-    }
-    
     /* save the appended file */
     save $tmp/secc_age_bins_`level'_`l', replace
   }

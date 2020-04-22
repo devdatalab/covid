@@ -25,6 +25,15 @@ use $pc11/pc11_td_clean.dta, clear
 /* keep the town directory hospital and clinic fields */
 keep *id pc11_td_med* pc11_td_disp pc11_td_all_hosp pc11_td_alt_hospital *_doc_* *_pmed_* *_beds *clinic pc11_td_all_hospital pc11_td_disp pc11_td_tb_clinic pc11_td_nur_homes pc11_td_mh_clinic pc11_td_in_out_pat pc11_td_c_hosp_home
 
+/* rename badly named allh to all for consistency with rural  */
+ren *_allh_* *_all_hosp_*
+ren pc11_td_all_hospital pc11_td_all_hosp
+
+/* make a few other fields consistent */
+ren pc11_td_tb_clinic pc11_td_tbc
+ren pc11_td_nur_homes pc11_td_nh
+ren pc11_td_mh_clinic pc11_td_mh
+
 /* merge with pca clean data at village level */
 merge 1:1 pc11_state_id pc11_district_id pc11_subdistrict_id pc11_town_id using $pc11/pc11u_pca_clean.dta, keepusing(pc11_pca_tot_p)
 keep if _merge == 3

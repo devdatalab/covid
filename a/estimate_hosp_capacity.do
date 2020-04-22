@@ -1,10 +1,9 @@
-/* merge everything together at district level */
-
+/* merge DLHS, PC, EC together at district level */
 use $iec/health/hosp/dlhs4_hospitals_dist.dta, clear
 merge 1:1 pc11_state_id pc11_district_id using $iec/health/hosp/ec_hospitals_dist.dta, gen(_m_ec13)
-merge 1:1 pc11_state_id pc11_district_id using $iec/health/hosp/pc_hospitals_dist.dta, gen(_m_pc11)
+merge 1:1 pc11_state_id pc11_district_id using $covidpub/pc_hospitals_dist.dta, gen(_m_pc11)
 
-/* drop if missing pc11 id's */
+/* drop if missing pc11 ids */
 drop if mi(pc11_state_id) | mi(pc11_district_id)
 
 /* key variables */
@@ -22,6 +21,9 @@ gen ec_emp_hosp_tot = ec_emp_hosp_priv + ec_emp_hosp_gov
 
 /* gen urban to rural doctor share */
 gen pc_doc_u_share = pc_doctors_pos_u / (pc_doctors_pos_r + pc_doctors_pos_u)
+
+/* gen urban to rural doctor in hospital share */
+gen pc_hosp_doc_u_share = pc_doctors_pos_u / (pc_doctors_pos_r + pc_doctors_pos_u)
 
 /* scale up urban beds in pc by rural share */
 gen pc_beds_tot = pc_beds_urb_tot / pc_doc_u_share
