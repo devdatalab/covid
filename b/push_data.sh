@@ -90,5 +90,3 @@ rm -rf ~/covid_tmp/
 
 # remove tarballs
 rm -f ~/ddl_covid_input_data.tar.gz ~/ddl_covid_output_data.tar.gz
-
-# remove metadata csvs
