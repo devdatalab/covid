@@ -65,8 +65,6 @@ do $ccode/a/impute_additional_fields
 /* PART 4 -- DDL SERVER ONLY */
 /*****************************/
 
-/* push data to production */
+/* push data and metadata to production. metadata will be included in
+data download links as well. */
 shell source $ccode/b/push_data.sh
-
-/* push metadata to production */
-shell source $ccode/b/push_metadata.sh
