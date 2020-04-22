@@ -60,15 +60,7 @@ do $ccode/a/export_hosp_cfr
 /*****************************/
 
 /* push data to production */
-
+shell source $ccode/b/push_data.sh
 
 /* push metadata to production */
-
-
-
-
-- DLHS documentation as well as PC
-- integrate rclone and dropbox into the build
-- write readme describe metastructure of the code
-- covid deaths and cases (state and district); dist-level hospital
-  data; district age distributions and CFR predictions
+shell source $ccode/b/push_metadata.sh
