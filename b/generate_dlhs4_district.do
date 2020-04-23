@@ -1,11 +1,10 @@
 /* generate dlhs4 district-level data on hospital capacity */
 
-
 /**********************/
 /* district hospitals */
 /**********************/
 
-use ~/iec/health/DLHS4_FacilitySurveyData/AHS_FACILITY/AHS_dh.dta , clear
+use ~/iec/health/DLHS4_FacilitySurveyData/AHS_FACILITY/AHS_dh.dta, clear
 append using ~/iec/health/DLHS4_FacilitySurveyData/NON_AHS_FACILITY/DH_NONAHS.dta
 
 /* merge in pc11 districts */
@@ -148,7 +147,7 @@ compress
 save $iec/health/hosp/dlhs4_hospitals_dist, replace
 
 /* save a version in the public repo */
-if mi("$dlhspub") {
+if mi("$covidpub") {
   di "Not in covid context; use set_context to continue"
   error 345
 }
