@@ -8,7 +8,7 @@ population. Epidemiologists need data to parameterize their models and
 estimate the dangers. Economists need data to assess the tradeoffs
 between policy alternatives. 
 
-This repository represents an effort by the <a href="http://www.devdatalab.org" target="_blank">Development Data Lab</a>, led by Professors Sam Asher (Johns Hopkins SAIS) and Paul Novosad (Dartmouth College) to provide to the public as much relevant data as possible. For now, it comprises an
+This repository represents an effort by the <a href="http://www.devdatalab.org" target="_blank">Development Data Lab</a>, led by Professors <a href="http://samuelasher.com" target="_blank">Sam Asher</a> (Johns Hopkins SAIS) and <a href="http://www.dartmouth.edu/~novosad/" target="_blank">Paul Novosad</a> (Dartmouth College), to provide to the public as much relevant data as possible. For now, it comprises an
 administrative data backbone with local estimates of health system
 capacity and local economic conditions. All data will be provided with consistent location identifiers (state, district, etc) to allow for data to be easily merged and analyzed together. We'll supplement what's here
 with additional information like real-time COVID-19 case data and
