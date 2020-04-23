@@ -1,308 +1,236 @@
-/************/
-/* Villages */
-/************/
+/**********************************************************************************/
+/* program clean_collapsed_data : Insert description here */
+/***********************************************************************************/
+cap prog drop clean_collapsed_data
+prog def clean_collapsed_data
 
+  /* label vars */
+  /* note beds data only available for urban areas */
+  la var clinic_beds_u "No. of beds across all urban clinics and hospitals"
+  la var hosp_beds_u "No. of beds across urban allopathic hospitals"
+  la var docs_pos_r "No. of doctors in position - rural"
+  la var docs_pos_u "No. of doctors in position - urban"
+  la var pmed_pos_r "No. of paramedics in position (rural)"
+  la var pmed_pos_u "No. of paramedics in position (urban)"
+  la var pc11_pca_tot_p "Total population"
+  la var hospitals_r "No. of allopathic hospitals - rural"
+  la var hospitals_u "No. of allopathic hospitals - urban"
+  la var docs_hosp_r "No. of doctors in allopathic hospitals - rural"
+  la var docs_hosp_u "No. of doctors in allopathic hospitals - urban"
+  la var clinics_r "No. of rural clinics"
+  la var clinics_u "No. of urban clinics"
+  
+  /* aggregate rural and urban vars */
+  egen clinics = rowtotal(clinics_*)
+  egen docs = rowtotal(docs_pos_*)
+  egen docs_hosp = rowtotal(docs_hosp_*)
+  egen pmeds = rowtotal(pmed_pos_*)
+  egen num_hospitals = rowtotal(hospitals_*)
+  
+  /* label new vars */
+  la var clinics "Total clinics "
+  la var pmeds "Total paramedics in position"
+  la var docs "Total doctors in hospitals and clinics"
+  la var docs "Total doctors in hospitals only"
+  la var num_hospitals "Total hospitals"
+  
+  ren * pc_*
+  ren pc_pc11* pc11*
 
-use $pc11/pc11_vd_clean.dta, clear
+end
+/* *********** END program clean_collapsed_data ***************************************** */
 
-
-/* check missing data percent for various health center variables */
-desc pc11_vd_nc_icds pc11_vd_nc_agwd pc11_vd_asha pc11_vd_med_in_out_pat pc11_vd_med_c_hosp_home pc11_vd_med_prac_* pc11_vd_med_trad_fth pc11_vd_fwc_cntr pc11_vd_mh_cln pc11_vd_disp pc11_vd_altmed_hosp pc11_vd_all_hosp pc11_vd_tb_cln pc11_vd_mcw_cntr pc11_vd_phs_cntr pc11_vd_ph_cntr pc11_vd_ch_cntr
-
-/* merge with pca data */
-isid pc11_state_id pc11_district_id pc11_subdistrict_id pc11_village_id
-
-/* merge with pca clean data at village level */
-merge 1:1 pc11_state_id pc11_district_id pc11_subdistrict_id pc11_village_id using $pc11/pc11r_pca_clean.dta, update
-keep if _merge>2
-drop _merge
-
-/* drop unnecessary vars to make dataset manageable */
-drop pc11_pca_marg* pc11_pca_main* pc11_pca_non*
-drop pc11_vd_power* pc11_vd_land*
-drop pc11_vd_mgt_inst_gov_status - pc11_vd_oth_sch_rang
-drop pc11_vd_wat_tap_trt - pc11_vd_poll_st_rang
-drop pc11_vd_agr_comm1- pc11_vd_hc_comm3
-
-
-/* drop outliers */
-
-sum pc11_vd_ph_cntr, d
-gen flag=1 if pc11_vd_ph_cntr >= 30000
-
-sum pc11_vd_phs_cntr, d
-replace flag=1 if pc11_vd_phs_cntr >= 70000
-
-sum pc11_vd_all_hosp, d
-replace flag=1 if pc11_vd_all_hosp >= 300
-
-sum pc11_pca_tot_p, d
-replace flag=1 if pc11_pca_tot_p >= 9039
-
-drop if flag==1
+/* open rural hospital/clinic dataset */
+use $covidpub/pc11r_hosp, clear
 
 /* rename vd vars for append with town data*/
 ren pc11_vd_* pc11_td_*
 
+/* separate urban and rural populations */
+gen pc11_pca_tot_p_r = pc11_pca_tot_p
+
 compress
 
-/* save merged dataset */
-
-save $tmp/healthcare_pca_r.dta, replace
-
+/* save temp file ready to be merged with urban dataset */
+save $tmp/healthcare_pca_r, replace
 
 /*********/
 /* Towns */
 /*********/
 
-use $pc11/pc11_td_clean.dta, clear
+use $covidpub/pc11u_hosp, clear
 
-/* merge with pca clean data at village level */
-merge 1:1 pc11_state_id pc11_district_id pc11_subdistrict_id pc11_town_id using $pc11/pc11u_pca_clean.dta, update
-keep if _merge>2
-drop _merge
-
-/* drop unnecessary vars to make dataset manageable */
-drop pc11_pca_marg* pc11_pca_main* pc11_pca_non*
-drop pc11_td_sys_drain-pc11_td_el_others
-drop pc11_td_primary_gov_status-pc11_td_n_a_c_soc
-
-/* drop outliers */
-
-sum pc11_td_all_hospital, d
-gen flag=1 if pc11_td_all_hospital >= 100
-
-sum pc11_td_alt_hospital, d
-replace flag=1 if pc11_td_alt_hospital>=38
-
-sum pc11_td_disp, d
-replace flag=1 if pc11_td_disp>=341
-
-sum pc11_pca_tot_p, d
-replace flag=1 if pc11_pca_tot_p >= 505693
-
-drop if flag==1
-
+/* separate urban and rural populations */
+gen pc11_pca_tot_p_u = pc11_pca_tot_p
 
 compress
-
-save $tmp/healthcare_pca_u.dta, replace
-
+save $tmp/healthcare_pca_u, replace
 
 
-/*******************************************/
-/* combine rural and urban healthcare data */
-/*******************************************/
 
-
-use $tmp/healthcare_pca_u.dta, clear
+/******************************************/
+/* append rural and urban healthcare data */
+/******************************************/
+use $tmp/healthcare_pca_u, clear
 
 gen urban = 1
 
-append using $tmp/healthcare_pca_r.dta
+append using $tmp/healthcare_pca_r
 
-replace urban = 0 if urban==.
+replace urban = 0 if mi(urban)
+
+/* drop the veterinary hospitals variables */
+drop pc11_td_vet_* pc11_td_veth_*
+
+/*****************************************/
+/* drop outliers after manual inspection */
+/*****************************************/
+local centers_r pc11_td_ch_cntr pc11_td_ph_cntr pc11_td_phs_cntr pc11_td_tb_cln pc11_td_all_hosp pc11_td_disp pc11_td_mh_cln pc11_td_med_in_out_pat pc11_td_med_c_hosp_home
+local centers_u pc11_td_all_hosp pc11_td_disp pc11_td_tbc pc11_td_nh pc11_td_mh pc11_td_in_out_pat pc11_td_c_hosp_home
+
+/* drop villages that are just a couple households */
+drop if pc11_pca_tot_p < 5
+/* 1718 such cases - all rural*/
+
+/* REVIEW CENTERS/CLINICS OUTLIERS */
+
+/* general logic - you cannot have more than 1 center for every 10 people */
+/* we make an exception for very small villages in case the clinic is somehow defined as the village.
+  the bed counts will be low for these places anyway, so it won't bias things much.
+*/
+
+/* review potential outliers on clinic numbers */
+foreach x of var `centers_r' {
+  disp_nice "`x'"
+  
+  /* calculate clinics per person */
+  gen `x'_pc = (`x' / pc11_pca_tot_p) if urban == 0
+
+  /* calculate docs per person (if available) */
+  cap gen `x'_doc_pc = (`x'_doc_pos / pc11_pca_tot_p) if urban == 0
+
+  /* list clinic outliers */
+  noi cap list `x'_pc `x'_doc_pc `x' `x'_doc_pos pc11_pca_tot_p if `x'_pc > 0.1 & !mi(`x'_pc) & urban == 0
+  if _rc {
+    list `x'_pc `x' pc11_pca_tot_p if `x'_pc > 0.1 & !mi(`x'_pc) & urban == 0
+  }
+  else {
+    list `x'_pc `x'_doc_pc `x' `x'_doc_pos pc11_pca_tot_p if `x'_doc_pc > 0.1 & !mi(`x'_doc_pc) & urban == 0
+  }
+
+  /* dropping at 1 clinic for every 10 people is clearly not dropping too many places. */
+  /* The few places that might be correct have a really small nubmer of docs anyway so won't break the estimates */
+  replace `x' = . if `x'_pc > .1 & urban == 0
+  cap replace `x'_doc_tot = . if `x'_pc > .1 & urban == 0
+  cap replace `x'_doc_pos = . if `x'_pc > .1 & urban == 0
+}
+
+/* drop the village with exactly 50 docs in every type of hospital */
+drop if pc11_td_ch_cntr_doc_pos == 50 & pc11_pca_tot_p == 551
+capdrop *_pc
+
+/* REPEAT ON URBAN SIDE */
+foreach x of var `centers_u' {
+  disp_nice "`x'"
+  
+  /* calculate clinics per person */
+  gen `x'_pc = (`x' / pc11_pca_tot_p) if urban == 1
+
+  /* calculate docs per person (if available) */
+  cap gen `x'_doc_pc = (`x'_doc_pos / pc11_pca_tot_p) if urban == 1
+
+  /* calculate beds per capita */
+  cap gen `x'_beds_pc = (`x'_beds / pc11_pca_tot_p) if urban == 1
+  
+  /* skip outpatient facilities and hospices which we don't use below anyway */
+  if _rc continue
+
+  /* list clinic outliers */
+  sum `x'_pc if urban == 1, d
+  list `x'_pc `x'_doc_pc `x'_beds_pc `x' `x'_doc_pos `x'_beds pc11_pca_tot_p if `x'_pc > 0.1 & !mi(`x'_pc) & urban == 1
+
+  /* list doc outliers */
+  sum `x'_doc_pc if urban == 1, d
+  list `x'_pc `x'_doc_pc `x'_beds_pc `x' `x'_doc_pos `x'_beds pc11_pca_tot_p if `x'_doc_pc > 0.1 & !mi(`x'_doc_pc) & urban == 1
+
+  /* list bed outliers */
+  sum `x'_beds_pc if urban == 1, d
+  list `x'_pc `x'_doc_pc `x'_beds_pc `x' `x'_doc_pos `x'_beds pc11_pca_tot_p if `x'_doc_pc > 0.1 & !mi(`x'_doc_pc) & urban == 1
+}
+
+/* the upper limit of hospital beds per capita seems fine-- these are mainly driven by small
+  towns and are thus plausible and won't affect our district counts that much.  The lower
+  limit is more of a concern-- there are 35 towns with pop > 100,000 and zero reported hospitals.
+  These probably reflect incorrect zeroes but it's hard to know how to fill them in. */
+list pc11_td_all_hosp_pc pc11_td_all_hosp_doc_pc pc11_td_all_hosp_beds_pc pc11_td_all_hosp pc11_td_all_hosp_doc_pos pc11_td_all_hosp_beds pc11_pca_tot_p if pc11_td_all_hosp_pc > 0.001 & !mi(pc11_td_all_hosp_pc) & urban == 1
+list pc11_td_all_hosp_doc_pc pc11_td_all_hosp_doc_pc pc11_td_all_hosp_beds_pc pc11_td_all_hosp pc11_td_all_hosp_doc_pos pc11_td_all_hosp_beds pc11_pca_tot_p if pc11_td_all_hosp_doc_pc > 0.01 & !mi(pc11_td_all_hosp_doc_pc) & urban == 1
+list pc11_td_all_hosp_beds_pc pc11_td_all_hosp_doc_pc pc11_td_all_hosp_beds_pc pc11_td_all_hosp pc11_td_all_hosp_doc_pos pc11_td_all_hosp_beds pc11_pca_tot_p if pc11_td_all_hosp_beds_pc > 0.01 & !mi(pc11_td_all_hosp_beds_pc) & urban == 1
+
+/* review places with high dispensary beds per capita */
+/* nothing way out of the ballpark and numbers are way lower than hospitals, so unlikely to cause district-level errors */
+sort pc11_td_disp_pc 
+list pc11_td_disp_pc pc11_td_disp_beds_pc pc11_td_disp_beds_pc pc11_td_disp pc11_td_disp_beds pc11_td_disp_beds pc11_pca_tot_p if pc11_td_disp_beds_pc > 0.005 & !mi(pc11_td_disp_beds_pc) & urban == 1
+
+/* TB clinics */
+sum pc11_td_tbc_beds_pc, d
+sort pc11_td_tbc_pc 
+list pc11_td_tbc_pc pc11_td_tbc_beds_pc pc11_td_tbc_beds_pc pc11_td_tbc pc11_td_tbc_beds pc11_td_tbc_beds pc11_pca_tot_p if pc11_td_tbc_beds_pc > 0.005 & !mi(pc11_td_tbc_beds_pc) & urban == 1
+
+/* Mobile health clinics */
+sum pc11_td_mh_beds_pc, d
+sort pc11_td_mh_pc 
+list pc11_td_mh_pc pc11_td_mh_beds_pc pc11_td_mh_beds_pc pc11_td_mh pc11_td_mh_beds pc11_td_mh_beds pc11_pca_tot_p if pc11_td_mh_beds_pc > 0.005 & !mi(pc11_td_mh_beds_pc) & urban == 1
+
+
+/* in the end, we didn't drop any urban outliers because all of these were either
+  in the ballpark or were very low numbers in levels and thus don't affect district
+  numbers much. */
 
 /************************************/
 /* create health capacity variables */
 /************************************/
 
 /* doctors (total, urban and rural) */
-egen doctors_pos_r = rowtotal(*_doc_pos) if urban==0
-egen doctors_pos_u = rowtotal(*_doc_pos) if urban==1
-
-egen doctors_tot_r = rowtotal(*_doc_tot) if urban==0
-egen doctors_tot_u = rowtotal(*_doc_tot) if urban==1
-
+egen docs_pos_r = rowtotal(*_doc_pos) if urban == 0
+egen docs_pos_u = rowtotal(*_doc_pos) if urban == 1
 
 /* paramedics (total, urban and rural) */
-egen pmed_pos_r = rowtotal(*_pmed_pos) if urban==0
-egen pmed_pos_u = rowtotal(*_pmed_pos) if urban==1
-
-egen pmed_tot_r = rowtotal(*_pmed_tot) if urban==0
-egen pmed_tot_u = rowtotal(*_pmed_tot) if urban==1
-
+egen pmed_pos_r = rowtotal(*_pmed_pos) if urban == 0
+egen pmed_pos_u = rowtotal(*_pmed_pos) if urban == 1
 
 /* clinics (total, urban and rural) */
-egen clinics_r = rowtotal(pc11_td_ch_cntr pc11_td_ph_cntr pc11_td_phs_cntr pc11_td_tb_cln pc11_td_all_hosp pc11_td_disp pc11_td_mh_cln pc11_td_med_in_out_pat pc11_td_med_c_hosp_home) if urban==0
-egen clinics_u = rowtotal(pc11_td_all_hospital pc11_td_disp pc11_td_tb_clinic pc11_td_nur_homes pc11_td_mh_clinic pc11_td_in_out_pat pc11_td_c_hosp_home) if urban==1                                      
-gen allhospitals_r = pc11_td_all_hosp if urban==0
-gen allhospitals_u = pc11_td_all_hospital if urban==1
+egen clinics_r = rowtotal(pc11_td_ch_cntr pc11_td_ph_cntr pc11_td_phs_cntr pc11_td_tb_cln pc11_td_all_hosp pc11_td_disp pc11_td_mh_cln pc11_td_med_in_out_pat pc11_td_med_c_hosp_home) if urban == 0
+egen clinics_u = rowtotal(pc11_td_all_hosp pc11_td_disp pc11_td_tbc pc11_td_nh pc11_td_mh pc11_td_in_out_pat pc11_td_c_hosp_home) if urban == 1
+gen hospitals_r = pc11_td_all_hosp if urban == 0
+gen hospitals_u = pc11_td_all_hosp if urban == 1
 
-/* beds (total and allopathic)*/
-egen beds_urb_tot = rowtotal(*_beds)
-egen beds_urb_allo = rowtotal(*_allh_beds)
+/* beds (total and allopathic) (note: no beds in rural data) */
+egen clinic_beds_u = rowtotal(*_beds)
+egen hosp_beds_u = rowtotal(*_all_hosp_beds)
 
+/* rename and store doctors in allopathic hospitals -- same variable for urban and rural */
+gen docs_hosp_u = pc11_td_all_hosp_doc_pos if urban == 1
+gen docs_hosp_r = pc11_td_all_hosp_doc_pos if urban == 0
 
+save $tmp/precollapse, replace
 
 /*******************************************/
 /* district and subdistrict level collapse */
 /*******************************************/
-
-preserve
+use $tmp/precollapse, clear
 
 /* collapse to sub district level */
+collapse (sum) hosp* pmed_* docs_* clinics_* clinic_beds_u  pc11_pca_tot_p, by(pc11_state_id pc11_district_id pc11_subdistrict_id)
 
-collapse (sum) allhosp* pmed_* doctors_* clinics_* beds_* pc11_pca_tot_p, by(pc11_state_id pc11_state_name pc11_district_id pc11_district_name pc11_subdistrict_id pc11_subdistrict_name)
+/* label vars, create urban + rural aggregates, set PC prefix */
+clean_collapsed_data
 
-/* label vars */
-/* note beds data only available for urban areas */
-la var beds_urb_tot "No. of beds across all hospitals/facilities"
-la var beds_urb_all "No. of beds across allopathic facilities"
-la var doctors_pos_r "No. of doctors in position - rural"
-la var doctors_pos_u "No. of doctors in position - urban"
-la var doctors_tot_r "No. of doctors (total)- rural"
-la var doctors_tot_u "No. of doctors (total)- urban"
-la var pmed_pos_r "No. of paramedics in position (rural)"
-la var pmed_tot_u "No. of paramedics (total) - urban"
-la var pmed_pos_u "No. of paramedics in position (urban)"
-la var pmed_tot_r "No. of paramedics (total) - rural"
-la var pc11_pca_tot_p "Total population"
-la var allhospitals_r "No. of allopathic hospitals - rural"
-la var allhospitals_u "No. of allopathic hospitals - urban"
+/* save subdistrict dataset */
+save $covidpub/pc_hospitals_subdist, replace
 
-/* Note: maternal and child welfare, family welfare centers, alternative medicine and faith healers excluded */
-la var clinics_r "No. of rural clinics"
-la var clinics_u "No. of urban clinics"
-
-/* aggregate rural and urban vars */
-egen clinics = rowtotal(clinics_*)
-egen doctors_tot = rowtotal(doctors_tot_*)
-egen pmed_tot = rowtotal(pmed_tot_*)
-egen doctors_pos = rowtotal(doctors_pos_*)
-egen pmed_pos = rowtotal(pmed_pos_*)
-egen num_allo_hospitals = rowtotal(allhospitals_*)
-
-/* label new vars */
-la var clinics "Total clinics in subdistrict"
-la var doctors_tot "Total doctors in subdistrict"
-la var pmed_tot "Total paramedics in subdistrict"
-la var pmed_pos "Total paramedics in position in subdistrict"
-la var doctors_pos "Total doctors in position in subdistrict"
-la var num_allo_hospitals "Total allopathic hospitals in subdistrict"
-
-/* generate per 1000 capacity vars */
-
-foreach x of var pmed_* doctors_* clinics* beds_* allhosp* num_all*{
-  gen perk_`x'=(`x'/pc11_pca_tot_p)*1000
-}
-
-/* label per thousand vars */
-la var perk_pmed_pos_r "Paramedics per thousand rural - in position"
-la var perk_pmed_pos_u "Paramedics per thousand urban - in position"
-la var perk_pmed_tot_r "Paramedics per thousand rural"
-la var perk_pmed_tot_u "Paramedics per thousand urban"
-la var perk_pmed_tot "Paramedics per thousand"
-la var perk_pmed_pos "Paramedics per thousand - in position"
-la var perk_doctors_pos_r "Paramedics per thousand rural - in position"
-la var perk_doctors_pos_u "Paramedics per thousand urban - in position"
-la var perk_clinics_r "Clinics per thousand - rural"
-la var perk_clinics_u "Clinics per thousand - urban"
-la var perk_clinics "Clinics per thousand"
-la var perk_beds_urb_tot "Beds per thousand - urban only"
-la var perk_beds_urb_all "Beds per thousand - allopathic hosp - urban only"
-la var perk_allhospitals_r "Allopathic hosp per thousand - rural"
-la var perk_allhospitals_u "Allopathic hosp per thousand - urban"
-la var perk_num_allo_hospitals "Allopathic hosp per thousand"
-la var perk_doctors_pos_r "Doctors per thousand - rural - in position"
-la var perk_doctors_pos_u "Doctors per thousand - urban - in position"
-la var perk_doctors_pos "Doctors per thousand in position"
-la var perk_doctors_tot_r "Doctors per thousand - rural"
-la var perk_doctors_tot_u "Doctors per thousand - urban"
-la var perk_doctors_tot "Doctors per thousand"
-
-ren * pc_*
-
-/* save dataset */
-
-save $iec/health/hosp/pc_hospitals_subdist_clean.dta, replace
-
-restore
-
-preserve
-
-/* collapse to district level */
-
-collapse (sum) allhosp* pmed_* doctors_* clinics_* beds_* pc11_pca_tot_p, by(pc11_state_id pc11_state_name pc11_district_id pc11_district_name)
-
-/* label vars */
-/* note beds data only available for urban areas */
-la var beds_urb_tot "No. of beds across all urban hospitals/facilities"
-la var beds_urb_allo "No. of beds across urban allopathic facilities"
-la var doctors_pos_r "No. of doctors in position - rural"
-la var doctors_pos_u "No. of doctors in position - urban"
-la var doctors_tot_r "No. of doctors (total)- rural"
-la var doctors_tot_u "No. of doctors (total)- urban"
-la var pmed_pos_r "No. of paramedics in position (rural)"
-la var pmed_tot_u "No. of paramedics (total) - urban"
-la var pmed_pos_u "No. of paramedics in position (urban)"
-la var pmed_tot_r "No. of paramedics (total) - rural"
-la var pc11_pca_tot_p "Total population"
-la var allhospitals_r "No. of allopathic hospitals - rural"
-la var allhospitals_u "No. of allopathic hospitals - urban"
-
-/* Note: maternal and child welfare, family welfare centers, alternative medicine and faith healers excluded */
-la var clinics_r "No. of rural clinics"
-la var clinics_u "No. of urban clinics"
-
-/* aggregate rural and urban vars */
-egen clinics = rowtotal(clinics_*)
-egen doctors_tot = rowtotal(doctors_tot_*)
-egen pmed_tot = rowtotal(pmed_tot_*)
-egen doctors_pos = rowtotal(doctors_pos_*)
-egen pmed_pos = rowtotal(pmed_pos_*)
-egen num_allo_hospitals = rowtotal(allhospitals_*)
-
-/* label new vars */
-la var clinics "Total clinics in district"
-la var doctors_tot "Total doctors in district"
-la var pmed_tot "Total paramedics in district"
-la var pmed_pos "Total paramedics in position in district"
-la var doctors_pos "Total doctors in position in district"
-la var num_allo_hospitals "Total allopathic hospitals in district"
-
-/* generate per 1000 capacity vars */
-
-foreach x of var pmed_* doctors_* clinics* beds_* allhosp* num_all*{
-  gen perk_`x'=(`x'/pc11_pca_tot_p)*1000
-}
-
-/* label per thousand vars */
-la var perk_pmed_pos_r "Paramedics per thousand rural - in position"
-la var perk_pmed_pos_u "Paramedics per thousand urban - in position"
-la var perk_pmed_tot_r "Paramedics per thousand rural"
-la var perk_pmed_tot_u "Paramedics per thousand urban"
-la var perk_pmed_tot "Paramedics per thousand"
-la var perk_pmed_pos "Paramedics per thousand - in position"
-la var perk_doctors_pos_r "Paramedics per thousand rural - in position"
-la var perk_doctors_pos_u "Paramedics per thousand urban - in position"
-la var perk_clinics_r "Clinics per thousand - rural"
-la var perk_clinics_u "Clinics per thousand - urban"
-la var perk_clinics "Clinics per thousand"
-la var perk_beds_urb_tot "Beds per thousand - urban only"
-la var perk_beds_urb_allo "Beds per thousand - allopathic hosp - urban only"
-la var perk_allhospitals_r "Allopathic hosp per thousand - rural"
-la var perk_allhospitals_u "Allopathic hosp per thousand - urban"
-la var perk_num_allo_hospitals "Allopathic hosp per thousand"
-la var perk_doctors_pos_r "Doctors per thousand - rural - in position"
-la var perk_doctors_pos_u "Doctors per thousand - urban - in position"
-la var perk_doctors_pos "Doctors per thousand in position"
-la var perk_doctors_tot_r "Doctors per thousand - rural"
-la var perk_doctors_tot_u "Doctors per thousand - urban"
-la var perk_doctors_tot "Doctors per thousand"
-
-ren * pc_*
-ren pc_pc11* pc11*
-
-/* save dataset */
-
-save $iec/health/hosp/pc_hospitals_dist.dta, replace
-
-restore
-
-
-
-
-
-                       
+/* REPEAT COLLAPSE AT DISTRICT LEVEL */
+use $tmp/precollapse, clear
+collapse (sum) hosp* pmed_* docs_* clinics_* clinic_beds_u  pc11_pca_tot_p, by(pc11_state_id pc11_district_id )
+clean_collapsed_data
+save $covidpub/pc_hospitals_dist, replace
 
