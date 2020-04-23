@@ -136,6 +136,13 @@ gen total_beds = dh_beds + chc_beds + (phc_beds * phc_mult)
 gen total_staff = dh_staff + chc_staff + (phc_staff * phc_mult)
 gen total_facilities = dh_count + chc_count + (phc_count * phc_mult)
 
+/* label remaining variables */
+label var total_beds "Total beds in all public facilities (DH + CHC + PHC)"
+label var total_staff "Total staff in all public facilities (DH + CHC + PHC)"
+label var total_facilities "Total number of public facilities (DH + CHC + PHC)"
+label var pc11_state_id "2011 Population Census State ID"
+label var pc11_district_id "2011 Population Census District ID"
+
 /* clean up */
 ren * dlhs4_*
 ren dlhs4_pc11* pc11*
