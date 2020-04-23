@@ -8,13 +8,27 @@ population. Epidemiologists need data to parameterize their models and
 estimate the dangers. Economists need data to assess the tradeoffs
 between policy alternatives. 
 
-This repository represents an effort by the <a href="http://www.devdatalab.org" target="_blank">Development Data Lab</a> to provide some these data in the form of an
+This repository represents an effort by the <a href="http://www.devdatalab.org" target="_blank">Development Data Lab</a>, led by Professors Sam Asher (Johns Hopkins SAIS) and Paul Novosad (Dartmouth College) to provide to the public as much relevant data as possible. For now, it comprises an
 administrative data backbone with local estimates of health system
-capacity and local economic conditions. We'll supplement what's here
+capacity and local economic conditions. All data will be provided with consistent location identifiers (state, district, etc) to allow for data to be easily merged and analyzed together. We'll supplement what's here
 with additional information like real-time COVID-19 case data and
 further demographic and economics data; we have many variables and
 data sources we've identified and targeted for inclusion, but are
 limited by manpower.
+
+## Data Currently Available
+
+| Data              | Description | Geographic level | Scope |
+| ----------- | ----------- | ----------- | ----------- |
+| Hospital capacity | Measures on hospital capacity, with a focus on beds. Estimated from 2011 Population Census and DLHS-4 (2012-14). | District, subdistrict (Pop Census only) | Total |
+| Covid-19 mortality | Local age distribution data and predicted Covid-19 total deaths. At-risk status based on discrepancy between projected hospital bed needs and estimated capacity. | District (subdistrict coming soon) | Total/rural/urban |
+| Hospitals | 2013 Economic Census data on number of hospitals and total employment in hospitals. | District | Private/public |
+
+## Data Identified for Inclusion
+
+| Data              | Description | Geographic level | Scope |
+| ----------- | ----------- | ----------- | ----------- |
+| Comorbidity rates | Rates of common conditions known to correlate with Covid-19 morbidity, such as diabetes, from the National Sample Survey | District | Total/rural/urban
 
 | ![Hospital Beds by District](assets/dlhs4_perk_beds_pubpriv.png?raw=true "Hospital Beds") | 
 |:--:| 
