@@ -24,7 +24,6 @@ this repository, please contact us and we will add it to our list if
 we can obtain it.*
 
 This is an effort by <a href="http://www.devdatalab.org" target="_blank">Development Data Lab</a>, led by Professors <a href="http://samuelasher.com" target="_blank">Sam Asher</a> (Johns Hopkins SAIS) and <a href="http://www.dartmouth.edu/~novosad/" target="_blank">Paul Novosad</a> (Dartmouth College).
-
 If you use these data, please reference the source. This helops us
 continue to provide and develop this service. If you are interested in
 funding more rapid development of this data platform, please contact
@@ -34,24 +33,24 @@ us.
 
 | Data              | Description | Geographic level |
 | ----------- | ----------- | ----------- |
-| Public Hospital capacity | Facilities, doctors, and beds. Sources: 2011 Population Census and DLHS-4 (2012-14). | District, subdistrict (Pop Census only) |
+| Public Hospital capacity | Facilities, doctors, and beds. Sources: 2011 Population Census and DLHS-4 (2012-14). | District, Subdistrict (PC only) |
 | Private Hospitals | Public and private hospital employment from 2013 Economic Census. Can estimate private system beds based on public employment:bed ratios. | District |
 | Predicted COVID-19 mortality rates | Predictions based strictly on local age distributions, which create substantial risk differences across locations. | Subdistrict |
 |District correspondences | Keys linking current districts to 2011 Population Census districts, which are the basis of many datasets | District |
-| Demographics | 2011 Population Census (most recent) population, density, literacy rate, urbanization | State/district/subdistrict/town/village |
+| Demographics | 2011 Population Census (most recent) population, density, literacy rate, urbanization | State/District/Subdistrict/Town/Village |
 
 
 ## Data Identified for Inclusion
 
 | Data              | Description | Geographic level | Scope |
 | ----------- | ----------- | ----------- | ----------- |
-| Comorbidity rates | Local mortality multipliers based on rates of common conditions known to correlate with Covid-19 morbidity, such as diabetes. Source: NSS | District | Total/rural/urban |
-| Gender composition | Sex ratios in five year age bins | State/district/subdistrict | Total/urban/rural |
-| Lockdown policies | Government-imposed restrictions/social distancing with details and dates | State/district | Total |
-| Slums | Slum populations, areas, proportions | State/district/town | Total |
-| Poverty | Small area estimation consumption per capita and poverty rate estimates based on the Socioeconomic and Caste Census | State/district/subdistrict | Total/urban/rural | 
-| Health staff | Number of doctors, nurses, employees of health centers, etc. | State/district/subdistrict | Total/urban/rural | COVID testing and cases | Numbers tested and infected, date of first confirmed case, etc | State (potentially district) | Total |
-| Sectoral composition | Share of employment in important sectors of the economy | State/district/subdistrict | Total/rural/urban |
+| Comorbidity rates | Local mortality multipliers based on rates of common conditions known to correlate with Covid-19 morbidity, such as diabetes. Source: NSS | District | Total/Rural/Urban |
+| Gender composition | Sex ratios in five year age bins | State/District/Subdistrict | Total/urban/rural |
+| Lockdown policies | Government-imposed restrictions/social distancing with details and dates | State/District | Total |
+| Slums | Slum populations, areas, proportions | State/District/Town | Total |
+| Poverty | Small area estimation consumption per capita and poverty rate estimates based on the Socioeconomic and Caste Census | State/District/Subdistrict | Total/Urban/Rural | 
+| Health staff | Number of doctors, nurses, employees of health centers, etc. | State/District/Subdistrict | Total/Urban/Rural | COVID testing and cases | Numbers tested and infected, date of first confirmed case, etc | State (potentially district) | Total |
+| Sectoral composition | Share of employment in important sectors of the economy | State/District/Subdistrict | Total/Rural/Urban |
 
 | ![Hospital Beds by District](assets/dlhs4_perk_beds_pubpriv.png?raw=true "Hospital Beds") | 
 |:--:| 
