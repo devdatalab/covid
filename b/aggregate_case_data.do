@@ -3,7 +3,7 @@
 /**********/
 /* Deaths */
 /**********/
-use $iec/health/covid_data/covid_deaths_recoveries, clear
+use $covidpub/covid/covid_deaths_recoveries, clear
 
 /* keep only the deaths */
 keep if patientstatus == "Deceased"
@@ -21,7 +21,7 @@ save `deaths'
 /*********/
 /* Cases */
 /*********/
-use $iec/health/covid_data/covid_raw_data, clear
+use $covidpub/covid/covid_cases_raw, clear
 
 /* rename date announced to simply date */
 ren dateannounced date
@@ -56,9 +56,9 @@ bys pc11_state_id pc11_district_id: gen total_deaths = sum(new_deaths)
 
 drop _merge datenum
 
-/***********************************************************************/
+/***************************************************************************/
 /* Transform into a square dataset with district positive cases and deaths */
-/***********************************************************************/
+/***************************************************************************/
 
 /* drop if we have no date-- hard to know what to do with these */
 drop if mi(date)
@@ -96,4 +96,4 @@ replace total_deaths = L.total_deaths if mi(total_deaths)
 
 drop _fillin
 
-save $iec/health/covid_data/covid_cases_deaths_district, replace
+save $covidpub/covid/covid_cases_deaths_district, replace
