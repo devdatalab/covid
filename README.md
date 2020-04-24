@@ -23,12 +23,21 @@ limited by manpower.
 | Hospital capacity | Measures on hospital capacity, with a focus on beds. Estimated from 2011 Population Census and DLHS-4 (2012-14). | District, subdistrict (Pop Census only) | Total |
 | Covid-19 mortality | Local age distribution data and predicted Covid-19 total deaths. At-risk status based on discrepancy between projected hospital bed needs and estimated capacity. | District (subdistrict coming soon) | Total/rural/urban |
 | Hospitals | 2013 Economic Census data on number of hospitals and total employment in hospitals. | District | Private/public |
+|District correspondence | Key linking current districts to 2011 Population Census districts, which are the basis of many datasets | District | |
+| Demographics | 2011 Population Census (most recent) population, density, literacy rate, urbanization | State/district/subdistrict/town/village | Total/rural/urban |
+
 
 ## Data Identified for Inclusion
 
 | Data              | Description | Geographic level | Scope |
 | ----------- | ----------- | ----------- | ----------- |
-| Comorbidity rates | Rates of common conditions known to correlate with Covid-19 morbidity, such as diabetes, from the National Sample Survey | District | Total/rural/urban
+| Comorbidity rates | Rates of common conditions known to correlate with Covid-19 morbidity, such as diabetes, from the National Sample Survey | District | Total/rural/urban |
+| Gender composition | Sex ratios in five year age bins | State/district/subdistrict | Total/urban/rural |
+| Lockdown policies | Government-imposed restrictions/social distancing with details and dates | State/district | Total |
+| Slums | Slum populations, areas, proportions | State/district/town | Total |
+| Poverty | Small area estimation consumption per capita and poverty rate estimates based on the Socioeconomic and Caste Census | State/district/subdistrict | Total/urban/rural | 
+| Health staff | Number of doctors, nurses, employees of health centers, etc. | State/district/subdistrict | Total/urban/rural | COVID testing and cases | Numbers tested and infected, date of first confirmed case, etc | State (potentially district) | Total |
+| Sectoral composition | Share of employment in important sectors of the economy | State/district/subdistrict | Total/rural/urban |
 
 | ![Hospital Beds by District](assets/dlhs4_perk_beds_pubpriv.png?raw=true "Hospital Beds") | 
 |:--:| 
@@ -79,3 +88,7 @@ downloading those data without running any of the code, you can do so
 Metadata tables describing the datasets and variable specifications
 for these data can be found
 [here](https://github.com/devdatalab/covid/blob/master/assets/metadata.md).
+
+## The Team
+
+This repo is a collaborative effort led by the Development Data Lab, co-founded by Sam Asher, Toby Lunt, and Paul Novosad. Many people have contributed to this effort, in no particular order: Ali Campion, Radhika Jain, Sam Besse, Aditi Bhowmick. 
