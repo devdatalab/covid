@@ -1,7 +1,7 @@
 # Covid-19 Data Resources
 
 This repository aims to provide a backbone of high geographic
-resolution administrative data to support analysis of the COVID-19
+resolution administrative data to support analysis of and the policy response to the COVID-19
 pandemic in India.
 
 The current version includes estimates of hospital and clinic doctor
@@ -20,14 +20,14 @@ many other teams' surveys as possible, given data availability.
 We are updating and adding to this repo as quickly as possible. *If you
 are part of a team working with policymakers or researchers on
 the COVID-19 response in India and need administrative data not in
-this repository, please contact us and we will add it to our list if
+this repository, please contact us (covid@devdatalab.org) and we will add it to our list if
 we can obtain it.*
 
 This is an effort by <a href="http://www.devdatalab.org" target="_blank">Development Data Lab</a>, led by Professors <a href="http://samuelasher.com" target="_blank">Sam Asher</a> (Johns Hopkins SAIS) and <a href="http://www.dartmouth.edu/~novosad/" target="_blank">Paul Novosad</a> (Dartmouth College).
-If you use these data, please reference the source. This helops us
+If you use these data, please reference the source. This helps us
 continue to provide and develop this service. If you are interested in
 funding more rapid development of this data platform, please contact
-us.
+us at covid@devdatalab.org.
 
 ## Data Currently Available
 
@@ -44,13 +44,13 @@ us.
 
 | Data              | Description | Geographic level | Scope |
 | ----------- | ----------- | ----------- | ----------- |
-| Comorbidity rates | Local mortality multipliers based on rates of common conditions known to correlate with Covid-19 morbidity, such as diabetes. Source: NSS | District | Total/Rural/Urban |
-| Gender composition | Sex ratios in five year age bins | State/District/Subdistrict | Total/urban/rural |
-| Lockdown policies | Government-imposed restrictions/social distancing with details and dates | State/District | Total |
-| Slums | Slum populations, areas, proportions | State/District/Town | Total |
-| Poverty | Small area estimation consumption per capita and poverty rate estimates based on the Socioeconomic and Caste Census | State/District/Subdistrict | Total/Urban/Rural | 
-| Health staff | Number of doctors, nurses, employees of health centers, etc. | State/District/Subdistrict | Total/Urban/Rural | COVID testing and cases | Numbers tested and infected, date of first confirmed case, etc | State (potentially district) | Total |
-| Sectoral composition | Share of employment in important sectors of the economy | State/District/Subdistrict | Total/Rural/Urban |
+| Comorbidity rates | Local mortality multipliers based on rates of common conditions known to correlate with Covid-19 morbidity, such as diabetes. Source: NSS | District | 
+| Gender composition | Sex ratios in five year age bins | State/District/Subdistrict |
+| Lockdown policies | Government-imposed restrictions/social distancing with details and dates | State/District |
+| Slums | Slum populations, areas, proportions | State/District/Town |
+| Poverty | Small area estimation consumption per capita and poverty rate estimates based on the Socioeconomic and Caste Census | State/District/Subdistrict | 
+| Health staff | Number of doctors, nurses, employees of health centers, etc. | State/District/Subdistrict | Total/Urban/Rural | COVID testing and cases | Numbers tested and infected, date of first confirmed case, etc | State (potentially district) | 
+| Sectoral composition | Share of employment in important sectors of the economy | State/District/Subdistrict | 
 
 | ![Hospital Beds by District](assets/dlhs4_perk_beds_pubpriv.png?raw=true "Hospital Beds") | 
 |:--:| 
