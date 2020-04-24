@@ -98,15 +98,15 @@ gen idm = pc11_state_id + "-" + pc11_district_name
 save $tmp/covid_raw_data_keys, replace
 
 /* run masala merge */
-masala_merge pc11_state_id using $tmp/pc11_district_keys_merge, s1(pc11_district_name) idmaster(idm) idusing(idu) minbigram(0.1) minscore(0.5) manual_file($iec/health/covid_data/manual_covid_case_district_match.csv) nonameclean
+masala_merge pc11_state_id using $tmp/pc11_district_keys_merge, s1(pc11_district_name) idmaster(idm) idusing(idu) minbigram(0.1) minscore(0.5) manual_file($ccode/str/manual_covid_case_district_match.csv) nonameclean
 
 /* PAUSE HERE AND ADD CORRECTIONS YOU WANT TO THE UNMATCHED FILE 
    fill in the unmatched observation file name below- unmatched_observations_78494.csv is a placeholder */
-cap process_manual_matches, infile($tmp/unmatched_observations_78494.csv) outfile($iec/health/covid_data/manual_covid_case_district_match.csv) s1(pc11_district_name) idmaster(idm_master) idusing(idu_using) charsep("-")
+cap process_manual_matches, infile($tmp/unmatched_observations_78494.csv) outfile($ccode/str/manual_covid_case_district_match.csv) s1(pc11_district_name) idmaster(idm_master) idusing(idu_using) charsep("-")
 
 /* re-run masala merge again with manual matches*/
 use $tmp/covid_raw_data_keys, clear
-masala_merge pc11_state_id using $tmp/pc11_district_keys_merge, s1(pc11_district_name) idmaster(idm) idusing(idu) minbigram(0.1) minscore(0.5) manual_file($iec/health/covid_data/manual_covid_case_district_match.csv) nonameclean
+masala_merge pc11_state_id using $tmp/pc11_district_keys_merge, s1(pc11_district_name) idmaster(idm) idusing(idu) minbigram(0.1) minscore(0.5) manual_file($ccode/str/manual_covid_case_district_match.csv) nonameclean
 drop pc11_district_name_master
 ren pc11_district_name_using pc11_district_name
 
@@ -115,17 +115,16 @@ drop if match_source == 7
 
 /* save the covid case data - pc11 district key */
 keep pc11* pc01* detectedstate detecteddistrict
-save $iec/health/covid_data/covid_cases_pc11_district_key, replace
+save $tmp/covid_cases_pc11_district_key, replace
 
 /* 3. Match the full case data with the pc11 keys */
 use $tmp/covid_raw_data, clear
 
 /* merge with pc11 codes */
-merge m:1 pc11_state_id pc11_state_name detecteddistrict using $iec/health/covid_data/covid_cases_pc11_district_key
+merge m:1 pc11_state_id pc11_state_name detecteddistrict using $tmp/covid_cases_pc11_district_key
 
 drop _merge
-save $iec/health/covid_data/covid_raw_data, replace
-
+save $covidpub/covid/covid_cases_raw, replace
 
 /*******************************/
 /* B. PATIENT-LEVEL DEATH DATA */
@@ -207,11 +206,11 @@ masala_merge pc11_state_id using $tmp/pc11_district_keys_merge, s1(pc11_district
 
 /* PAUSE HERE AND ADD CORRECTIONS YOU WANT TO THE UNMATCHED FILE 
    fill in the unmatched observation file name below- unmatched_observations_21647.csv is a placeholder */
-cap process_manual_matches, infile($tmp/unmatched_observations_21647.csv) outfile($iec/health/covid_data/manual_covid_case_district_match.csv) s1(pc11_district_name) idmaster(idm_master) idusing(idu_using) charsep("-")
+cap process_manual_matches, infile($tmp/unmatched_observations_21647.csv) outfile($ccode/str/manual_covid_case_district_match.csv) s1(pc11_district_name) idmaster(idm_master) idusing(idu_using) charsep("-")
 
 /* re-run masala merge again with manual matches*/
 use $tmp/covid_deaths_recoveries_key, clear
-masala_merge pc11_state_id using $tmp/pc11_district_keys_merge, s1(pc11_district_name) idmaster(idm) idusing(idu) minbigram(0.1) minscore(0.5) manual_file($iec/health/covid_data/manual_covid_case_district_match.csv) nonameclean
+masala_merge pc11_state_id using $tmp/pc11_district_keys_merge, s1(pc11_district_name) idmaster(idm) idusing(idu) minbigram(0.1) minscore(0.5) manual_file($ccode/str/manual_covid_case_district_match.csv) nonameclean
 
 /* keep only the distrcit name we matched to in the key */
 drop pc11_district_name_master
@@ -222,11 +221,22 @@ drop if match_source == 7
 
 /* 3. Match the full case data with the pc11 keys */
 keep pc11* pc01* state district
-save $iec/health/covid_data/covid_deaths_recoveries_pc11_district_key, replace
+save $tmp/covid_deaths_recoveries_pc11_district_key, replace
 
 /* merge in pc11 and pc01 identifiers */
 use $tmp/covid_deaths_recoveries, clear
-merge m:1 state district using $iec/health/covid_data/covid_deaths_recoveries_pc11_district_key, keep(match master)
+merge m:1 state district using $tmp/covid_deaths_recoveries_pc11_district_key, keep(match master)
 drop _merge
 
-save $iec/health/covid_data/covid_deaths_recoveries, replace
+save $covidpub/covid/covid_deaths_recoveries, replace
+
+
+/* the covid folder:
+
+DTA
+ - covid_cases_raw -- what we scraped
+ - cfr_age_bins -- age-specific CFRs from Max Roser for S.Korea, Italy
+ - covid_deaths_recoveries.dta -- cleaned death/recovery summary file
+  
+STUFF TO MOVE
+- secc_age_bins_t

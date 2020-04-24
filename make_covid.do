@@ -11,25 +11,30 @@ $hosp -- output folder for hospital data
 /*****************************/
 
 /* match DLHS4 to PC11 districts */
-do $ccode/b/merge_dlhs4_pc11_district
+/* in: $health/DLHS4, $keys/pc11_district_key.  out: $health/DLHS4 */
+do $ccode/b/create_dlhs4_pc11_district_key
 
 /* collapse raw DLHS4 data to district level */
-do $ccode/b/generate_dlhs4_district
+/* in: $health/DLHS4, pc11_pca_district.  out: $health/hosp/dlhs4_hospitals_dist, $covidpub/dhls4_hospitals_dist
+do $ccode/b/prep_dlhs4_district
 
 /* prepare short village/town directory and PCA to save in public repo */
+/* in: TD/VD.  out: $covidpub/pc11r_hosp, pc11r_hosp
 do $ccode/b/prep_hosp_pca_vd
 
 /* prepare EC microdata on hospitals */
+/* in: raw economic census 2013.  out: $covidpub/ec13_hosp_microdata */
 do $ccode/b/prep_ec_hosp_microdata
 
+/* download latest district-level case data */
+// need to fix conda setup to make this universal
+// do $ccode/b/get_case_data
+do $ccode/b/aggregate_case_data
 
 /***********************************************/
 /* PART 2 -- RUNS FROM DATA LINKED IN GIT REPO */
 /***********************************************/
 
-/* download latest district-level case data */
-// need to fix conda setup to make this universal
-// do $ccode/b/get_case_data
 
 /* prepare PC11 hospital/clinic data */
 do $ccode/b/prep_pc_hosp.do

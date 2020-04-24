@@ -1,4 +1,4 @@
-import delimited using "$iec/health/DLHS4_FacilitySurveyData/dlhs4_dist_key.csv", clear
+import delimited using "$health/DLHS4_FacilitySurveyData/dlhs4_dist_key.csv", clear
 
 /* drop missing data */
 drop if mi(state_name)
@@ -125,4 +125,4 @@ merge m:1 pc11_state_id pc11_district_name using $iec/keys/pc11_district_key
 drop if _merge != 3
 drop _merge
 
-save $iec/health/DLHS4_FacilitySurveyData/dlhs4_district_key.dta, replace
+save $health/DLHS4_FacilitySurveyData/dlhs4_district_key.dta, replace

@@ -1,14 +1,14 @@
-/* generate dlhs4 district-level data on hospital capacity */
+/* clean dlhs4 district-level data on hospital capacity */
 
 /**********************/
 /* district hospitals */
 /**********************/
 
-use ~/iec/health/DLHS4_FacilitySurveyData/AHS_FACILITY/AHS_dh.dta, clear
-append using ~/iec/health/DLHS4_FacilitySurveyData/NON_AHS_FACILITY/DH_NONAHS.dta
+use $health/DLHS4_FacilitySurveyData/AHS_FACILITY/AHS_dh, clear
+append $health/DLHS4_FacilitySurveyData/NON_AHS_FACILITY/DH_NONAHS
 
 /* merge in pc11 districts */
-merge m:1 state dist using ~/iec/health/DLHS4_FacilitySurveyData/dlhs4_district_key.dta, keepusing(pc11_state_id pc11_state_name pc11_district_id pc11_district_name)
+merge m:1 state dist using $health/DLHS4_FacilitySurveyData/dlhs4_district_key, keepusing(pc11_state_id pc11_state_name pc11_district_id pc11_district_name)
 drop if _merge == 2
 drop _merge
 
@@ -36,11 +36,11 @@ save $tmp/dlhs4_dh_dist_beds, replace
 /* community health centers */
 /****************************/
 
-use ~/iec/health/DLHS4_FacilitySurveyData/AHS_FACILITY/AHS_chc.dta , clear
-append using ~/iec/health/DLHS4_FacilitySurveyData/NON_AHS_FACILITY/CHC_NONAHS.dta
+use $health/DLHS4_FacilitySurveyData/AHS_FACILITY/AHS_chc.dta , clear
+append using $health/DLHS4_FacilitySurveyData/NON_AHS_FACILITY/CHC_NONAHS.dta
 
 /* merge in pc11 districts */
-merge m:1 state dist using ~/iec/health/DLHS4_FacilitySurveyData/dlhs4_district_key.dta, keepusing(pc11_state_id pc11_state_name pc11_district_id pc11_district_name)
+merge m:1 state dist using $health/DLHS4_FacilitySurveyData/dlhs4_district_key.dta, keepusing(pc11_state_id pc11_state_name pc11_district_id pc11_district_name)
 drop if _merge == 2
 drop _merge
 
@@ -68,11 +68,11 @@ save $tmp/dlhs4_chc_dist_beds, replace
 /* primary health centers */
 /****************************/
 
-use ~/iec/health/DLHS4_FacilitySurveyData/AHS_FACILITY/AHS_phc.dta , clear
-append using ~/iec/health/DLHS4_FacilitySurveyData/NON_AHS_FACILITY/PHC_NONAHS.dta
+use $health/DLHS4_FacilitySurveyData/AHS_FACILITY/AHS_phc.dta , clear
+append using $health/DLHS4_FacilitySurveyData/NON_AHS_FACILITY/PHC_NONAHS.dta
 
 /* merge in pc11 districts */
-merge m:1 state dist using ~/iec/health/DLHS4_FacilitySurveyData/dlhs4_district_key.dta, keepusing(pc11_state_id pc11_state_name pc11_district_id pc11_district_name)
+merge m:1 state dist using $health/DLHS4_FacilitySurveyData/dlhs4_district_key.dta, keepusing(pc11_state_id pc11_state_name pc11_district_id pc11_district_name)
 drop if _merge == 2
 drop _merge
 
@@ -114,7 +114,7 @@ merge 1:1 pc11_state_id pc11_district_id using $tmp/dlhs4_phc_dist_beds, gen(_m_
 drop _m_phc
 
 /* get district population */
-merge 1:1 pc11_district_id using ~/iec1/pc11/pc11_pca_district_clean, keepusing(pc11_pca_tot_p) gen(_m_pca)
+merge 1:1 pc11_district_id using $pc11/pc11_pca_district_clean, keepusing(pc11_pca_tot_p) gen(_m_pca)
 drop if _m_pca == 2
 drop _m_pca
 
@@ -151,7 +151,7 @@ sort pc11_state_id pc11_district_id pc11_pca_tot_p
 label var pc11_state_id "PC11 state id"
 label var pc11_district_id "PC11 district id"
 compress
-save $iec/health/hosp/dlhs4_hospitals_dist, replace
+save $health/hosp/dlhs4_hospitals_dist, replace
 
 /* save a version in the public repo */
 if mi("$covidpub") {
