@@ -14,7 +14,7 @@ identifiers, making it easy to link them together and to external data
 sources. Data are disaggregated by urban/rural where possible.
 
 We have phone surveys on economic conditions in the field, which we
-will include here as they arrive. We will also include data from as
+will include here as they arrive. We will also harmonize and include data from as
 many other teams' surveys as possible, given data availability.
 
 We are updating and adding to this repo as quickly as possible. *If you
