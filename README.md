@@ -1,37 +1,51 @@
 # Covid-19 Data Resources
 
-The COVID-19 pandemic has generated an enormous demand for data in
-India and around the world. Policymakers responding to the crisis need
-data on the spread of the disease, the healthcare resources at their
-disposal and the economic hardships being faced by the
-population. Epidemiologists need data to parameterize their models and
-estimate the dangers. Economists need data to assess the tradeoffs
-between policy alternatives. 
+This repository aims to provide a backbone of high geographic
+resolution administrative data to support analysis of the COVID-19
+pandemic in India.
 
-This repository represents an effort by the <a href="http://www.devdatalab.org" target="_blank">Development Data Lab</a>, led by Professors <a href="http://samuelasher.com" target="_blank">Sam Asher</a> (Johns Hopkins SAIS) and <a href="http://www.dartmouth.edu/~novosad/" target="_blank">Paul Novosad</a> (Dartmouth College), to provide to the public as much relevant data as possible. For now, it comprises an
-administrative data backbone with local estimates of health system
-capacity and local economic conditions. All data will be provided with consistent location identifiers (state, district, etc) to allow for data to be easily merged and analyzed together. We'll supplement what's here
-with additional information like real-time COVID-19 case data and
-further demographic and economics data; we have many variables and
-data sources we've identified and targeted for inclusion, but are
-limited by manpower.
+The current version includes estimates of hospital and clinic doctor
+and bed capacity (district level, and soon subdistrict), CFR predictions
+based on variation in local population age distribution (subdistrict
+level), urbanization rates and population density (subdistrict level
+and lower), as well as deaths and infections at the highest resolution
+possible. Crucially, all of these are described with common
+identifiers, making it easy to link them together and to external data
+sources. Data are disaggregated by urban/rural where possible.
+
+We have phone surveys on economic conditions in the field, which we
+will include here as they arrive. We will also include data from as
+many other teams' surveys as possible, given data availability.
+
+We are updating and adding to this repo as quickly as possible. *If you
+are part of a team working with policymakers or researchers on
+the COVID-19 response in India and need administrative data not in
+this repository, please contact us and we will add it to our list if
+we can obtain it.*
+
+This is an effort by <a href="http://www.devdatalab.org" target="_blank">Development Data Lab</a>, led by Professors <a href="http://samuelasher.com" target="_blank">Sam Asher</a> (Johns Hopkins SAIS) and <a href="http://www.dartmouth.edu/~novosad/" target="_blank">Paul Novosad</a> (Dartmouth College).
+
+If you use these data, please reference the source. This helops us
+continue to provide and develop this service. If you are interested in
+funding more rapid development of this data platform, please contact
+us.
 
 ## Data Currently Available
 
-| Data              | Description | Geographic level | Scope |
-| ----------- | ----------- | ----------- | ----------- |
-| Hospital capacity | Measures on hospital capacity, with a focus on beds. Estimated from 2011 Population Census and DLHS-4 (2012-14). | District, subdistrict (Pop Census only) | Total |
-| Covid-19 mortality | Local age distribution data and predicted Covid-19 total deaths. At-risk status based on discrepancy between projected hospital bed needs and estimated capacity. | District (subdistrict coming soon) | Total/rural/urban |
-| Hospitals | 2013 Economic Census data on number of hospitals and total employment in hospitals. | District | Private/public |
-|District correspondence | Key linking current districts to 2011 Population Census districts, which are the basis of many datasets | District | |
-| Demographics | 2011 Population Census (most recent) population, density, literacy rate, urbanization | State/district/subdistrict/town/village | Total/rural/urban |
+| Data              | Description | Geographic level |
+| ----------- | ----------- | ----------- |
+| Public Hospital capacity | Facilities, doctors, and beds. Sources: 2011 Population Census and DLHS-4 (2012-14). | District, subdistrict (Pop Census only) |
+| Private Hospitals | Public and private hospital employment from 2013 Economic Census. Can estimate private system beds based on public employment:bed ratios. | District |
+| Predicted COVID-19 mortality rates | Predictions based strictly on local age distributions, which create substantial risk differences across locations. | Subdistrict |
+|District correspondences | Keys linking current districts to 2011 Population Census districts, which are the basis of many datasets | District |
+| Demographics | 2011 Population Census (most recent) population, density, literacy rate, urbanization | State/district/subdistrict/town/village |
 
 
 ## Data Identified for Inclusion
 
 | Data              | Description | Geographic level | Scope |
 | ----------- | ----------- | ----------- | ----------- |
-| Comorbidity rates | Rates of common conditions known to correlate with Covid-19 morbidity, such as diabetes, from the National Sample Survey | District | Total/rural/urban |
+| Comorbidity rates | Local mortality multipliers based on rates of common conditions known to correlate with Covid-19 morbidity, such as diabetes. Source: NSS | District | Total/rural/urban |
 | Gender composition | Sex ratios in five year age bins | State/district/subdistrict | Total/urban/rural |
 | Lockdown policies | Government-imposed restrictions/social distancing with details and dates | State/district | Total |
 | Slums | Slum populations, areas, proportions | State/district/town | Total |
@@ -72,8 +86,8 @@ A global can be set in Stata with e.g. `global tmp temporary/directory/location`
 ## Downloading the Data
 
 This repository is structured such that the first half runs on
-Development Data Lab servers to produce datasets that serve as inputs
-for the Covid-related analytics, like the EC microdata file, the DLHS
+DDL servers to produce datasets that serve as inputs
+for the COVID-related analytics, like the EC microdata file, the DLHS
 district-level aggregates, and a shortened VD/TD/PCA. These files have
 been compressed into a single archive available
 [here](https://dl.dropboxusercontent.com/s/80igbve4f751rz1/ddl_covid_input_data.tar.gz?dl=0). 
@@ -91,4 +105,4 @@ for these data can be found
 
 ## The Team
 
-This repo is a collaborative effort led by the Development Data Lab, co-founded by Sam Asher, Toby Lunt, and Paul Novosad. Many people have contributed to this effort, in no particular order: Ali Campion, Radhika Jain, Sam Besse, Aditi Bhowmick. 
+This repo is a collaborative effort led by the Development Data Lab, co-founded by Sam Asher, Toby Lunt, and Paul Novosad. Additional contributors: Aditi Bhowmick, Ali Campion, Radhika Jain, Sam Besse. 
