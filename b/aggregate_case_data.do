@@ -69,6 +69,19 @@ replace pc11_district_id = "-99" if mi(pc11_district_id)
 /* create a single variable for state-district */
 egen sdgroup = group(pc11_state_id pc11_district_id)
 
+/* save the data here */
+tempfile all_data
+save `all_data'
+
+/* create a key to match sdgroup with the state and district names */
+keep sdgroup pc11_state_id pc11_district_id
+duplicates drop
+tempfile sdgroup_key
+save `sdgroup_key'
+
+/* open the full data back up */
+use `all_data', clear
+
 /* fill in  non-reporting dates */
 fillin date sdgroup
 
@@ -95,5 +108,8 @@ replace total_cases = L.total_cases if mi(total_cases)
 replace total_deaths = L.total_deaths if mi(total_deaths)
 
 drop _fillin
+ 
+/* merge the missing state and district id's back in */
+merge m:1 sdgroup using `sdgroup_key', keep(match master) update nogen
 
 save $covidpub/covid/covid_cases_deaths_district, replace
