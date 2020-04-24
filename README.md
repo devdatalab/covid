@@ -10,12 +10,13 @@ based on variation in local population age distribution (subdistrict
 level), urbanization rates and population density (subdistrict level
 and lower), as well as deaths and infections at the highest resolution
 possible. Crucially, all of these are described with common
-identifiers, making it easy to link them together and to external data
+location identifiers, making it easy to link them together and to external data
 sources. Data are disaggregated by urban/rural where possible.
 
 We have phone surveys on economic conditions in the field, which we
 will include here as they arrive. We will also include data from as
-many other teams' surveys as possible, given data availability.
+many other teams' surveys as possible and link to the same
+identifiers, given data availability.
 
 We are updating and adding to this repo as quickly as possible. *If you
 are part of a team working with policymakers or researchers on
