@@ -10,4 +10,4 @@ drop *shric*
 /* only keep the sector, location, employment, and activity fields */
 keep sector count_all emp_all gov nic ec13_state_id ec13_district_id ec13_subdistrict_id ec13_village_id ec13_town_id
 
-save $covidpub/ec13_hosp_microdata, replace
+save $covidpub/hospitals/ec13_hosp_microdata, replace

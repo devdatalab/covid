@@ -41,7 +41,7 @@ end
 /* *********** END program clean_collapsed_data ***************************************** */
 
 /* open rural hospital/clinic dataset */
-use $covidpub/pc11r_hosp, clear
+use $covidpub/hospitals/pc11r_hosp, clear
 
 /* rename vd vars for append with town data*/
 ren pc11_vd_* pc11_td_*
@@ -58,7 +58,7 @@ save $tmp/healthcare_pca_r, replace
 /* Towns */
 /*********/
 
-use $covidpub/pc11u_hosp, clear
+use $covidpub/hospitals/pc11u_hosp, clear
 
 /* separate urban and rural populations */
 gen pc11_pca_tot_p_u = pc11_pca_tot_p
@@ -226,11 +226,11 @@ collapse (sum) hosp* pmed_* docs_* clinics_* clinic_beds_u  pc11_pca_tot_p, by(p
 clean_collapsed_data
 
 /* save subdistrict dataset */
-save $covidpub/pc_hospitals_subdist, replace
+save $covidpub/hospitals/pc_hospitals_subdist, replace
 
 /* REPEAT COLLAPSE AT DISTRICT LEVEL */
 use $tmp/precollapse, clear
 collapse (sum) hosp* pmed_* docs_* clinics_* clinic_beds_u  pc11_pca_tot_p, by(pc11_state_id pc11_district_id )
 clean_collapsed_data
-save $covidpub/pc_hospitals_dist, replace
+save $covidpub/hospitals/pc_hospitals_dist, replace
 

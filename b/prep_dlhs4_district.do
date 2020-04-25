@@ -158,4 +158,4 @@ if mi("$covidpub") {
   di "Not in covid context; use set_context to continue"
   error 345
 }
-save $covidpub/dlhs4_hospitals_dist, replace
+save $covidpub/hospitals/dlhs4_hospitals_dist, replace

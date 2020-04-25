@@ -1,7 +1,10 @@
+/* combine DLHS, Population Census, Economic Census, to estimate hospital
+  capacity at the district and subdistrict level. */
+
 /* merge DLHS, PC, EC together at district level */
-use $covidpub/dlhs4_hospitals_dist.dta, clear
-merge 1:1 pc11_state_id pc11_district_id using $covidpub/ec_hospitals_dist.dta, gen(_m_ec13)
-merge 1:1 pc11_state_id pc11_district_id using $covidpub/pc_hospitals_dist.dta, gen(_m_pc11)
+use $covidpub/hospitals/dlhs4_hospitals_dist.dta, clear
+merge 1:1 pc11_state_id pc11_district_id using $covidpub/hospitals/ec_hospitals_dist.dta, gen(_m_ec13)
+merge 1:1 pc11_state_id pc11_district_id using $covidpub/hospitals/pc_hospitals_dist.dta, gen(_m_pc11)
 
 /* drop if missing pc11 ids */
 drop if mi(pc11_state_id) | mi(pc11_district_id)
@@ -79,4 +82,4 @@ drop if _merge == 2
 drop _merge
 
 /* save district-level hospital dataset with 3 hospital sources: DLHS, PC, EC*/
-save $iec/health/hosp/hospitals_dist, replace
+save $covidpub/estimates/hospitals_dist, replace
