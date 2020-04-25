@@ -32,7 +32,7 @@ foreach level in district subdistrict {
       cap confirm file "$iec2/secc/parsed_draft/dta/`sector'/`state'_members_clean.dta"
   
       /* skip loop if this file doesn't exist */
-      if _rc continue
+      if _rc != 0 continue
 
       /* open the file if it exists */
       use $iec2/secc/parsed_draft/dta/`sector'/`state'_members_clean, clear
@@ -123,12 +123,13 @@ foreach level in district subdistrict {
       append using $tmp/secc_age_bins_`level'_`l'_tmp
 
       /* drop a weird broken rural district (almost no data)  */
-      if "`l'" == "rural" {
+      if "`sector'" == "rural" {
         drop if pc11_state_id == "12" & pc11_district_id == "246" & secc_pop_r == 198
       }
       bys `ids': assert _N == 1
-    }
 
+      save $tmp/secc_age_bins_`level'_`l'_tmp, replace
+    }
     /* save the appended file */
     save $tmp/secc_age_bins_`level'_`l', replace
   }
@@ -272,7 +273,7 @@ foreach level in district subdistrict {
     replace age_bin = "age_" + age_bin
 
     /* merge with cfr data - use italy rates - high end of CFR */
-    merge m:1 age_bin using $iec/health/covid_data/cfr_age_bins, keepusing(italy) assert(match) nogen
+    merge m:1 age_bin using $covidpub/covid/cfr_age_bins, keepusing(italy) assert(match) nogen
 
     /* rename Italy rate to just be cfr */
     /* note: Italy aggregate CFR measured on March 24 was 12.3%, S.Korea was 1.33%,
