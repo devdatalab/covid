@@ -69,47 +69,47 @@ replace pc11_district_id = "-99" if mi(pc11_district_id)
 /* create a single variable for state-district */
 egen sdgroup = group(pc11_state_id pc11_district_id)
 
-/* save the data here */
-tempfile all_data
-save `all_data'
-
-/* create a key to match sdgroup with the state and district names */
-keep sdgroup pc11_state_id pc11_district_id
-duplicates drop
-tempfile sdgroup_key
-save `sdgroup_key'
-
-/* open the full data back up */
-use `all_data', clear
-
-/* fill in  non-reporting dates */
-fillin date sdgroup
-
+/* create a Stata date field */
 ren date datestr
-
 gen date = date(datestr, "DMY")
 format date %d
 
-/* create a sequential date so we can use L for the last date even if not yesterday */
+/* fill in  non-reporting dates */
+assert !mi(pc11_state_id) & !mi(pc11_district_id)
+sort sdgroup date
+fillin date sdgroup
+
+/* fill in missing state and district ids created by the fillin */
+xfill pc11_state_id, i(sdgroup)
+xfill pc11_district_id, i(sdgroup)
+xfill datestr, i(date)
+
+/* create a sequential row counter so we can use L for the last seen
+date even if not yesterday (fillin solves some of this but some dates
+had no reporting at all. */
 sort sdgroup date
 by sdgroup: egen row = seq()
 
+/* set as time series on the row */
 sort sdgroup row
 xtset sdgroup row
 
 /* fill in zeroes with the new missing data */
 replace new_cases = 0 if mi(new_cases)
 replace new_deaths = 0 if mi(new_deaths)
-replace total_cases = 0  if datestr == "30/01/2020" & mi(total_cases)
-replace total_deaths = 0 if datestr == "30/01/2020" & mi(total_deaths)
 
 /* fill in the cumulative count for days when nothing happened */
+replace total_cases = 0  if datestr == "30/01/2020" & mi(total_cases)
+replace total_deaths = 0 if datestr == "30/01/2020" & mi(total_deaths)
 replace total_cases = L.total_cases if mi(total_cases)
 replace total_deaths = L.total_deaths if mi(total_deaths)
 
-drop _fillin
- 
-/* merge the missing state and district id's back in */
-merge m:1 sdgroup using `sdgroup_key', keep(match master) update nogen
+/* drop unused fields */
+drop _fillin datestr sdgroup row
 
+/* save total case and death data */
 save $covidpub/covid/covid_cases_deaths_district, replace
+
+/* review number of confirmed/deaths in unknown districts */
+sum total_* if date == 22029
+sum total_* if date == 22029 & pc11_district_id == "-99"
