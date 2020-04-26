@@ -69,6 +69,16 @@ us at covid@devdatalab.org.
 The root path of the folder only has one code file:
 - `make_covid.do`, which runs the full build and the full analysis.
 
+## Data Folder Structure
+
+| Directory   | Explanation |
+| ----------- | ----------- |
+| covid/      | Confirmed cases and deaths by date, state, district
+| demography/ | Age structure of every district and subdistrict  |
+| estimates/  | All estimates/outputs requiring assumption/imputation, e.g. district bed counts, case fatality rate predictions based on age structure |
+| hospitals/  | Hospital and clinic bed and doctor counts (Population Census, Economic Census, DLHS4)  |
+| keys/       | Correspondences to link different datasets  |
+
 ### Code Globals
 
 This repository's build refers to locations of code and data using

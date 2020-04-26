@@ -5,7 +5,7 @@
 /**********************/
 
 use $health/DLHS4_FacilitySurveyData/AHS_FACILITY/AHS_dh, clear
-append $health/DLHS4_FacilitySurveyData/NON_AHS_FACILITY/DH_NONAHS
+append using $health/DLHS4_FacilitySurveyData/NON_AHS_FACILITY/DH_NONAHS
 
 /* merge in pc11 districts */
 merge m:1 state dist using $health/DLHS4_FacilitySurveyData/dlhs4_district_key, keepusing(pc11_state_id pc11_state_name pc11_district_id pc11_district_name)

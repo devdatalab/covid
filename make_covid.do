@@ -27,7 +27,7 @@ do $ccode/b/prep_hosp_pca_vd
 do $ccode/b/prep_ec_hosp_microdata
 
 /* build age distribution by district/subdistrict, using SECC + PC */
-do $ccode/b/gen_age_distribution
+// do $ccode/b/gen_age_distribution
 
 /* download latest district-level case data */
 // need to fix conda setup to make this universal
@@ -58,15 +58,13 @@ do $ccode/b/prep_ec_hosp.do
 /***************************************/
 
 /* predict district and subdistrict mortality distribution based on age distribution */
+/* out: estimates/(sub)district_age_dist_cfr */
 do $ccode/a/predict_age_cfr
 
 /* combine PC and DLHS hospital capacity */
 do $ccode/a/estimate_hosp_capacity
 
-/* combine hospital capacity with estimated district mortality rates */
-do $ccode/a/export_hosp_cfr
-
-/* export some additional stats that were asked for */
+/* export some additional stats that were asked for into a combined file */
 do $ccode/a/impute_additional_fields
 
 
@@ -76,4 +74,4 @@ do $ccode/a/impute_additional_fields
 
 /* push data and metadata to production. metadata will be included in
 data download links as well. */
-shell source $ccode/b/push_data.sh
+// shell source $ccode/b/push_data.sh
