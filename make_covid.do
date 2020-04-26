@@ -6,6 +6,8 @@ $ccode -- this root folder for this repo
 $hosp -- output folder for hospital data
 */
 
+global fast 1
+
 /*****************************/
 /* PART 1 -- DDL SERVER ONLY */
 /*****************************/
@@ -27,7 +29,9 @@ do $ccode/b/prep_hosp_pca_vd
 do $ccode/b/prep_ec_hosp_microdata
 
 /* build age distribution by district/subdistrict, using SECC + PC */
-// do $ccode/b/gen_age_distribution
+if "$fast" != "1" {
+  do $ccode/b/gen_age_distribution
+}
 
 /* download latest district-level case data */
 // need to fix conda setup to make this universal
