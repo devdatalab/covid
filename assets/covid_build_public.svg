@@ -1,0 +1,231 @@
+<svg version="1.1" baseProfile="full" width="1734.5" height="1216" viewbox="0 0 1734.5 1216" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:ev="http://www.w3.org/2001/xml-events" style="font-weight:bold; font-size:12pt; font-family:'Calibri', Helvetica, sans-serif;;stroke-width:3;stroke-linejoin:round;stroke-linecap:round">
+  <title >nomnoml</title>
+  <desc >#.mem: fill=#8DE
+#.house: fill=#FC1
+#.prog: fill=#D5F1FF visual=sender italic
+#.data: visual=roundrect align=left 
+#.indiv: stroke=#8900B0 visual=class align=left 
+#.village: stroke=#1079D7 visual=class align=left  
+#.dist: stroke=#EF9B00 visual=class align=center 
+#.web: visual=database italic 
+#.finaldata: visual=roundrect align=left fill=#FC1
+
+
+[Raw COVID Case Data |
+[&lt;data&gt;pc11_district_key.dta]-&gt;[&lt;prog&gt;get_case_data.do]
+[&lt;web&gt; https://www.covid19india.org/]-&gt;[&lt;prog&gt;get_case_data.do]
+[&lt;prog&gt;get_case_data.do]
+]o-&gt;[COVID Case Data | [&lt;data&gt;covid_raw_data.dta|covid_deaths_recoveries.dta]]
+
+[Population Census |
+[&lt;data&gt;pc11r_hosp.dta | pc11u_hosp.dta]-&gt;[&lt;prog&gt;prep_pc_hosp.do]
+[&lt;prog&gt;prep_pc_hosp.do]
+]o-&gt;[PC Hospital Data | [&lt;data&gt; pc_hospitals_subdist.dta|pc_hospitals_dist.dta]]
+
+[Economic Census |
+[&lt;data&gt;pc11_district_key.dta]-&gt;[&lt;prog&gt;prep_ec_hosp.do]
+[&lt;data&gt;ec13_hosp_microdata.dta]-&gt;[&lt;prog&gt;prep_ec_hosp.do]
+[&lt;prog&gt;prep_ec_hosp.do]-&gt;[&lt;data&gt;ec_hospitals_tv.dta]
+[&lt;data&gt;ec_hospitals_tv.dta]o-&gt;[&lt;data&gt;ec_hospitals_dist.dta]
+]o-&gt;[EC Hospital Data | [&lt;data&gt;ec_hospitals_dist.dta]]
+
+[CFR by Age Bins |
+[SECC | [&lt;data&gt;rural/{state}_members_clean.dta|urban/{state}_members_clean.dta]]-&gt;[&lt;prog&gt;gen_district_age_bins.do]
+[Population Census | [&lt;data&gt;pc11{r/u}_pca_dist_clean|pc11u{r/u}_pca_subdist_clean]]-&gt;[&lt;prog&gt;gen_district_age_bins.do]
+[CFR Rates by Age | [&lt;data&gt; cfr_age_bins.dta]]-&gt;[&lt;prog&gt;gen_district_age_bins.do]
+
+]
+[CFR by Age Bins]o-&gt;[Age Bins | [&lt;data&gt;secc_age_bins_subdist_t.dta|secc_age_bins_dist_t.dta]]
+[CFR by Age Bins]o-&gt;[CFR Rates | [&lt;data&gt;dist_age_dist_cfr.dta|subdist_age_dist_cfr.dta]]
+
+[DLHS Data | [&lt;data&gt;dlhs4_hospitals_dist.dta]]-&gt;[&lt;prog&gt;estimate_hosp_capacity.do]
+[EC Hospital Data]-&gt;[&lt;prog&gt;estimate_hosp_capacity.do]
+[PC Hospital Data ]-&gt;[&lt;prog&gt;estimate_hosp_capacity.do]
+[&lt;prog&gt;estimate_hosp_capacity.do]-&gt;[&lt;finaldata&gt;hospitals_dist.dta]
+
+[&lt;finaldata&gt;hospitals_dist.dta]-&gt;[&lt;prog&gt;export_hosp_cfr.do]
+[CFR Rates]-&gt;[&lt;prog&gt;export_hosp_cfr.do]
+[&lt;prog&gt;export_hosp_cfr.do]-&gt;[&lt;finaldata&gt;district_ages_cfr_hospitals.csv]
+[&lt;finaldata&gt;district_ages_cfr_hospitals.csv]-&gt;[&lt;prog&gt;impute_additional_fields.do]
+[&lt;prog&gt;impute_additional_fields.do]-&gt;[&lt;finaldata&gt;district_age_dist_cfr_hospitals.dta]
+
+
+[Key | 
+[&lt;data&gt; Intermediate Data File]--[&lt;finaldata&gt; Final Data File]
+[&lt;finaldata&gt; Final Data File]--[&lt;prog&gt; Script]
+]</desc>
+  <path d="M300.5 243.5 L300.5 334.5 L300.5 354.5 L300.5 354.5 " style="stroke:#33322E;fill:none;stroke-dasharray:none;"></path>
+  <path d="M295.2 341.2 L300.5 347.8 L305.8 341.2 L300.5 354.5 Z" style="stroke:#33322E;fill:#33322E;stroke-dasharray:none;"></path>
+  <path d="M305.8 252.8 L300.5 262.2 L295.2 252.8 L300.5 243.5 Z" style="stroke:#33322E;fill:#eee8d5;stroke-dasharray:none;"></path>
+  <path d="M1277 259 L1277 334.5 L1277 354.5 L1277 354.5 " style="stroke:#33322E;fill:none;stroke-dasharray:none;"></path>
+  <path d="M1271.7 341.2 L1277 347.8 L1282.3 341.2 L1277 354.5 Z" style="stroke:#33322E;fill:#33322E;stroke-dasharray:none;"></path>
+  <path d="M1282.3 268.3 L1277 277.7 L1271.7 268.3 L1277 259 Z" style="stroke:#33322E;fill:#eee8d5;stroke-dasharray:none;"></path>
+  <path d="M886 314.5 L886 334.5 L886 370 L886 370 " style="stroke:#33322E;fill:none;stroke-dasharray:none;"></path>
+  <path d="M880.7 356.7 L886 363.3 L891.3 356.7 L886 370 Z" style="stroke:#33322E;fill:#33322E;stroke-dasharray:none;"></path>
+  <path d="M891.3 323.8 L886 333.2 L880.7 323.8 L886 314.5 Z" style="stroke:#33322E;fill:#eee8d5;stroke-dasharray:none;"></path>
+  <path d="M491.6 760.5 L468 780.5 L468 800.5 L468 800.5 " style="stroke:#33322E;fill:none;stroke-dasharray:none;"></path>
+  <path d="M462.7 787.2 L468 793.8 L473.3 787.2 L468 800.5 Z" style="stroke:#33322E;fill:#33322E;stroke-dasharray:none;"></path>
+  <path d="M487.9 770.6 L477.4 772.6 L481.1 762.5 L491.6 760.5 Z" style="stroke:#33322E;fill:#eee8d5;stroke-dasharray:none;"></path>
+  <path d="M785.5 760.5 L809.5 780.5 L809.5 800.5 L809.5 800.5 " style="stroke:#33322E;fill:none;stroke-dasharray:none;"></path>
+  <path d="M804.2 787.2 L809.5 793.8 L814.8 787.2 L809.5 800.5 Z" style="stroke:#33322E;fill:#33322E;stroke-dasharray:none;"></path>
+  <path d="M796.1 762.4 L799.9 772.5 L789.3 770.6 L785.5 760.5 Z" style="stroke:#33322E;fill:#eee8d5;stroke-dasharray:none;"></path>
+  <path d="M1587 458 L1587 493.5 L1310.5 621.5 L1310.5 621.5 " style="stroke:#33322E;fill:none;stroke-dasharray:none;"></path>
+  <path d="M1320.3 611.1 L1316.5 618.7 L1324.8 620.7 L1310.5 621.5 Z" style="stroke:#33322E;fill:#33322E;stroke-dasharray:none;"></path>
+  <path d="M886 458 L886 493.5 L1234.8 621.5 L1234.8 621.5 " style="stroke:#33322E;fill:none;stroke-dasharray:none;"></path>
+  <path d="M1220.4 621.9 L1228.5 619.2 L1224.1 611.9 L1234.8 621.5 Z" style="stroke:#33322E;fill:#33322E;stroke-dasharray:none;"></path>
+  <path d="M1277 473.5 L1277 493.5 L1277 621.5 L1277 621.5 " style="stroke:#33322E;fill:none;stroke-dasharray:none;"></path>
+  <path d="M1271.7 608.2 L1277 614.8 L1282.3 608.2 L1277 621.5 Z" style="stroke:#33322E;fill:#33322E;stroke-dasharray:none;"></path>
+  <path d="M1277 652.5 L1277 780.5 L1277 844.5 L1277 844.5 " style="stroke:#33322E;fill:none;stroke-dasharray:none;"></path>
+  <path d="M1271.7 831.2 L1277 837.8 L1282.3 831.2 L1277 844.5 Z" style="stroke:#33322E;fill:#33322E;stroke-dasharray:none;"></path>
+  <path d="M1277 875.5 L1277 939.5 L1201.4 959.5 L1201.4 959.5 " style="stroke:#33322E;fill:none;stroke-dasharray:none;"></path>
+  <path d="M1212.9 950.9 L1207.8 957.8 L1215.6 961.2 L1201.4 959.5 Z" style="stroke:#33322E;fill:#33322E;stroke-dasharray:none;"></path>
+  <path d="M809.5 919.5 L809.5 939.5 L1049.3 965 L1049.3 965 " style="stroke:#33322E;fill:none;stroke-dasharray:none;"></path>
+  <path d="M1035.4 968.9 L1042.6 964.3 L1036.6 958.3 L1049.3 965 Z" style="stroke:#33322E;fill:#33322E;stroke-dasharray:none;"></path>
+  <path d="M1142.8 990.5 L1142.8 1010.5 L1142.8 1030.5 L1142.8 1030.5 " style="stroke:#33322E;fill:none;stroke-dasharray:none;"></path>
+  <path d="M1137.4 1017.2 L1142.8 1023.8 L1148.1 1017.2 L1142.8 1030.5 Z" style="stroke:#33322E;fill:#33322E;stroke-dasharray:none;"></path>
+  <path d="M1142.8 1061.5 L1142.8 1081.5 L1142.8 1101.5 L1142.8 1101.5 " style="stroke:#33322E;fill:none;stroke-dasharray:none;"></path>
+  <path d="M1137.4 1088.2 L1142.8 1094.8 L1148.1 1088.2 L1142.8 1101.5 Z" style="stroke:#33322E;fill:#33322E;stroke-dasharray:none;"></path>
+  <path d="M1142.8 1132.5 L1142.8 1152.5 L1142.8 1172.5 L1142.8 1172.5 " style="stroke:#33322E;fill:none;stroke-dasharray:none;"></path>
+  <path d="M1137.4 1159.2 L1142.8 1165.8 L1148.1 1159.2 L1142.8 1172.5 Z" style="stroke:#33322E;fill:#33322E;stroke-dasharray:none;"></path>
+  <rect x="13.5" y="84.5" height="159" width="574" style="stroke:#33322E;fill:#eee8d5;stroke-dasharray:none;"></rect>
+  <text x="300.5" y="106" style="fill: #33322E;text-anchor: middle;">Raw COVID Case Data</text>
+  <path d="M13.5 115.5 L587.5 115.5" style="stroke:#33322E;fill:none;stroke-dasharray:none;"></path>
+  <path d="M134.5 159.5 L134.5 179.5 L217.3 199.5 L217.3 199.5 " style="stroke:#33322E;fill:none;stroke-dasharray:none;"></path>
+  <path d="M203.1 201.6 L210.8 197.9 L205.6 191.2 L217.3 199.5 Z" style="stroke:#33322E;fill:#33322E;stroke-dasharray:none;"></path>
+  <path d="M428.5 159.5 L428.5 179.5 L345.7 199.5 L345.7 199.5 " style="stroke:#33322E;fill:none;stroke-dasharray:none;"></path>
+  <path d="M357.4 191.2 L352.2 197.9 L359.9 201.6 L345.7 199.5 Z" style="stroke:#33322E;fill:#33322E;stroke-dasharray:none;"></path>
+  <rect x="26.5" y="128.5" rx="15.5" ry="15.5" height="31" width="216" style="stroke:#33322E;fill:#fdf6e3;stroke-dasharray:none;"></rect>
+  <text x="34.5" y="150" style="fill: #33322E;font-weight:normal;">pc11_district_key.dta</text>
+  <path d="M197.5 199.5 L357.5 199.5 L365.5 215 L357.5 230.5 L197.5 230.5 Z" style="stroke:#33322E;fill:#D5F1FF;stroke-dasharray:none;"></path>
+  <text x="281.5" y="221" style="fill: #33322E;font-weight:normal;font-style:italic;text-anchor: middle;">get_case_data.do</text>
+  <rect x="282.5" y="128.5" height="31" width="292" style="stroke:none; fill:#fdf6e3;"></rect>
+  <path d="M282.5 124.5 L282.5 155.5" style="stroke:#33322E;fill:none;stroke-dasharray:none;"></path>
+  <path d="M574.5 124.5 L574.5 155.5" style="stroke:#33322E;fill:none;stroke-dasharray:none;"></path>
+  <ellipse cx="428.5" cy="124.5" rx="146" ry="6" style="stroke:#33322E;fill:#fdf6e3;stroke-dasharray:none;"></ellipse>
+  <path d="M282.5 155.5A146 6 0 1 0 574.5 155.5" style="stroke:#33322E;fill:#fdf6e3;stroke-dasharray:none;"></path>
+  <text x="428.5" y="150" style="fill: #33322E;font-weight:normal;font-style:italic;text-anchor: middle;">https://www.covid19india.org/</text>
+  <rect x="151.5" y="354.5" height="119" width="299" style="stroke:#33322E;fill:#eee8d5;stroke-dasharray:none;"></rect>
+  <text x="301" y="376" style="fill: #33322E;text-anchor: middle;">COVID Case Data</text>
+  <path d="M151.5 385.5 L450.5 385.5" style="stroke:#33322E;fill:none;stroke-dasharray:none;"></path>
+  <rect x="164.5" y="398.5" rx="20" ry="20" height="62" width="273" style="stroke:#33322E;fill:#fdf6e3;stroke-dasharray:none;"></rect>
+  <text x="172.5" y="420" style="fill: #33322E;font-weight:normal;">covid_raw_data.dta</text>
+  <path d="M164.5 429.5 L437.5 429.5" style="stroke:#33322E;fill:none;stroke-dasharray:none;"></path>
+  <text x="172.5" y="451" style="fill: #33322E;font-weight:normal;">covid_deaths_recoveries.dta</text>
+  <rect x="1184.5" y="69.5" height="190" width="185" style="stroke:#33322E;fill:#eee8d5;stroke-dasharray:none;"></rect>
+  <text x="1277" y="91" style="fill: #33322E;text-anchor: middle;">Population Census</text>
+  <path d="M1184.5 100.5 L1369.5 100.5" style="stroke:#33322E;fill:none;stroke-dasharray:none;"></path>
+  <path d="M1277 175.5 L1277 195.5 L1277 215.5 L1277 215.5 " style="stroke:#33322E;fill:none;stroke-dasharray:none;"></path>
+  <path d="M1271.7 202.2 L1277 208.8 L1282.3 202.2 L1277 215.5 Z" style="stroke:#33322E;fill:#33322E;stroke-dasharray:none;"></path>
+  <rect x="1202.5" y="113.5" rx="20" ry="20" height="62" width="149" style="stroke:#33322E;fill:#fdf6e3;stroke-dasharray:none;"></rect>
+  <text x="1210.5" y="135" style="fill: #33322E;font-weight:normal;">pc11r_hosp.dta</text>
+  <path d="M1202.5 144.5 L1351.5 144.5" style="stroke:#33322E;fill:none;stroke-dasharray:none;"></path>
+  <text x="1210.5" y="166" style="fill: #33322E;font-weight:normal;">pc11u_hosp.dta</text>
+  <path d="M1197.5 215.5 L1348.5 215.5 L1356.5 231 L1348.5 246.5 L1197.5 246.5 Z" style="stroke:#33322E;fill:#D5F1FF;stroke-dasharray:none;"></path>
+  <text x="1277" y="237" style="fill: #33322E;font-weight:normal;font-style:italic;text-anchor: middle;">prep_pc_hosp.do</text>
+  <rect x="1142.5" y="354.5" height="119" width="270" style="stroke:#33322E;fill:#eee8d5;stroke-dasharray:none;"></rect>
+  <text x="1277.5" y="376" style="fill: #33322E;text-anchor: middle;">PC Hospital Data</text>
+  <path d="M1142.5 385.5 L1412.5 385.5" style="stroke:#33322E;fill:none;stroke-dasharray:none;"></path>
+  <rect x="1155.5" y="398.5" rx="20" ry="20" height="62" width="244" style="stroke:#33322E;fill:#fdf6e3;stroke-dasharray:none;"></rect>
+  <text x="1163.5" y="420" style="fill: #33322E;font-weight:normal;">pc_hospitals_subdist.dta</text>
+  <path d="M1155.5 429.5 L1399.5 429.5" style="stroke:#33322E;fill:none;stroke-dasharray:none;"></path>
+  <text x="1163.5" y="451" style="fill: #33322E;font-weight:normal;">pc_hospitals_dist.dta</text>
+  <rect x="627.5" y="13.5" height="301" width="517" style="stroke:#33322E;fill:#eee8d5;stroke-dasharray:none;"></rect>
+  <text x="886" y="35" style="fill: #33322E;text-anchor: middle;">Economic Census</text>
+  <path d="M627.5 44.5 L1144.5 44.5" style="stroke:#33322E;fill:none;stroke-dasharray:none;"></path>
+  <path d="M748.5 88.5 L748.5 108.5 L823.3 128.5 L823.3 128.5 " style="stroke:#33322E;fill:none;stroke-dasharray:none;"></path>
+  <path d="M809 130.2 L816.8 126.8 L811.8 119.9 L823.3 128.5 Z" style="stroke:#33322E;fill:#33322E;stroke-dasharray:none;"></path>
+  <path d="M1014 88.5 L1014 108.5 L939.2 128.5 L939.2 128.5 " style="stroke:#33322E;fill:none;stroke-dasharray:none;"></path>
+  <path d="M950.7 119.9 L945.7 126.8 L953.5 130.2 L939.2 128.5 Z" style="stroke:#33322E;fill:#33322E;stroke-dasharray:none;"></path>
+  <path d="M881.3 159.5 L881.3 179.5 L881.3 199.5 L881.3 199.5 " style="stroke:#33322E;fill:none;stroke-dasharray:none;"></path>
+  <path d="M875.9 186.2 L881.3 192.8 L886.6 186.2 L881.3 199.5 Z" style="stroke:#33322E;fill:#33322E;stroke-dasharray:none;"></path>
+  <path d="M881.3 230.5 L881.3 250.5 L881.3 270.5 L881.3 270.5 " style="stroke:#33322E;fill:none;stroke-dasharray:none;"></path>
+  <path d="M875.9 257.2 L881.3 263.8 L886.6 257.2 L881.3 270.5 Z" style="stroke:#33322E;fill:#33322E;stroke-dasharray:none;"></path>
+  <path d="M886.6 239.8 L881.3 249.2 L875.9 239.8 L881.3 230.5 Z" style="stroke:#33322E;fill:#eee8d5;stroke-dasharray:none;"></path>
+  <rect x="640.5" y="57.5" rx="15.5" ry="15.5" height="31" width="216" style="stroke:#33322E;fill:#fdf6e3;stroke-dasharray:none;"></rect>
+  <text x="648.5" y="79" style="fill: #33322E;font-weight:normal;">pc11_district_key.dta</text>
+  <path d="M801.5 128.5 L952.5 128.5 L960.5 144 L952.5 159.5 L801.5 159.5 Z" style="stroke:#33322E;fill:#D5F1FF;stroke-dasharray:none;"></path>
+  <text x="881" y="150" style="fill: #33322E;font-weight:normal;font-style:italic;text-anchor: middle;">prep_ec_hosp.do</text>
+  <rect x="896.5" y="57.5" rx="15.5" ry="15.5" height="31" width="235" style="stroke:#33322E;fill:#fdf6e3;stroke-dasharray:none;"></rect>
+  <text x="904.5" y="79" style="fill: #33322E;font-weight:normal;">ec13_hosp_microdata.dta</text>
+  <rect x="782.5" y="199.5" rx="15.5" ry="15.5" height="31" width="197" style="stroke:#33322E;fill:#fdf6e3;stroke-dasharray:none;"></rect>
+  <text x="790.5" y="221" style="fill: #33322E;font-weight:normal;">ec_hospitals_tv.dta</text>
+  <rect x="773.5" y="270.5" rx="15.5" ry="15.5" height="31" width="216" style="stroke:#33322E;fill:#fdf6e3;stroke-dasharray:none;"></rect>
+  <text x="781.5" y="292" style="fill: #33322E;font-weight:normal;">ec_hospitals_dist.dta</text>
+  <rect x="765.5" y="370.5" height="88" width="242" style="stroke:#33322E;fill:#eee8d5;stroke-dasharray:none;"></rect>
+  <text x="886.5" y="392" style="fill: #33322E;text-anchor: middle;">EC Hospital Data</text>
+  <path d="M765.5 401.5 L1007.5 401.5" style="stroke:#33322E;fill:none;stroke-dasharray:none;"></path>
+  <rect x="778.5" y="414.5" rx="15.5" ry="15.5" height="31" width="216" style="stroke:#33322E;fill:#fdf6e3;stroke-dasharray:none;"></rect>
+  <text x="786.5" y="436" style="fill: #33322E;font-weight:normal;">ec_hospitals_dist.dta</text>
+  <rect x="165.5" y="513.5" height="247" width="945" style="stroke:#33322E;fill:#eee8d5;stroke-dasharray:none;"></rect>
+  <text x="638" y="535" style="fill: #33322E;text-anchor: middle;">CFR by Age Bins</text>
+  <path d="M165.5 544.5 L1110.5 544.5" style="stroke:#33322E;fill:none;stroke-dasharray:none;"></path>
+  <path d="M347 676.5 L347 696.5 L587.5 720.1 L587.5 720.1 " style="stroke:#33322E;fill:none;stroke-dasharray:none;"></path>
+  <path d="M573.7 724.1 L580.9 719.4 L574.7 713.4 L587.5 720.1 Z" style="stroke:#33322E;fill:#33322E;stroke-dasharray:none;"></path>
+  <path d="M709.5 676.5 L709.5 696.5 L709.5 716.5 L709.5 716.5 " style="stroke:#33322E;fill:none;stroke-dasharray:none;"></path>
+  <path d="M704.2 703.2 L709.5 709.8 L714.8 703.2 L709.5 716.5 Z" style="stroke:#33322E;fill:#33322E;stroke-dasharray:none;"></path>
+  <path d="M1000.5 661 L1000.5 696.5 L831.5 717.1 L831.5 717.1 " style="stroke:#33322E;fill:none;stroke-dasharray:none;"></path>
+  <path d="M844.1 710.2 L838.1 716.3 L845.4 720.8 L831.5 717.1 Z" style="stroke:#33322E;fill:#33322E;stroke-dasharray:none;"></path>
+  <rect x="178.5" y="557.5" height="119" width="337" style="stroke:#33322E;fill:#fdf6e3;stroke-dasharray:none;"></rect>
+  <text x="347" y="579" style="fill: #33322E;text-anchor: middle;">SECC</text>
+  <path d="M178.5 588.5 L515.5 588.5" style="stroke:#33322E;fill:none;stroke-dasharray:none;"></path>
+  <rect x="191.5" y="601.5" rx="20" ry="20" height="62" width="311" style="stroke:#33322E;fill:#eee8d5;stroke-dasharray:none;"></rect>
+  <text x="199.5" y="623" style="fill: #33322E;font-weight:normal;">rural/{state}_members_clean.dta</text>
+  <path d="M191.5 632.5 L502.5 632.5" style="stroke:#33322E;fill:none;stroke-dasharray:none;"></path>
+  <text x="199.5" y="654" style="fill: #33322E;font-weight:normal;">urban/{state}_members_clean.dta</text>
+  <rect x="555.5" y="557.5" height="119" width="308" style="stroke:#33322E;fill:#fdf6e3;stroke-dasharray:none;"></rect>
+  <text x="709.5" y="579" style="fill: #33322E;text-anchor: middle;">Population Census</text>
+  <path d="M555.5 588.5 L863.5 588.5" style="stroke:#33322E;fill:none;stroke-dasharray:none;"></path>
+  <rect x="568.5" y="601.5" rx="20" ry="20" height="62" width="282" style="stroke:#33322E;fill:#eee8d5;stroke-dasharray:none;"></rect>
+  <text x="576.5" y="623" style="fill: #33322E;font-weight:normal;">pc11{r/u}_pca_dist_clean</text>
+  <path d="M568.5 632.5 L850.5 632.5" style="stroke:#33322E;fill:none;stroke-dasharray:none;"></path>
+  <text x="576.5" y="654" style="fill: #33322E;font-weight:normal;">pc11u{r/u}_pca_subdist_clean</text>
+  <rect x="903.5" y="573.5" height="88" width="194" style="stroke:#33322E;fill:#fdf6e3;stroke-dasharray:none;"></rect>
+  <text x="1000.5" y="595" style="fill: #33322E;text-anchor: middle;">CFR Rates by Age</text>
+  <path d="M903.5 604.5 L1097.5 604.5" style="stroke:#33322E;fill:none;stroke-dasharray:none;"></path>
+  <rect x="916.5" y="617.5" rx="15.5" ry="15.5" height="31" width="168" style="stroke:#33322E;fill:#eee8d5;stroke-dasharray:none;"></rect>
+  <text x="924.5" y="639" style="fill: #33322E;font-weight:normal;">cfr_age_bins.dta</text>
+  <path d="M587.5 716.5 L823.5 716.5 L831.5 732 L823.5 747.5 L587.5 747.5 Z" style="stroke:#33322E;fill:#D5F1FF;stroke-dasharray:none;"></path>
+  <text x="709.5" y="738" style="fill: #33322E;font-weight:normal;font-style:italic;text-anchor: middle;">gen_district_age_bins.do</text>
+  <rect x="318.5" y="800.5" height="119" width="299" style="stroke:#33322E;fill:#eee8d5;stroke-dasharray:none;"></rect>
+  <text x="468" y="822" style="fill: #33322E;text-anchor: middle;">Age Bins</text>
+  <path d="M318.5 831.5 L617.5 831.5" style="stroke:#33322E;fill:none;stroke-dasharray:none;"></path>
+  <rect x="331.5" y="844.5" rx="20" ry="20" height="62" width="273" style="stroke:#33322E;fill:#fdf6e3;stroke-dasharray:none;"></rect>
+  <text x="339.5" y="866" style="fill: #33322E;font-weight:normal;">secc_age_bins_subdist_t.dta</text>
+  <path d="M331.5 875.5 L604.5 875.5" style="stroke:#33322E;fill:none;stroke-dasharray:none;"></path>
+  <text x="339.5" y="897" style="fill: #33322E;font-weight:normal;">secc_age_bins_dist_t.dta</text>
+  <rect x="674.5" y="800.5" height="119" width="270" style="stroke:#33322E;fill:#eee8d5;stroke-dasharray:none;"></rect>
+  <text x="809.5" y="822" style="fill: #33322E;text-anchor: middle;">CFR Rates</text>
+  <path d="M674.5 831.5 L944.5 831.5" style="stroke:#33322E;fill:none;stroke-dasharray:none;"></path>
+  <rect x="687.5" y="844.5" rx="20" ry="20" height="62" width="244" style="stroke:#33322E;fill:#fdf6e3;stroke-dasharray:none;"></rect>
+  <text x="695.5" y="866" style="fill: #33322E;font-weight:normal;">dist_age_dist_cfr.dta</text>
+  <path d="M687.5 875.5 L931.5 875.5" style="stroke:#33322E;fill:none;stroke-dasharray:none;"></path>
+  <text x="695.5" y="897" style="fill: #33322E;font-weight:normal;">subdist_age_dist_cfr.dta</text>
+  <rect x="1452.5" y="370.5" height="88" width="270" style="stroke:#33322E;fill:#eee8d5;stroke-dasharray:none;"></rect>
+  <text x="1587.5" y="392" style="fill: #33322E;text-anchor: middle;">DLHS Data</text>
+  <path d="M1452.5 401.5 L1722.5 401.5" style="stroke:#33322E;fill:none;stroke-dasharray:none;"></path>
+  <rect x="1465.5" y="414.5" rx="15.5" ry="15.5" height="31" width="244" style="stroke:#33322E;fill:#fdf6e3;stroke-dasharray:none;"></rect>
+  <text x="1473.5" y="436" style="fill: #33322E;font-weight:normal;">dlhs4_hospitals_dist.dta</text>
+  <rect x="1409.5" y="49.5" height="230" width="251" style="stroke:#33322E;fill:#eee8d5;stroke-dasharray:none;"></rect>
+  <text x="1535" y="71" style="fill: #33322E;text-anchor: middle;">Key</text>
+  <path d="M1409.5 80.5 L1660.5 80.5" style="stroke:#33322E;fill:none;stroke-dasharray:none;"></path>
+  <path d="M1535 124.5 L1535 144.5 L1535 164.5 L1535 164.5 " style="stroke:#33322E;fill:none;stroke-dasharray:6 6;"></path>
+  <path d="M1535 195.5 L1535 215.5 L1535 235.5 L1535 235.5 " style="stroke:#33322E;fill:none;stroke-dasharray:6 6;"></path>
+  <rect x="1422.5" y="93.5" rx="15.5" ry="15.5" height="31" width="225" style="stroke:#33322E;fill:#fdf6e3;stroke-dasharray:none;"></rect>
+  <text x="1430.5" y="115" style="fill: #33322E;font-weight:normal;">Intermediate Data File</text>
+  <rect x="1455.5" y="164.5" rx="15.5" ry="15.5" height="31" width="159" style="stroke:#33322E;fill:#FC1;stroke-dasharray:none;"></rect>
+  <text x="1463.5" y="186" style="fill: #33322E;font-weight:normal;">Final Data File</text>
+  <path d="M1498.5 235.5 L1563.5 235.5 L1571.5 251 L1563.5 266.5 L1498.5 266.5 Z" style="stroke:#33322E;fill:#D5F1FF;stroke-dasharray:none;"></path>
+  <text x="1535" y="257" style="fill: #33322E;font-weight:normal;font-style:italic;text-anchor: middle;">Script</text>
+  <path d="M1150.5 621.5 L1396.5 621.5 L1404.5 637 L1396.5 652.5 L1150.5 652.5 Z" style="stroke:#33322E;fill:#D5F1FF;stroke-dasharray:none;"></path>
+  <text x="1277.5" y="643" style="fill: #33322E;font-weight:normal;font-style:italic;text-anchor: middle;">estimate_hosp_capacity.do</text>
+  <rect x="1183.5" y="844.5" rx="15.5" ry="15.5" height="31" width="187" style="stroke:#33322E;fill:#FC1;stroke-dasharray:none;"></rect>
+  <text x="1191.5" y="866" style="fill: #33322E;font-weight:normal;">hospitals_dist.dta</text>
+  <path d="M1049.5 959.5 L1228.5 959.5 L1236.5 975 L1228.5 990.5 L1049.5 990.5 Z" style="stroke:#33322E;fill:#D5F1FF;stroke-dasharray:none;"></path>
+  <text x="1143" y="981" style="fill: #33322E;font-weight:normal;font-style:italic;text-anchor: middle;">export_hosp_cfr.do</text>
+  <rect x="987.5" y="1030.5" rx="15.5" ry="15.5" height="31" width="311" style="stroke:#33322E;fill:#FC1;stroke-dasharray:none;"></rect>
+  <text x="995.5" y="1052" style="fill: #33322E;font-weight:normal;">district_ages_cfr_hospitals.csv</text>
+  <path d="M1006.5 1101.5 L1271.5 1101.5 L1279.5 1117 L1271.5 1132.5 L1006.5 1132.5 Z" style="stroke:#33322E;fill:#D5F1FF;stroke-dasharray:none;"></path>
+  <text x="1143" y="1123" style="fill: #33322E;font-weight:normal;font-style:italic;text-anchor: middle;">impute_additional_fields.do</text>
+  <rect x="968.5" y="1172.5" rx="15.5" ry="15.5" height="31" width="349" style="stroke:#33322E;fill:#FC1;stroke-dasharray:none;"></rect>
+  <text x="976.5" y="1194" style="fill: #33322E;font-weight:normal;">district_age_dist_cfr_hospitals.dta</text>
+</svg>
