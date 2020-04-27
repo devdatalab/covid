@@ -180,45 +180,52 @@ sum pc11_td_mh_beds_pc, d
 sort pc11_td_mh_pc 
 list pc11_td_mh_pc pc11_td_mh_beds_pc pc11_td_mh_beds_pc pc11_td_mh pc11_td_mh_beds pc11_td_mh_beds pc11_pca_tot_p if pc11_td_mh_beds_pc > 0.005 & !mi(pc11_td_mh_beds_pc) & urban == 1
 
-
-/* Outliers at the lower tail */
-
-/* Check how many highly populated towns (pop > 500,000) have less than 75th */
-/* percentile of number of health centers, allopathic doctors and allopathic hosp beds */
-
-/* Note on decisions: */
-/* 1. 75th pctl was chosen bc for all variables considered below values up till the 75th pctl are 0 */
-/* 2. For beds and doctors, limiting checking for allopathic hospitals as these are the most prevalent */
-/* type of centers in urban areas */
-
-/* centers */
-gen centers_low = .
-
-foreach x of var `centers_u' {
-  disp_nice "`x'"
-
-  /* check no. of obs at the lower extreme */
-  sum `x'_pc, d
-  count if `x'_pc < r(p75) & !mi(`x'_pc) & pc11_pca_tot_p > 500000 & urban == 1
-
-  /* flag the obs */
-  replace centers_low = 1 if `x'_pc < 0.00003 & !mi(`x'_pc) & pc11_pca_tot_p > 500000 & urban == 1
-}
-
-/* note - 81 towns have been flagged by centers_low variable */
+/* Flag obs with high population and 0 allo beds and docs per thousand ppl */
+/* High population defined as pop >= 100,000  */
+/* Note: we are focusing just on allopathic hosp as they are the most prevalent facility type in towns */
+/* For flagegd obs, doc and bed vars were replaced with district means */
 
 /* doctors */
-sum pc11_td_all_hosp_doc_pc, d
-gen docs_low = 1 if pc11_td_all_hosp_doc_pc < r(p75) & !mi(pc11_td_all_hosp_doc_pc) & pc11_pca_tot_p > 500000 & urban == 1
+gen pc11_td_all_hosp_doc_pk =  pc11_td_all_hosp_doc_pc * 1000
+gen docs_impute = 1 if pc11_td_all_hosp_doc_pk == 0 & !mi(pc11_td_all_hosp_doc_pk) & pc11_pca_tot_p >= 100000 & urban == 1
 
-/* note - 55 towns have been flagged by the docs_low variable */
+/* note - 38 towns have been flagged by the docs_low variable */
 
 /* beds */
-sum pc11_td_all_hosp_beds_pc, d
-gen beds_low = 1 if pc11_td_all_hosp_beds_pc < r(p75) & !mi(pc11_td_all_hosp_beds_pc) & pc11_pca_tot_p > 500000 & urban == 1
+gen pc11_td_all_hosp_beds_pk =  pc11_td_all_hosp_beds_pc * 1000
+gen beds_impute = 1 if pc11_td_all_hosp_beds_pk == 0 & !mi(pc11_td_all_hosp_beds_pk) & pc11_pca_tot_p >= 100000 & urban == 1
 
-/* note - 55 towns have been flagged by the beds_low variabel */
-/* 47 obs have been flagged across all three variables */
+/* note - 37 towns have been flagged, these overlap with towns flagged above */
+
+cap drop *_pc *_pk
+
+/* calculate means at the district level to impute values */
+
+/* beds */
+foreach x of var *_beds {
+
+  /* calculate district level means for each variable */
+  bys pc11_state_id pc11_district_id: egen m_`x' = mean(`x')
+
+  /* replace values with mean in flagged vars */
+  replace `x' = m_`x' if beds_impute == 1
+}
+
+/* doctors */
+foreach x of var pc11_td_all_hosp pc11_td_disp pc11_td_tbc pc11_td_nh pc11_td_mh {
+  
+  /* calculate district level means for each variable */
+  bys pc11_state_id pc11_district_id: egen m_`x'_doc_tot = mean(`x'_doc_tot)
+  bys pc11_state_id pc11_district_id: egen m_`x'_doc_pos = mean(`x'_doc_pos)
+
+  /* replace values with mean in flagged vars */
+  replace `x'_doc_tot = m_`x'_doc_tot if docs_impute == 1
+  replace `x'_doc_pos = m_`x'_doc_pos if docs_impute == 1
+}
+
+/* drop unnecessary vars */
+drop m_* *_impute
+
 
 /* in the end, we didn't drop any urban outliers because all of these were either
   in the ballpark or were very low numbers in levels and thus don't affect district
