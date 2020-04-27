@@ -60,6 +60,8 @@ rename sector rural
 // label_from_gdoc, docid("1h6G4vYL3lvy4Bi8DTY3pMT2-5aVWOBoxAm3plx4M7qQ")
 
 save $covidpub/hospitals/ec_hospitals_tv, replace
+cap mkdir $covidpub/hospitals/csv
+export delimited $covidpub/hospitals/csv/ec_hospitals_tv.csv, replace
 
 /* COLLAPSE TO DISTRICT LEVEL */
 use $covidpub/hospitals/ec_hospitals_tv, clear
@@ -92,3 +94,5 @@ ren *hosp* ec_*hosp*
 /* label from the google sheet dictionary */
 // label_from_gdoc, docid("1h6G4vYL3lvy4Bi8DTY3pMT2-5aVWOBoxAm3plx4M7qQ")
 save $covidpub/hospitals/ec_hospitals_dist, replace
+cap mkdir $covidpub/hospitals/csv
+export delimited $covidpub/hospitals/csv/ec_hospitals_dist.csv, replace

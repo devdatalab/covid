@@ -19,9 +19,17 @@ foreach level in district subdistrict {
   /* cycle through rural and urban */
   foreach sector in rural urban {
     
-    /* set letter that will distinguish urban and rural variables */
-    if "`sector'" == "urban" local l = "u"
-    if "`sector'" == "rural" local l = "r"
+    /* set some urban and rural parameters: */
+    /* - one letter suffix to distinguish urban and rural variables */
+    /* - path: use parsed_draft for urban, final for rural */
+    if "`sector'" == "urban" {
+      local l = "u"
+      local path $secc/parsed_draft/dta/urban
+    }
+    if "`sector'" == "rural" {
+      local l = "r"
+      local path $secc/final/dta
+    }
     
     /* save an empty output file so we can append to it state by state */
     clear
@@ -30,23 +38,33 @@ foreach level in district subdistrict {
     /* cycle through each state */
     foreach state in $statelist {
       disp_nice "`sector'-`level'-`state'"
-  
-      /* open the urban file */
-      cap confirm file "$iec2/secc/parsed_draft/dta/`sector'/`state'_members_clean.dta"
-  
-      /* skip loop if this file doesn't exist */
-      if _rc != 0 continue
 
-      /* open the file if it exists */
-      use $iec2/secc/parsed_draft/dta/`sector'/`state'_members_clean, clear
-    
+      /* use telangana from parsed_draft/ folder */
+      if "`state'" == "telangana" & "`sector'" == "rural" {
+        use $secc/parsed_draft/dta/rural/`state'_members_clean, clear
+      }
+      else {
+        
+        /* open the members file */
+        cap confirm file "`path'/`state'_members_clean.dta"
+        
+        /* skip loop if this file doesn't exist */
+        if _rc != 0 continue
+        
+        /* open the file if it exists */
+        use `path'/`state'_members_clean, clear
+      }
+      
       /* drop if missing geographic identifiers */
       drop if mi(pc11_state_id) | mi(pc11_district_id)
       if "`level'" == "subdistrict" drop if mi(pc11_subdistrict_id)
   
       /* keep only the ids and age variables */
+      /* birthyear doesn't exist in the final/ data */
+      cap gen birthyear = 2012 - age
       keep `ids' age birthyear 
-
+      drop if age < 0
+        
       /****************/
       /* Age Cleaning */
       /****************/

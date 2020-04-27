@@ -159,3 +159,7 @@ if mi("$covidpub") {
   error 345
 }
 save $covidpub/hospitals/dlhs4_hospitals_dist, replace
+
+/* save a CSV version */
+cap mkdir $covidpub/hospitals/csv
+export delimited $covidpub/hospitals/csv/dlhs4_hospitals_dist, replace

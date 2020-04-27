@@ -15,8 +15,7 @@ gen new_deaths = 1
 collapse (sum) new_deaths, by(pc11_state_id pc11_district_id date)
 
 /* save as a tempfile */
-tempfile deaths
-save `deaths'
+save $tmp/deaths
 
 /*********/
 /* Cases */
@@ -36,7 +35,7 @@ collapse (sum) new_cases, by(pc11_state_id pc11_district_id date)
 /*******************/
 /* Merge and Clean */
 /*******************/
-merge 1:1 pc11_state_id pc11_district_id date using `deaths'
+merge 1:1 pc11_state_id pc11_district_id date using $tmp/deaths
 
 /* fill in missing new_cases and new_deaths with 0 */
 replace new_cases = 0 if mi(new_cases)
@@ -109,6 +108,8 @@ drop _fillin datestr sdgroup row
 
 /* save total case and death data */
 save $covidpub/covid/covid_cases_deaths_district, replace
+cap mkdir $covidpub/covid/csv
+export delimited $covidpub/covid/csv/covid_cases_deaths_district.csv, replace
 
 /* review number of confirmed/deaths in unknown districts */
 sum total_* if date == 22029

@@ -226,10 +226,14 @@ clean_collapsed_data
 
 /* save subdistrict dataset */
 save $covidpub/hospitals/pc_hospitals_subdist, replace
+cap mkdir $covidpub/hospitals/csv
+export delimited $covidpub/hospitals/csv/pc_hospitals_subdist.csv, replace
 
 /* REPEAT COLLAPSE AT DISTRICT LEVEL */
 use $tmp/precollapse, clear
 collapse (sum) hosp* pmed_* docs_* clinics_* clinic_beds_u  pc11_pca_tot_p, by(pc11_state_id pc11_district_id )
 clean_collapsed_data
 save $covidpub/hospitals/pc_hospitals_dist, replace
+cap mkdir $covidpub/hospitals/csv
+export delimited $covidpub/hospitals/csv/pc_hospitals_dist.csv, replace
 
