@@ -55,7 +55,7 @@ us at covid@devdatalab.org.
 | Health staff | Number of doctors, nurses, employees of health centers, etc. | State/District/Subdistrict | Total/Urban/Rural | COVID testing and cases | Numbers tested and infected, date of first confirmed case, etc | State (potentially district) | 
 | Sectoral composition | Share of employment in important sectors of the economy | State/District/Subdistrict | 
 
-| [![Hospital Beds by District](assets/dlhs4_perk_beds_pubpriv.png?raw=true "Hospital Beds")](http://www.devdatalab.org/covid_hospital_beds) | 
+| [![Hospital Beds by District](assets/hospital-beds.png?raw=true "Hospital Beds")](http://www.devdatalab.org/covid_hospital_beds) | 
 |:--:| 
 | *Hospital Bed Availability by District* |
 
