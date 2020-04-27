@@ -71,6 +71,8 @@ us at covid@devdatalab.org.
 The root path of the folder only has one code file:
 - `make_covid.do`, which runs the full build and the full analysis.
 
+## Build Diagram
+
 The full build, including both code and data, is diagrammatically described [here](build.md).
 
 ## Data Folder Structure and Metadata
