@@ -8,7 +8,7 @@ global agebins age_0 age_5 age_10 age_15 age_20 age_25 age_30 age_35 age_40 age_
 /***************************************************/
 
 /* loop over subdistrict and district level data */
-foreach level in district subdistrict {
+foreach level in subdistrict district {
   
   /* set location identifiers for this collapse level */
   if "`level'" == "district" local ids pc11_state_id pc11_district_id 
@@ -72,7 +72,7 @@ foreach level in district subdistrict {
     foreach age in $agebins {
       ren `age' pop_share_`l'_`age'
     }
-    
+
     /* set CFRs to missing for places where missing data caused zero CFRs */
     /* FIX: FIGURE OUT WHY THIS HAPPENS */
     replace `level'_estimated_cfr_`l' = . if `level'_estimated_cfr_`l' == 0
@@ -105,4 +105,8 @@ foreach level in district subdistrict {
   order `ids' pc11_pca* `level'_estimated_cfr_*
 
   save $covidpub/estimates/`level'_age_dist_cfr, replace
+
+  /* export to CSV */
+  cap mkdir $covidpub/estimates/csv
+  export delimited $covidpub/estimates/csv/`level'_age_dist_cfr.csv, replace
 }

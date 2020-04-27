@@ -11,3 +11,5 @@ drop *shric*
 keep sector emp_all gov nic ec13_state_id ec13_district_id ec13_subdistrict_id ec13_village_id ec13_town_id
 
 save $covidpub/hospitals/ec_hosp_microdata, replace
+cap mkdir $covidpub/hospitals/csv
+export delimited $covidpub/hospitals/csv/ec_hosp_microdata.csv, replace

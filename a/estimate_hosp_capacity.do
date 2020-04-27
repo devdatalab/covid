@@ -86,3 +86,5 @@ drop _m_pc11 _m_ec13
 
 /* save district-level hospital dataset with 3 hospital sources: DLHS, PC, EC*/
 save $covidpub/estimates/hospitals_dist, replace
+cap mkdir $covidpub/estimates/csv
+export delimited $covidpub/estimates/csv/hospitals_dist.csv, replace

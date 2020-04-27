@@ -229,6 +229,8 @@ merge m:1 state district using $tmp/covid_deaths_recoveries_pc11_district_key, k
 drop _merge
 
 save $covidpub/covid/covid_deaths_recoveries, replace
+cap mkdir $covid/covid/csv
+export delimited $covidpub/covid/csv/covid_deaths_recoveries.csv, replace
 
 
 /* the covid folder:
