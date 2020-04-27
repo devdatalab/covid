@@ -147,7 +147,7 @@ foreach x of var `centers_u' {
   /* list clinic outliers */
   sum `x'_pc if urban == 1, d
   list `x'_pc `x'_doc_pc `x'_beds_pc `x' `x'_doc_pos `x'_beds pc11_pca_tot_p if `x'_pc > 0.1 & !mi(`x'_pc) & urban == 1
-
+  
   /* list doc outliers */
   sum `x'_doc_pc if urban == 1, d
   list `x'_pc `x'_doc_pc `x'_beds_pc `x' `x'_doc_pos `x'_beds pc11_pca_tot_p if `x'_doc_pc > 0.1 & !mi(`x'_doc_pc) & urban == 1
@@ -181,6 +181,24 @@ sort pc11_td_mh_pc
 list pc11_td_mh_pc pc11_td_mh_beds_pc pc11_td_mh_beds_pc pc11_td_mh pc11_td_mh_beds pc11_td_mh_beds pc11_pca_tot_p if pc11_td_mh_beds_pc > 0.005 & !mi(pc11_td_mh_beds_pc) & urban == 1
 
 
+/* outliers at the lower tail */
+
+/* check how many highly populated (>500000) towns have less than 0.00003 per capita clinics */
+/* 0.00003 is the 50-75th pctl of the clinic per capita variables acc to the output in code above */
+
+gen centers_low = .
+
+foreach x of var `centers_u' {
+  disp_nice "`x'"
+
+  /* check how many towns for each type of center are at the extreme low tail */
+  count if `x'_pc < 0.00003 & !mi(`x'_pc) & pc11_pca_tot_p > 500000 & urban == 1
+
+  /* flag these incorrect zero cases */
+  replace centers_low = 1 if `x'_pc < 0.00003 & !mi(`x'_pc) & pc11_pca_tot_p > 500000 & urban == 1
+
+}
+  
 /* in the end, we didn't drop any urban outliers because all of these were either
   in the ballpark or were very low numbers in levels and thus don't affect district
   numbers much. */
