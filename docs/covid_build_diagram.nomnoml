@@ -1,0 +1,47 @@
+#.instructions:
+#.1: navigate to nomnoml.com
+#.2: copy the following UML code into the window
+#.3: use the toolbar in the top left to export the diagram
+#.3a: if you make changes, export the source and push the changes to this file in github (be sure to rename the downloaded file to match the name in github)
+#.3b: download the png and push the updated file in github (be sure to rename the downloaded file to match the name in github)
+
+#.prog: fill=#D5F1FF visual=sender italic center
+#.data: visual=roundrect align=center 
+#.web: visual=database italic 
+#.finaldata: visual=roundrect align=center fill=#FC1
+#.key: fill=#ffffff bold
+
+[<key>Key |
+[<data>Initial Dataset]--[<finaldata> Final Dataset]
+[<finaldata> Final Dataset]--[<prog>Program]
+]
+
+[COVID Case Data |
+[<data>pc11_district_key.dta]->[<prog>get_case_data.do]
+[<web> https://www.covid19india.org/]->[<prog>get_case_data.do]
+]o->[<finaldata>covid_cases_deaths_district.dta]
+
+[Population Census |
+[<data>pc11r_hosp.dta | pc11u_hosp.dta]->[<prog>prep_pc_hosp.do]
+[<prog>prep_pc_hosp.do]
+]o->[PC Hospital Data | [<data> pc_hospitals_subdist.dta|pc_hospitals_dist.dta]]
+
+[Economic Census |
+[<data>pc11_district_key.dta]->[<prog>prep_ec_hosp.do]
+[<data>ec13_hosp_microdata.dta]->[<prog>prep_ec_hosp.do]
+[<prog>prep_ec_hosp.do]->[<data>ec_hospitals_tv.dta]
+]o->[EC Hospital Data | [<data>ec_hospitals_dist.dta]]
+
+[Age Bins from SECC| [<data>secc_age_bins_district_t|secc_age_bins_subdistrict_t]]->[<prog>predict_age_cfr.do]
+[National CFR by Age | [<data> cfr_age_bins.dta]]->[<prog>predict_age_cfr.do]
+[<prog>predict_age_cfr.do]o->[CFR by Age Bins| [<data>district_age_dist_cfr.dta|subdistrict_age_dist_cfr.dta]]
+
+[DLHS Data | [<data>dlhs4_hospitals_dist.dta]]->[<prog>estimate_hosp_capacity.do]
+[EC Hospital Data]->[<prog>estimate_hosp_capacity.do]
+[PC Hospital Data ]->[<prog>estimate_hosp_capacity.do]
+[<prog>estimate_hosp_capacity.do]->[<finaldata>hospitals_dist.dta]
+
+[<finaldata>hospitals_dist.dta]->[<prog>impute_additional_fields.do]
+[CFR by Age Bins]->[<prog>impute_additional_fields.do]
+[<prog>impute_additional_fields.do]->[<finaldata>district_age_dist_cfr_hospitals.dta]
+
