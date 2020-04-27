@@ -32,16 +32,23 @@ us at covid@devdatalab.org.
 
 <p align="center"><a target="_blank" href="https://www.dropbox.com/sh/y949ncp39towulf/AABs8_dECTzr38GdS7BneTH7a?dl=0"><img src="https://raw.githubusercontent.com/devdatalab/covid/master/assets/download_button.png"/></a></p>
 
-## Data Currently Available
+## Data Folder Structure and Metadata
 
-| Data              | Description | Geographic level |
-| ----------- | ----------- | ----------- |
-| Public Hospital capacity | Facilities, doctors, and beds. Sources: 2011 Population Census and DLHS-4 (2012-14). | District, Subdistrict (PC only) |
-| Private Hospitals | Public and private hospital employment from 2013 Economic Census. Can estimate private system beds based on public employment:bed ratios. | District |
-| Predicted COVID-19 mortality rates | Predictions based strictly on local age distributions, which create substantial risk differences across locations. | Subdistrict |
-|District correspondences | Keys linking current districts to 2011 Population Census districts, which are the basis of many datasets | District |
-| Demographics | 2011 Population Census (most recent) population, density, literacy rate, urbanization | State/District/Subdistrict/Town/Village |
+Relative paths here refer to paths in the data folder. CSV files are
+in a csv/ subfolder in each path.
 
+| Folder   | Description                                                                       | Data Files                             | Metadata                                                                                                                                         |
+| ----------- | -----------                                                                       | ----------                             | --------                                                                                                                                         |
+| covid/      | Number of confirmed cases and deaths by date, district                            | `covid/covid_cases_deaths_district`    | [Link](https://docs.google.com/spreadsheets/d/e/2PACX-1vTKTuciRsUd6pk5kWhlMyhF85Iv5x04b0njSrWzCkaN5IeEZpBwwvmSdw-mUJOp215jBgv2NPMeTHXK/pubhtml)  |
+|             | Case-level patient data with state/district ids                                   | `covid/covid_deaths_recoveries`        |                                                                                                                                                  |
+| demography/ | Age pyramid of every district and subdistrict                                     | `demography/age_bins_(sub)district_t`  | [Link](https://docs.google.com/spreadsheets/d/e/2PACX-1vSyQghmU8rKxC_1NWAUKMa1-DwjT95XmmmQO5b1nuzj48Tjmq8cDvZRaN1C59JgY7eRapMHtnmYY3_k/pubhtml)  |
+|             | (Sub)district level slum populations, pop density, urbanization rates (PC)        | `demography/...`  | [Link Needed]()  |
+| estimates/  | Modeled district hospital/clinic bed and doctor counts (EC,PC,DLHS)               | `estimates/hospitals_dist`             | [Link](https://docs.google.com/spreadsheets/d/e/2PACX-1vQL3zu-_LMCV3gIjk1NOGWJVwDwcspl2lI7lvvRUuUgRN3I-X9QFe9BUhdr3dhROpTItTiiUxP_-kU9/pubhtml)  |
+|             | Modeled age-structured based fatality rate predictions                            | `estimates/(sub)district_age_dist_cfr` |                                                                                                                                                  |
+| hospitals/  | District-level public hospital/clinic bed and doctor counts from DLHS             | `hospitals/dlhs4_hospitals_dist`       | [Link](https://docs.google.com/spreadsheets/d/e/2PACX-1vR8pkaS86ZlwcSe0ljKyL6wR_YOGE380JrHgAhG5Z66Oq1WtD4xtsJCsdCt-yAv8Qw0X74twBeIQ9of/pubhtml#) |
+|             | (Sub)district-level public hospital/clinic bed and doctor counts from Pop Census  | `hospitals/pc_hospitals_(sub)dist`     | [Link](https://docs.google.com/spreadsheets/d/e/2PACX-1vTpGgFszhHhMlzh-ePv3tRj5Arpv7uyicPPDgkCS7-Ms3nE6OvofQWBFuOxOWBPtELzSmBFttxvLc20/pubhtml)  |
+|             | District- and town/village-level hospital public/private hospital employment (EC) | `hospitals/ec_hospitals_(dist,tv)`     | [Link](https://docs.google.com/spreadsheets/d/e/2PACX-1vTpGgFszhHhMlzh-ePv3tRj5Arpv7uyicPPDgkCS7-Ms3nE6OvofQWBFuOxOWBPtELzSmBFttxvLc20/pubhtml)  |
+| keys/       | Correspondences to link different datasets                                        |                                        |                                                                                                                                                  |
 
 ## Data Identified for Inclusion
 
@@ -71,32 +78,6 @@ us at covid@devdatalab.org.
 The root path of the folder only has one code file:
 - `make_covid.do`, which runs the full build and the full analysis.
 
-## Build Diagram
-
-The full build, including both code and data, is diagrammatically described [here](build.md).
-
-## Data Folder Structure and Metadata
-
-Relative paths here refer to paths in the data folder. CSV files are
-in a csv/ subfolder in each path.
-
-| Directory   | Explanation                                                                       | Data Files                             | Metadata                                                                                                                                         |
-| ----------- | -----------                                                                       | ----------                             | --------                                                                                                                                         |
-| covid/      | Number of confirmed cases and deaths by date, district                            | `covid/covid_cases_deaths_district`    | [Link](https://docs.google.com/spreadsheets/d/e/2PACX-1vTKTuciRsUd6pk5kWhlMyhF85Iv5x04b0njSrWzCkaN5IeEZpBwwvmSdw-mUJOp215jBgv2NPMeTHXK/pubhtml)  |
-|             | Case-level patient data with state/district ids                                   | `covid/covid_deaths_recoveries`        |                                                                                                                                                  |
-| demography/ | Age pyramid of every district and subdistrict                                     | `demography/age_bins_(sub)district_t`  | [Link](https://docs.google.com/spreadsheets/d/e/2PACX-1vSyQghmU8rKxC_1NWAUKMa1-DwjT95XmmmQO5b1nuzj48Tjmq8cDvZRaN1C59JgY7eRapMHtnmYY3_k/pubhtml)  |
-|             | (Sub)district level slum populations, pop density, urbanization rates (PC)        | `demography/...`  | [Link Needed]()  |
-| estimates/  | Modeled district hospital/clinic bed and doctor counts (EC,PC,DLHS)               | `estimates/hospitals_dist`             | [Link](https://docs.google.com/spreadsheets/d/e/2PACX-1vQL3zu-_LMCV3gIjk1NOGWJVwDwcspl2lI7lvvRUuUgRN3I-X9QFe9BUhdr3dhROpTItTiiUxP_-kU9/pubhtml)  |
-|             | Modeled age-structured based fatality rate predictions                            | `estimates/(sub)district_age_dist_cfr` |                                                                                                                                                  |
-| hospitals/  | District-level public hospital/clinic bed and doctor counts from DLHS             | `hospitals/dlhs4_hospitals_dist`       | [Link](https://docs.google.com/spreadsheets/d/e/2PACX-1vR8pkaS86ZlwcSe0ljKyL6wR_YOGE380JrHgAhG5Z66Oq1WtD4xtsJCsdCt-yAv8Qw0X74twBeIQ9of/pubhtml#) |
-|             | (Sub)district-level public hospital/clinic bed and doctor counts from Pop Census  | `hospitals/pc_hospitals_(sub)dist`     | [Link](https://docs.google.com/spreadsheets/d/e/2PACX-1vTpGgFszhHhMlzh-ePv3tRj5Arpv7uyicPPDgkCS7-Ms3nE6OvofQWBFuOxOWBPtELzSmBFttxvLc20/pubhtml)  |
-|             | District- and town/village-level hospital public/private hospital employment (EC) | `hospitals/ec_hospitals_(dist,tv)`     | [Link](https://docs.google.com/spreadsheets/d/e/2PACX-1vTpGgFszhHhMlzh-ePv3tRj5Arpv7uyicPPDgkCS7-Ms3nE6OvofQWBFuOxOWBPtELzSmBFttxvLc20/pubhtml)  |
-| keys/       | Correspondences to link different datasets                                        |                                        |                                                                                                                                                  |
-
-
-[PC]
-[EC](https://docs.google.com/spreadsheets/d/e/2PACX-1vSq7qkpXS2QFatP_35deNi0ZeHNVgSMr4JHKaxx3pZgefp4cw4iqRMo0GRPMe0-h3n6BEoHPuzQEgmc/pubhtml), 
-
 ### Code Globals
 
 This repository's build refers to locations of code and data using
@@ -110,6 +91,10 @@ run the code:
 | `$covidpub` | Root data folder for this repo.                       |
 
 A global can be set in Stata with e.g. `global tmp temporary/directory/location`.
+
+### Build Diagram
+
+The full build, including both code and data, is diagrammatically described [here](build.md).
 
 ## Downloading the Data
 
