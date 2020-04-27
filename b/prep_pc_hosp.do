@@ -181,24 +181,45 @@ sort pc11_td_mh_pc
 list pc11_td_mh_pc pc11_td_mh_beds_pc pc11_td_mh_beds_pc pc11_td_mh pc11_td_mh_beds pc11_td_mh_beds pc11_pca_tot_p if pc11_td_mh_beds_pc > 0.005 & !mi(pc11_td_mh_beds_pc) & urban == 1
 
 
-/* outliers at the lower tail */
+/* Outliers at the lower tail */
 
-/* check how many highly populated (>500000) towns have less than 0.00003 per capita clinics */
-/* 0.00003 is the 50-75th pctl of the clinic per capita variables acc to the output in code above */
+/* Check how many highly populated towns (pop > 500,000) have less than 75th */
+/* percentile of number of health centers, allopathic doctors and allopathic hosp beds */
 
+/* Note on decisions: */
+/* 1. 75th pctl was chosen bc for all variables considered below values up till the 75th pctl are 0 */
+/* 2. For beds and doctors, limiting checking for allopathic hospitals as these are the most prevalent */
+/* type of centers in urban areas */
+
+/* centers */
 gen centers_low = .
 
 foreach x of var `centers_u' {
   disp_nice "`x'"
 
-  /* check how many towns for each type of center are at the extreme low tail */
-  count if `x'_pc < 0.00003 & !mi(`x'_pc) & pc11_pca_tot_p > 500000 & urban == 1
+  /* check no. of obs at the lower extreme */
+  sum `x'_pc, d
+  count if `x'_pc < r(p75) & !mi(`x'_pc) & pc11_pca_tot_p > 500000 & urban == 1
 
-  /* flag these incorrect zero cases */
+  /* flag the obs */
   replace centers_low = 1 if `x'_pc < 0.00003 & !mi(`x'_pc) & pc11_pca_tot_p > 500000 & urban == 1
-
 }
-  
+
+/* note - 81 towns have been flagged by centers_low variable */
+
+/* doctors */
+sum pc11_td_all_hosp_doc_pc, d
+gen docs_low = 1 if pc11_td_all_hosp_doc_pc < r(p75) & !mi(pc11_td_all_hosp_doc_pc) & pc11_pca_tot_p > 500000 & urban == 1
+
+/* note - 55 towns have been flagged by the docs_low variable */
+
+/* beds */
+sum pc11_td_all_hosp_beds_pc, d
+gen beds_low = 1 if pc11_td_all_hosp_beds_pc < r(p75) & !mi(pc11_td_all_hosp_beds_pc) & pc11_pca_tot_p > 500000 & urban == 1
+
+/* note - 55 towns have been flagged by the beds_low variabel */
+/* 47 obs have been flagged across all three variables */
+
 /* in the end, we didn't drop any urban outliers because all of these were either
   in the ballpark or were very low numbers in levels and thus don't affect district
   numbers much. */
