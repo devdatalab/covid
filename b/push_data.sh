@@ -62,7 +62,7 @@ csv2md ~/dlhs_variable_metdata.csv >> ~/ddl/covid/assets/metadata.md
 # cp input data from section 1 of make_covid.do to a temp folder to
 # avoid including paths in the archive. copy metadata as well.
 mkdir -p ~/covid_tmp/input
-cp -t ~/covid_tmp/input ~/iec/health/DLHS4_FacilitySurveyData/dlhs4_district_key.dta ~/iec/shrug_covid/dlhs4_hospitals_dist.dta ~/iec/shrug_covid/pc11u_hosp.dta ~/iec/shrug_covid/pc11r_hosp.dta ~/iec/shrug_covid/ec13_hosp_microdata.dta
+cp -t ~/covid_tmp/input ~/iec/health/DLHS4_FacilitySurveyData/dlhs4_district_key.dta ~/iec/shrug_covid/dlhs4_hospitals_dist.dta ~/iec/shrug_covid/pc11u_hosp.dta ~/iec/shrug_covid/pc11r_hosp.dta ~/iec/shrug_covid/ec_hosp_microdata.dta
 cp -t ~/covid_tmp/input ~/dlhs*metadata.csv ~/pc*metadata.csv
 
 # create tarball of input data (from the first section of make_covid.do)

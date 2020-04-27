@@ -25,7 +25,7 @@ do $ccode/b/prep_dlhs4_district
 do $ccode/b/prep_hosp_pca_vd
 
 /* prepare EC microdata on hospitals */
-/* in: raw economic census 2013.  out: $covidpub/ec13_hosp_microdata */
+/* in: raw economic census 2013.  out: $covidpub/ec_hosp_microdata */
 do $ccode/b/prep_ec_hosp_microdata
 
 /* build age distribution by district/subdistrict, using SECC + PC */

@@ -88,9 +88,8 @@ drop pc11_td_vet_* pc11_td_veth_*
 local centers_r pc11_td_ch_cntr pc11_td_ph_cntr pc11_td_phs_cntr pc11_td_tb_cln pc11_td_all_hosp pc11_td_disp pc11_td_mh_cln pc11_td_med_in_out_pat pc11_td_med_c_hosp_home
 local centers_u pc11_td_all_hosp pc11_td_disp pc11_td_tbc pc11_td_nh pc11_td_mh pc11_td_in_out_pat pc11_td_c_hosp_home
 
-/* drop villages that are just a couple households */
-drop if pc11_pca_tot_p < 5
-/* 1718 such cases - all rural*/
+/* drop villages that are too small to plausibly have a clinic */
+drop if pc11_pca_tot_p < 50
 
 /* REVIEW CENTERS/CLINICS OUTLIERS */
 
