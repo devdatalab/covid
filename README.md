@@ -83,7 +83,7 @@ The full build, including both code and data, is diagrammatically described [her
 | demography/ | Age structure of every district and subdistrict  | [Link](https://docs.google.com/spreadsheets/d/e/2PACX-1vSyQghmU8rKxC_1NWAUKMa1-DwjT95XmmmQO5b1nuzj48Tjmq8cDvZRaN1C59JgY7eRapMHtnmYY3_k/pubhtml) |
 | estimates/  | All estimates/outputs requiring assumption/imputation, e.g. district bed counts, case fatality rate predictions based on age structure | [Link](https://docs.google.com/spreadsheets/d/e/2PACX-1vQL3zu-_LMCV3gIjk1NOGWJVwDwcspl2lI7lvvRUuUgRN3I-X9QFe9BUhdr3dhROpTItTiiUxP_-kU9/pubhtml) |
 | hospitals/  | Hospital and clinic bed and doctor counts (Population Census, Economic Census, DLHS4)  | [PC](https://docs.google.com/spreadsheets/d/e/2PACX-1vTpGgFszhHhMlzh-ePv3tRj5Arpv7uyicPPDgkCS7-Ms3nE6OvofQWBFuOxOWBPtELzSmBFttxvLc20/pubhtml), [EC](https://docs.google.com/spreadsheets/d/e/2PACX-1vSq7qkpXS2QFatP_35deNi0ZeHNVgSMr4JHKaxx3pZgefp4cw4iqRMo0GRPMe0-h3n6BEoHPuzQEgmc/pubhtml), [DLHS](https://docs.google.com/spreadsheets/d/e/2PACX-1vR8pkaS86ZlwcSe0ljKyL6wR_YOGE380JrHgAhG5Z66Oq1WtD4xtsJCsdCt-yAv8Qw0X74twBeIQ9of/pubhtml#) |
-| keys/       | Correspondences to link different datasets  | [Link]() |
+| keys/       | Correspondences to link different datasets  |  |
 
 ### Code Globals
 
