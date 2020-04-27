@@ -55,11 +55,11 @@ us at covid@devdatalab.org.
 | Health staff | Number of doctors, nurses, employees of health centers, etc. | State/District/Subdistrict | Total/Urban/Rural | COVID testing and cases | Numbers tested and infected, date of first confirmed case, etc | State (potentially district) | 
 | Sectoral composition | Share of employment in important sectors of the economy | State/District/Subdistrict | 
 
-| ![Hospital Beds by District](assets/dlhs4_perk_beds_pubpriv.png?raw=true "Hospital Beds") | 
+| [![Hospital Beds by District](assets/dlhs4_perk_beds_pubpriv.png?raw=true "Hospital Beds")](http://www.devdatalab.org/covid_hospital_beds) | 
 |:--:| 
 | *Hospital Bed Availability by District* |
 
-## Repo Structure
+## Repo / Code Structure
 
 | Directory   | Explanation |
 | ----------- | ----------- |
@@ -71,15 +71,17 @@ us at covid@devdatalab.org.
 The root path of the folder only has one code file:
 - `make_covid.do`, which runs the full build and the full analysis.
 
-## Data Folder Structure
+The full build, including both code and data, is diagrammatically described [here](build.md).
 
-| Directory   | Explanation |
-| ----------- | ----------- |
-| covid/      | Confirmed cases and deaths by date, state, district
-| demography/ | Age structure of every district and subdistrict  |
-| estimates/  | All estimates/outputs requiring assumption/imputation, e.g. district bed counts, case fatality rate predictions based on age structure |
-| hospitals/  | Hospital and clinic bed and doctor counts (Population Census, Economic Census, DLHS4)  |
-| keys/       | Correspondences to link different datasets  |
+## Data Folder Structure and Metadata
+
+| Directory   | Explanation | Metadata |
+| ----------- | ----------- | -------- |
+| covid/      | Confirmed cases and deaths by date, state, district | [Link](https://docs.google.com/spreadsheets/d/e/2PACX-1vTpGgFszhHhMlzh-ePv3tRj5Arpv7uyicPPDgkCS7-Ms3nE6OvofQWBFuOxOWBPtELzSmBFttxvLc20/pubhtml) |
+| demography/ | Age structure of every district and subdistrict  | [Link](https://docs.google.com/spreadsheets/d/e/2PACX-1vTpGgFszhHhMlzh-ePv3tRj5Arpv7uyicPPDgkCS7-Ms3nE6OvofQWBFuOxOWBPtELzSmBFttxvLc20/pubhtml) |
+| estimates/  | All estimates/outputs requiring assumption/imputation, e.g. district bed counts, case fatality rate predictions based on age structure | [Link](https://docs.google.com/spreadsheets/d/e/2PACX-1vTpGgFszhHhMlzh-ePv3tRj5Arpv7uyicPPDgkCS7-Ms3nE6OvofQWBFuOxOWBPtELzSmBFttxvLc20/pubhtml) |
+| hospitals/  | Hospital and clinic bed and doctor counts (Population Census, Economic Census, DLHS4)  | [PC](https://docs.google.com/spreadsheets/d/e/2PACX-1vTpGgFszhHhMlzh-ePv3tRj5Arpv7uyicPPDgkCS7-Ms3nE6OvofQWBFuOxOWBPtELzSmBFttxvLc20/pubhtml), [EC](https://docs.google.com/spreadsheets/d/e/2PACX-1vTpGgFszhHhMlzh-ePv3tRj5Arpv7uyicPPDgkCS7-Ms3nE6OvofQWBFuOxOWBPtELzSmBFttxvLc20/pubhtml), [DLHS](https://docs.google.com/spreadsheets/d/e/2PACX-1vR8pkaS86ZlwcSe0ljKyL6wR_YOGE380JrHgAhG5Z66Oq1WtD4xtsJCsdCt-yAv8Qw0X74twBeIQ9of/pubhtml#) |
+| keys/       | Correspondences to link different datasets  | [Link](https://docs.google.com/spreadsheets/d/e/2PACX-1vTpGgFszhHhMlzh-ePv3tRj5Arpv7uyicPPDgkCS7-Ms3nE6OvofQWBFuOxOWBPtELzSmBFttxvLc20/pubhtml) |
 
 ### Code Globals
 
@@ -100,20 +102,13 @@ A global can be set in Stata with e.g. `global tmp temporary/directory/location`
 This repository is structured such that the first half runs on
 DDL servers to produce datasets that serve as inputs
 for the COVID-related analytics, like the EC microdata file, the DLHS
-district-level aggregates, and a shortened VD/TD/PCA. These files have
-been compressed into a single archive available
-[here](https://dl.dropboxusercontent.com/s/80igbve4f751rz1/ddl_covid_input_data.tar.gz?dl=0). 
+district-level aggregates, and a shortened VD/TD/PCA. The second half 
+then needs to run on those files to produce the final
+outputs, like the hospital bed estimates. 
 
-The second half then needs to run on those files to produce the final
-outputs, like the hospital bed estimates. If you are interested in
-downloading those data without running any of the code, you can do so
-[here](https://dl.dropboxusercontent.com/s/ig9u8ol45445vdl/ddl_covid_output_data.tar.gz?dl=0).
+You can download the data here:
 
-## Metadata
-
-Metadata tables describing the datasets and variable specifications
-for these data can be found
-[here](https://github.com/devdatalab/covid/blob/master/assets/metadata.md).
+[![Download Data](assets/download_button.png)](https://www.dropbox.com/sh/y949ncp39towulf/AABs8_dECTzr38GdS7BneTH7a?dl=0)
 
 ## The Team
 
