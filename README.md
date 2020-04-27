@@ -124,6 +124,12 @@ You can download the data here:
 
 [![Download Data](assets/download_button.png)](https://www.dropbox.com/sh/y949ncp39towulf/AABs8_dECTzr38GdS7BneTH7a?dl=0)
 
+## Bugs / Requests
+
+If you come across bugs in the data or have a specific data request
+that we are likely to have, you can email covid@devdatalab.org or
+email Paul, Sam or Toby directly.
+
 ## The Team
 
 This repo is a collaborative effort led by the Development Data Lab, co-founded by Sam Asher, Toby Lunt, and Paul Novosad. Additional contributors: Aditi Bhowmick, Ali Campion, Radhika Jain, Sam Besse. 
