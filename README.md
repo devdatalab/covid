@@ -30,7 +30,7 @@ continue to provide and develop this service. If you are interested in
 funding more rapid development of this data platform, please contact
 us at covid@devdatalab.org.
 
-[![Download Data](assets/download_button.png)](https://www.dropbox.com/sh/y949ncp39towulf/AABs8_dECTzr38GdS7BneTH7a?dl=0)
+<p align="center"><a target="_blank" href="https://www.dropbox.com/sh/y949ncp39towulf/AABs8_dECTzr38GdS7BneTH7a?dl=0"><img src="https://raw.githubusercontent.com/devdatalab/covid/master/assets/download_button.png"/></a></p>
 
 ## Data Currently Available
 
@@ -55,7 +55,7 @@ us at covid@devdatalab.org.
 | Health staff | Number of doctors, nurses, employees of health centers, etc. | State/District/Subdistrict | Total/Urban/Rural | COVID testing and cases | Numbers tested and infected, date of first confirmed case, etc | State (potentially district) | 
 | Sectoral composition | Share of employment in important sectors of the economy | State/District/Subdistrict | 
 
-| [![Hospital Beds by District](assets/dlhs4_perk_beds_pubpriv.png?raw=true "Hospital Beds")](http://www.devdatalab.org/covid_hospital_beds) | 
+| [![Hospital Beds by District](assets/hospital-beds.png?raw=true "Hospital Beds")](http://www.devdatalab.org/covid_hospital_beds) | 
 |:--:| 
 | *Hospital Bed Availability by District* |
 
@@ -83,7 +83,7 @@ The full build, including both code and data, is diagrammatically described [her
 | demography/ | Age structure of every district and subdistrict  | [Link](https://docs.google.com/spreadsheets/d/e/2PACX-1vSyQghmU8rKxC_1NWAUKMa1-DwjT95XmmmQO5b1nuzj48Tjmq8cDvZRaN1C59JgY7eRapMHtnmYY3_k/pubhtml) |
 | estimates/  | All estimates/outputs requiring assumption/imputation, e.g. district bed counts, case fatality rate predictions based on age structure | [Link](https://docs.google.com/spreadsheets/d/e/2PACX-1vQL3zu-_LMCV3gIjk1NOGWJVwDwcspl2lI7lvvRUuUgRN3I-X9QFe9BUhdr3dhROpTItTiiUxP_-kU9/pubhtml) |
 | hospitals/  | Hospital and clinic bed and doctor counts (Population Census, Economic Census, DLHS4)  | [PC](https://docs.google.com/spreadsheets/d/e/2PACX-1vTpGgFszhHhMlzh-ePv3tRj5Arpv7uyicPPDgkCS7-Ms3nE6OvofQWBFuOxOWBPtELzSmBFttxvLc20/pubhtml), [EC](https://docs.google.com/spreadsheets/d/e/2PACX-1vSq7qkpXS2QFatP_35deNi0ZeHNVgSMr4JHKaxx3pZgefp4cw4iqRMo0GRPMe0-h3n6BEoHPuzQEgmc/pubhtml), [DLHS](https://docs.google.com/spreadsheets/d/e/2PACX-1vR8pkaS86ZlwcSe0ljKyL6wR_YOGE380JrHgAhG5Z66Oq1WtD4xtsJCsdCt-yAv8Qw0X74twBeIQ9of/pubhtml#) |
-| keys/       | Correspondences to link different datasets  | [Link]() |
+| keys/       | Correspondences to link different datasets  |  |
 
 ### Code Globals
 
