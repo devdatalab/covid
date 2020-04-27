@@ -30,7 +30,7 @@ continue to provide and develop this service. If you are interested in
 funding more rapid development of this data platform, please contact
 us at covid@devdatalab.org.
 
-[![Download Data](assets/download_button.png)](https://www.dropbox.com/sh/y949ncp39towulf/AABs8_dECTzr38GdS7BneTH7a?dl=0)
+<p align="center"><a target="_blank" href="https://www.dropbox.com/sh/y949ncp39towulf/AABs8_dECTzr38GdS7BneTH7a?dl=0"><img src="https://raw.githubusercontent.com/devdatalab/covid/master/assets/download_button.png"/></a></p>
 
 ## Data Currently Available
 
