@@ -241,6 +241,12 @@ foreach level in district subdistrict {
     gen `i'_t_share = `i'_t / pc11_pca_tot_t
   }
 
+  /* drop SECC populations which are not used and are less reliable than the pop census */
+  drop secc_pop_*
+
+  /* drop other extraneous fields */
+  drop _merge_u
+  
   /* save totals */
   label data ""
   cap mkdir $covidpub/demography

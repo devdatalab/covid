@@ -8,6 +8,6 @@ keep if inlist(nic, 861, 862, 869, 871, 872, 873, 879)
 drop *shric*
 
 /* only keep the sector, location, employment, and activity fields */
-keep sector count_all emp_all gov nic ec13_state_id ec13_district_id ec13_subdistrict_id ec13_village_id ec13_town_id
+keep sector emp_all gov nic ec13_state_id ec13_district_id ec13_subdistrict_id ec13_village_id ec13_town_id
 
 save $covidpub/hospitals/ec_hosp_microdata, replace

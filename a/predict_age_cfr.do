@@ -55,12 +55,6 @@ foreach level in district subdistrict {
     /* estimate the probability of death given infection at the district level */
     bys `ids': egen `level'_estimated_cfr_`l' = total(est_p_death_age)
     
-    /* multiply the CFR by a multiplication factor to account for India's higher comorbidity population and weaker health system.
-    NOTE: We have very little idea what this multiplier should be.
-    Needs to be informed by Indian CFR data when we think it is reliable. */
-    global india_multiplier 3
-    replace `level'_estimated_cfr_`l' = `level'_estimated_cfr_`l' * $india_multiplier
-    
     /* convert age_bins back to numeric */
     replace age_bins = subinstr(age_bins, "age_", "", .)
     destring age_bins, replace
@@ -91,7 +85,23 @@ foreach level in district subdistrict {
   use $tmp/cfr_t
   merge 1:1 `ids' using $tmp/cfr_r, assert(match) nogen
   merge 1:1 `ids' using $tmp/cfr_u, assert(match) nogen
+
+  /* NOTE: We have no idea what the aggregate CFR should be in India. Rather than provide
+           a misleading aggregate number when we don't know, we just normalize the data
+           to a median value of 1. 1.7 means 70% more than the median (sub)district. */
+  sum `level'_estimated_cfr_t, d
+  replace `level'_estimated_cfr_t = `level'_estimated_cfr_t / `r(p50)'
+  replace `level'_estimated_cfr_r = `level'_estimated_cfr_r / `r(p50)'
+  replace `level'_estimated_cfr_u = `level'_estimated_cfr_u / `r(p50)'
+
+  /* If you wanted to match Italy's age-specific mortality exactly, you would multiply by 0.00784 */
   
+  /* If you wanted to match South Korea's age-specific mortality, you would multiply by about 0.00392  */
+  
+  /* If you wanted the median district to match India's aggregate CFR
+  of 3.1%, you would multiply by 0.031. But this CFR is likely biased
+  upward-- note that this is assuming India's age-specific mortality
+  rate would be 10x that of South Korea.  */
   order `ids' pc11_pca* `level'_estimated_cfr_*
 
   save $covidpub/estimates/`level'_age_dist_cfr, replace

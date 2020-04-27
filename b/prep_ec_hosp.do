@@ -5,6 +5,9 @@ use $covidpub/hospitals/ec_hosp_microdata, clear
          on gov hospitals with smaller thresholds. */
 keep if emp_all >= 5
 
+/* create a firm-level counter t oget a firm count */
+gen count_all = 1
+
 /* collapse count and employment in each type of facility, by ec13 code */
 /* note village id and town id are the same thing */
 destring sector, replace
