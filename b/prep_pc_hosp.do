@@ -205,22 +205,20 @@ cap drop *_pc *_pk
 foreach x of var *_beds {
 
   /* calculate district level means for each variable */
-  bys pc11_state_id pc11_district_id: egen m_`x' = mean(`x')
+  bys pc11_state_id pc11_district_id: egen m_`x' = mean(`x') if urban == 1
 
   /* replace values with mean in flagged vars */
   replace `x' = m_`x' if beds_impute == 1
 }
 
 /* doctors */
-foreach x of var pc11_td_all_hosp pc11_td_disp pc11_td_tbc pc11_td_nh pc11_td_mh {
+foreach x of var *_doc_tot *_doc_pos {
   
   /* calculate district level means for each variable */
-  bys pc11_state_id pc11_district_id: egen m_`x'_doc_tot = mean(`x'_doc_tot)
-  bys pc11_state_id pc11_district_id: egen m_`x'_doc_pos = mean(`x'_doc_pos)
+  bys pc11_state_id pc11_district_id: egen m_`x' = mean(`x') if urban == 1
 
   /* replace values with mean in flagged vars */
-  replace `x'_doc_tot = m_`x'_doc_tot if docs_impute == 1
-  replace `x'_doc_pos = m_`x'_doc_pos if docs_impute == 1
+  replace `x' = m_`x' if docs_impute == 1
 }
 
 /* drop unnecessary vars */
