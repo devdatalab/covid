@@ -180,25 +180,51 @@ sum pc11_td_mh_beds_pc, d
 sort pc11_td_mh_pc 
 list pc11_td_mh_pc pc11_td_mh_beds_pc pc11_td_mh_beds_pc pc11_td_mh pc11_td_mh_beds pc11_td_mh_beds pc11_pca_tot_p if pc11_td_mh_beds_pc > 0.005 & !mi(pc11_td_mh_beds_pc) & urban == 1
 
+/* Flag obs with high population and 0 allo beds and docs per thousand ppl */
+/* High population defined as pop >= 100,000  */
+/* Note: we are focusing just on allopathic hosp as they are the most prevalent facility type in towns */
+/* For flagged obs, doc and bed vars were replaced with district means */
 
-/* outliers at the lower tail */
+/* doctors */
+gen pc11_td_all_hosp_doc_pk =  pc11_td_all_hosp_doc_pc * 1000
+gen docs_impute = 1 if pc11_td_all_hosp_doc_pk == 0 & !mi(pc11_td_all_hosp_doc_pk) & pc11_pca_tot_p >= 100000 & urban == 1
 
-/* check how many highly populated (>500000) towns have less than 0.00003 per capita clinics */
-/* 0.00003 is the 50-75th pctl of the clinic per capita variables acc to the output in code above */
+/* note - 38 towns have been flagged by the docs_impute variable */
 
-gen centers_low = .
+/* beds */
+gen pc11_td_all_hosp_beds_pk =  pc11_td_all_hosp_beds_pc * 1000
+gen beds_impute = 1 if pc11_td_all_hosp_beds_pk == 0 & !mi(pc11_td_all_hosp_beds_pk) & pc11_pca_tot_p >= 100000 & urban == 1
 
-foreach x of var `centers_u' {
-  disp_nice "`x'"
+/* note - 37 towns have been flagged, these overlap with towns flagged above */
 
-  /* check how many towns for each type of center are at the extreme low tail */
-  count if `x'_pc < 0.00003 & !mi(`x'_pc) & pc11_pca_tot_p > 500000 & urban == 1
+cap drop *_pc *_pk
 
-  /* flag these incorrect zero cases */
-  replace centers_low = 1 if `x'_pc < 0.00003 & !mi(`x'_pc) & pc11_pca_tot_p > 500000 & urban == 1
+/* calculate means at the district level to impute values */
 
+/* beds */
+foreach x of var *_beds {
+
+  /* calculate district level means for each variable */
+  bys pc11_state_id pc11_district_id: egen m_`x' = mean(`x') if urban == 1
+
+  /* replace values with mean in flagged vars */
+  replace `x' = m_`x' if beds_impute == 1
 }
+
+/* doctors */
+foreach x of var *_doc_tot *_doc_pos {
   
+  /* calculate district level means for each variable */
+  bys pc11_state_id pc11_district_id: egen m_`x' = mean(`x') if urban == 1
+
+  /* replace values with mean in flagged vars */
+  replace `x' = m_`x' if docs_impute == 1
+}
+
+/* drop unnecessary vars */
+drop m_* *_impute
+
+
 /* in the end, we didn't drop any urban outliers because all of these were either
   in the ballpark or were very low numbers in levels and thus don't affect district
   numbers much. */

@@ -3,7 +3,6 @@
 /* globals that need to be set:
 $tmp -- a temporary folder
 $ccode -- this root folder for this repo
-$hosp -- output folder for hospital data
 $covidpub -- processed data used as inputs for COVID variable construction
 */
 
