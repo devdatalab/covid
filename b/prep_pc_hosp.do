@@ -183,13 +183,13 @@ list pc11_td_mh_pc pc11_td_mh_beds_pc pc11_td_mh_beds_pc pc11_td_mh pc11_td_mh_b
 /* Flag obs with high population and 0 allo beds and docs per thousand ppl */
 /* High population defined as pop >= 100,000  */
 /* Note: we are focusing just on allopathic hosp as they are the most prevalent facility type in towns */
-/* For flagegd obs, doc and bed vars were replaced with district means */
+/* For flaggrd obs, doc and bed vars were replaced with district means */
 
 /* doctors */
 gen pc11_td_all_hosp_doc_pk =  pc11_td_all_hosp_doc_pc * 1000
 gen docs_impute = 1 if pc11_td_all_hosp_doc_pk == 0 & !mi(pc11_td_all_hosp_doc_pk) & pc11_pca_tot_p >= 100000 & urban == 1
 
-/* note - 38 towns have been flagged by the docs_low variable */
+/* note - 38 towns have been flagged by the docs_impute variable */
 
 /* beds */
 gen pc11_td_all_hosp_beds_pk =  pc11_td_all_hosp_beds_pc * 1000
