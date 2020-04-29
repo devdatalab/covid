@@ -62,7 +62,7 @@ in a csv/ subfolder in each path.
 | Health staff | Number of doctors, nurses, employees of health centers, etc. | State/District/Subdistrict | Total/Urban/Rural | COVID testing and cases | Numbers tested and infected, date of first confirmed case, etc | State (potentially district) | 
 | Sectoral composition | Share of employment in important sectors of the economy | State/District/Subdistrict | 
 
-| [![Hospital Beds by District](assets/hospital-beds.png?raw=true "Hospital Beds")](http://www.devdatalab.org/covid_hospital_beds) | 
+| <a href="http://www.devdatalab.org/covid_hospital_beds" target="_blank"><img src="https://raw.githubusercontent.com/devdatalab/covid/master/assets/hospital-beds.png" width="600" height="600"></a> | 
 |:--:| 
 | *Hospital Bed Availability by District* |
 
