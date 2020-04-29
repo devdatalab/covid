@@ -34,5 +34,7 @@ foreach level in district subdistrict {
 /* Itemwise Monthly */
 /********************/
 
-xmluse "$health/nrhm_hmis/raw/itemwise_monthly/district/2019-2020/Goa.xls", doctype(excel) clear
+/* call python to read .xls html files and save as csv's */
+
+/* process in stata */
 
