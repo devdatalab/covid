@@ -26,13 +26,47 @@ foreach level in district subdistrict {
 }
 
 
-/****************/
-/* Process Data */
-/****************/
+/***************************/
+/* Ingest and Process Data */
+/***************************/
+
+/* Convert XML Data into csv for 2019-2020*/
+shell python -c "from b.retrieve_case_data import read_hmis_csv; read_hmis_csv('2019-2020','$tmp')"
+
+/* Append all csv data for 2019-2020*/
+local filelist_2020 : dir "$tmp/nrhm_hmis/itemwise_monthly/district/2019-2020" files "*.csv"
+local temp
+
+foreach i in `filelist_2020'{
+  preserve
+  import delimited "$tmp/nrhm_hmis/itemwise_monthly/district/2019-2020/`i'", clear
+  save temp,replace
+  restore
+  append using temp, force
+}
+
+
+
+/* Rename important varibales */
+rename v4 gloves_balance_last_month  
+rename v193 inpatient_acute_respiratory
+rename v194 inpatient_tuberculosis
+rename v198 emergency_total
+rename v231 testing_lab_tests_total
+rename v108 bcg_vaccination
+rename v93 pentav1_vaccination
+rename v104 polio_ipv1_vaccination
+
+/* Can't seem to make a built directory */
+// mkdir $health/nrhm_hmis/built
+// save $health/nrhm_hmis/built/district_wise_health_data
+
+/* This doesn't seem to work either */
+save $health/nrhm_hmis/district_wise_health_data, replace
 
 /********************/
 /* Itemwise Monthly */
 /********************/
 
-xmluse "$health/nrhm_hmis/raw/itemwise_monthly/district/2019-2020/Goa.xls", doctype(excel) clear
+
 
