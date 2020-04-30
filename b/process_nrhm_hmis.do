@@ -8,6 +8,7 @@ cap mkdir $health/nrhm_hmis/raw/itemwise_comparison/
 cap mkdir $health/nrhm_hmis/raw/itemwise_monthly/
 cap mkdir $health/nrhm_hmis/raw/itemwise_monthly/district
 cap mkdir $health/nrhm_hmis/raw/itemwise_monthly/subdistrict
+cap mkdir $health/nrhm_hmis/built
 cap mkdir $tmp/nrhm_hmis
 cap mkdir $tmp/nrhm_hmis/itemwise_monthly/
 cap mkdir $tmp/nrhm_hmis/itemwise_monthly/district
@@ -29,23 +30,50 @@ foreach level in district subdistrict {
 /***************************/
 /* Ingest and Process Data */
 /***************************/
+cd $ddl/covid
+
+/* set the year- in the future we can loop over all the years and either save the 
+   separately or in one full dataset with all years */
+local year "2019-2020"
 
 /* Convert XML Data into csv for 2019-2020*/
-shell python -c "from b.retrieve_case_data import read_hmis_csv; read_hmis_csv('2019-2020','$tmp')"
+shell python -c "from b.retrieve_case_data import read_hmis_csv; read_hmis_csv('`year'','$tmp')"
 
 /* Append all csv data for 2019-2020*/
-local filelist_2020 : dir "$tmp/nrhm_hmis/itemwise_monthly/district/2019-2020" files "*.csv"
-local temp
+local filelist : dir "$tmp/nrhm_hmis/itemwise_monthly/district/2019-2020" files "*.csv"
 
-foreach i in `filelist_2020'{
-  preserve
-  import delimited "$tmp/nrhm_hmis/itemwise_monthly/district/2019-2020/`i'", clear
-  save temp,replace
-  restore
-  append using temp, force
+/* save an empty tempfile to hold all appended states */
+clear
+tempfile allstates
+save `allstates', emptyok
+
+/* cycle through each state file */
+foreach i in `filelist'{
+
+  /* skip the variable definitions */
+  if "`i'" == "hmis_variable_definitions.csv" continue
+
+  /* import  the csv*/
+  import delimited "$tmp/nrhm_hmis/itemwise_monthly/district/2019-2020/`i'", varn(1) clear
+
+  /* double check to make sure this has real data, and is not the variable defintion csv  */
+  cap assert `c(k)' > 4
+  if _rc != 0 {
+    di "`i' is not a state dataset, skipping"
+    continue
+  }
+  
+  /* generate a state and year variable */
+  gen state = "`i'"
+  gen year = "`year'"
+
+  /* bring identifying variables to the front */
+  order state district year month category
+
+  /* append the new state to the full data */
+  append using `allstates', force
+  save `allstates', replace
 }
-
-
 
 /* Rename important varibales */
 rename v4 gloves_balance_last_month  
@@ -57,9 +85,7 @@ rename v108 bcg_vaccination
 rename v93 pentav1_vaccination
 rename v104 polio_ipv1_vaccination
 
-/* Can't seem to make a built directory */
-// mkdir $health/nrhm_hmis/built
-// save $health/nrhm_hmis/built/district_wise_health_data
 
-/* This doesn't seem to work either */
-save $health/nrhm_hmis/district_wise_health_data, replace
+/* save the data */
+cap mkdir $health/nrhm_hmis/built/`year'
+save $health/nrhm_hmis/built/`year'/district_wise_health_data
