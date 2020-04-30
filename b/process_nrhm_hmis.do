@@ -63,10 +63,3 @@ rename v104 polio_ipv1_vaccination
 
 /* This doesn't seem to work either */
 save $health/nrhm_hmis/district_wise_health_data, replace
-
-/********************/
-/* Itemwise Monthly */
-/********************/
-
-
-
