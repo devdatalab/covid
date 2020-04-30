@@ -36,6 +36,9 @@ cd $ddl/covid
    separately or in one full dataset with all years */
 local year "2019-2020"
 
+/* make directory for year-specific results */
+cap mkdir $health/nrhm_hmis/built/`year'
+
 /* Convert XML Data into csv for 2019-2020*/
 shell python -c "from b.retrieve_case_data import read_hmis_csv; read_hmis_csv('`year'','$tmp')"
 
@@ -54,7 +57,7 @@ foreach i in `filelist'{
   if "`i'" == "hmis_variable_definitions.csv" continue
 
   /* import  the csv*/
-  import delimited "$tmp/nrhm_hmis/itemwise_monthly/district/2019-2020/`i'", varn(1) clear
+  import delimited "$tmp/nrhm_hmis/itemwise_monthly/district/`year'/`i'", varn(1) clear
 
   /* double check to make sure this has real data, and is not the variable defintion csv  */
   cap assert `c(k)' > 4
@@ -75,6 +78,17 @@ foreach i in `filelist'{
   save `allstates', replace
 }
 
+/* read in variable definitions and save as a stata file */
+import delimited using $tmp/nrhm_hmis/itemwise_monthly/district/`year'/hmis_variable_definitions.csv, clear charset("utf-8")
+
+/* rename variable headers */
+ren v1 variable
+ren v2 description
+drop in 1
+
+/* save variable descriptions */
+save $health/nrhm_hmis/built/`year'/hmis_variable_definitions, replace
+
 /* Rename important varibales */
 rename v4 gloves_balance_last_month  
 rename v193 inpatient_acute_respiratory
@@ -85,7 +99,5 @@ rename v108 bcg_vaccination
 rename v93 pentav1_vaccination
 rename v104 polio_ipv1_vaccination
 
-
 /* save the data */
-cap mkdir $health/nrhm_hmis/built/`year'
-save $health/nrhm_hmis/built/`year'/district_wise_health_data
+save $health/nrhm_hmis/built/`year'/district_wise_health_data, replace
