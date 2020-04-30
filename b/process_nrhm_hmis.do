@@ -47,8 +47,7 @@ local filelist : dir "$tmp/nrhm_hmis/itemwise_monthly/district/2019-2020" files 
 
 /* save an empty tempfile to hold all appended states */
 clear
-tempfile allstates
-save `allstates', emptyok
+save $tmp/hmis_allstates, replace emptyok
 
 /* cycle through each state file */
 foreach i in `filelist'{
@@ -74,9 +73,25 @@ foreach i in `filelist'{
   order state district year month category
 
   /* append the new state to the full data */
-  append using `allstates', force
-  save `allstates', replace
+  append using $tmp/hmis_allstates, force
+  save $tmp/hmis_allstates, replace
 }
+
+/* remove the .csv from the state name */
+replace state = subinstr(state, ".csv", "", .)
+
+/* Rename important varibales */
+rename v405 gloves_balance_last_month  
+rename v193 inpatient_acute_respiratory
+rename v194 inpatient_tuberculosis
+rename v198 emergency_total
+rename v231 testing_lab_tests_total
+rename v108 bcg_vaccination
+rename v93 pentav1_vaccination
+rename v104 polio_ipv1_vaccination
+
+/* save the data */
+save $health/nrhm_hmis/built/`year'/district_wise_health_data, replace
 
 /* read in variable definitions and save as a stata file */
 import delimited using $tmp/nrhm_hmis/itemwise_monthly/district/`year'/hmis_variable_definitions.csv, clear charset("utf-8")
@@ -88,16 +103,3 @@ drop in 1
 
 /* save variable descriptions */
 save $health/nrhm_hmis/built/`year'/hmis_variable_definitions, replace
-
-/* Rename important varibales */
-rename v4 gloves_balance_last_month  
-rename v193 inpatient_acute_respiratory
-rename v194 inpatient_tuberculosis
-rename v198 emergency_total
-rename v231 testing_lab_tests_total
-rename v108 bcg_vaccination
-rename v93 pentav1_vaccination
-rename v104 polio_ipv1_vaccination
-
-/* save the data */
-save $health/nrhm_hmis/built/`year'/district_wise_health_data, replace

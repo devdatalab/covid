@@ -68,16 +68,28 @@ def read_hmis_csv(year, filepath):
         # transpose the dataframe
         df = df.T.reset_index()
 
+        # drop empty column
+        df = df.drop(0, axis=1)
+
+        # split the column with variable name and definition information into separate name, definition columns
+        new_rows = df.loc[3].T.str.split(".", expand=True)
+
+        # combine variable name columns
+        df.loc[1] = df.loc[1] + "." + new_rows[0].astype(str)
+
+        # combine variabel definition columns
+        df.loc[2] = df.loc[2] + "-" + new_rows[1].replace({None: ""}).astype(str)
+
         # extract just the variable names and descriptions as their own dataframe
         df_vars = df.loc[1:2].T
 
         # drop extra rows with no data
-        df_vars = df_vars.drop(["level_0", "level_1", 0]).reset_index(drop=True)
-
+        df_vars = df_vars.drop(["level_0", "level_1"]).reset_index(drop=True)
+        
         # rename the columns
         df_vars.columns = ["variable", "description"]
-
-        # drop extra rows with no data
+        
+        # drop extra rows with variable description and redundant name information
         df = df.drop([2, 3]).reset_index(drop=True)
 
         # identify all the districts
@@ -110,7 +122,8 @@ def read_hmis_csv(year, filepath):
             df_all = df_all.append(temp)
 
         # replace meaningless names with true names
-        df_all = df_all.rename(columns={"Unnamed: 1_level_0": "month", "Unnamed: 1_level_1": "category"})
+        df_all = df_all.rename(columns={"Unnamed: 1_level_0.Unnamed: 3_level_0": "month",
+                                        "Unnamed: 1_level_1.Unnamed: 3_level_1": "category"})
 
         # set the index
         df_all = df_all.set_index(["district", "month", "category"])
