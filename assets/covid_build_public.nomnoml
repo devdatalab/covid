@@ -2,8 +2,8 @@
 #.1: navigate to nomnoml.com
 #.2: copy the following UML code into the window
 #.3: use the toolbar in the top left to export the diagram
-#.3a: if you make changes, export the source and push the changes to this file in github (be sure to rename the downloaded file to match the name in github)
-#.3b: download the png and push the updated file in github (be sure to rename the downloaded file to match the name in github)
+#.3a: if you make changes, export the source and push the changes to this file in github
+#.3b: download the png and push the updated file in github
 
 #.prog: fill=#D5F1FF visual=sender italic center
 #.data: visual=roundrect align=center 
