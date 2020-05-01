@@ -50,7 +50,7 @@ def read_hmis_csv(year, filepath):
     fp = os.path.join(filepath, "nrhm_hmis", "itemwise_monthly", "district", year)
 
     # get all files in this folder
-    filelist = os.listdir(fp)
+    filelist = os.listdir(fp)[0:5]
 
     # only keep xls files
     filelist = [x for x in filelist if x.endswith(".xls")]
@@ -131,5 +131,8 @@ def read_hmis_csv(year, filepath):
         # save the data to a csv
         df_all.to_csv(os.path.join(fp, f"{i.split('.')[0]}.csv"))
 
+    # drop the duplicates variables, for each state file with X districts the variables are repeated X times
+    df_vars = df_vars.drop_duplicates()
+    
     # save the variable definitions out to a csv
     df_vars.to_csv(os.path.join(fp, "hmis_variable_definitions.csv"), index=False)
