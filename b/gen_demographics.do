@@ -123,10 +123,10 @@ foreach level in district subdistrict {
   label var pc11_pop_dens "Population per sq km (PC11)"
 
   /* keep only needed variables */
-  keep `ids' pc11_urb_share pc11_slum_pop pc11*area pc11_pop_dens 
+  keep `ids' pc11_urb_share pc11_slum_pop pc11*area pc11_pop_dens pc11*pca_tot_p  pc11*pca_tot_m pc11*pca_tot_f pc11*pca_p_lit pc11*pca_m_lit pc11*pca_f_lit  pc11*pca_p_sc pc11*pca_m_sc pc11*pca_f_sc   pc11*pca_p_st pc11*pca_m_st pc11*pca_f_st 
   
   /* order */
-  order `ids' pc11_urb_share pc11_slum_pop pc11*area pc11_pop_dens
+  order `ids' pc11_urb_share pc11_slum_pop pc11*area pc11_pop_dens  pc11*pca_tot_p  pc11*pca_tot_m pc11*pca_tot_f pc11*pca_p_lit pc11*pca_m_lit pc11*pca_f_lit  pc11*pca_p_sc pc11*pca_m_sc pc11*pca_f_sc   pc11*pca_p_st pc11*pca_m_st pc11*pca_f_st 
 
   /* save */
   compress
