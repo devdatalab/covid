@@ -28,6 +28,36 @@ def retrieve_covid19india_case_data(url, output_fp):
     df.to_csv(os.path.join(output_fp, f"covid_{key}.csv"))
 
 
+def retrieve_covindia_case_data(url, output_fp):
+    """
+    url = specific url to api provided by covindia (ex. "https://v1.api.covindia.com/covindia-raw-data")
+    output_fp = the filepath the final csv data is stored to, should be your scratch folder
+    """
+    # retrieve the json with all data
+    with urllib.request.urlopen(url) as _url:
+
+        # load the json
+        data = json.loads(_url.read().decode())
+
+    # convert the raw data to a dataframe
+    df =  pd.DataFrame.from_records(data).T
+
+    # convert date to datetime
+    df["date_obj"] = df["date"].apply(lambda x: datetime.datetime.strptime(x, "%d/%m/%Y"))
+
+    # sort on date, state, and district
+    df = df.sort_values(["date_obj", "state", "district"])
+
+    # set index
+    df = df.set_index(["date", "state", "district"])
+
+    # extract filename from the url
+    fn = url.split("/")[-1]
+        
+    # write the dataframe out as a csv
+    df.to_csv(os.path.join(output_fp, f"{fn}.csv"))
+
+    
 def retrieve_state_case_data(output_fp):
     """
     Get official state level case data
