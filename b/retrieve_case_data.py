@@ -50,7 +50,8 @@ def read_hmis_csv(year, filepath):
     fp = os.path.join(filepath, "nrhm_hmis", "itemwise_monthly", "district", year)
 
     # get all files in this folder
-    filelist = os.listdir(fp)[0:5]
+    #Remove [0:5]?
+    filelist = os.listdir(fp)
 
     # only keep xls files
     filelist = [x for x in filelist if x.endswith(".xls")]
@@ -84,7 +85,23 @@ def read_hmis_csv(year, filepath):
         df_vars = df.loc[1:2].T
 
         # drop extra rows with no data
-        df_vars = df_vars.drop(["level_0", "level_1"]).reset_index(drop=True)
+        index_col_map = {
+            "2019-2020": ["level_0", "level_1"],
+            "2018-2019": ["level_0", "level_1"],
+            "2017-2018": ["level_0", "level_1"],
+            "2016-2017": ["index"],
+            "2015-2016": ["index"],
+            "2014-2015": ["index"],
+            "2013-2014": ["index"],
+            "2012-2013": ["index"],
+            "2011-2012": ["index"],
+            "2010-2011": ["index"],
+            "2009-2010": ["index"],
+            "2008-2009": ["index"]
+        }
+    
+        # drop extra rows with no data
+        df_vars = df_vars.drop(index_col_map[year]).reset_index(drop=True)
         
         # rename the columns
         df_vars.columns = ["variable", "description"]
@@ -96,7 +113,8 @@ def read_hmis_csv(year, filepath):
         districts = list(Counter(df.loc[0]).keys())
         districts = [x for x in districts if "Unnamed" not in x]
         districts = [x for x in districts if "District" not in x]
-
+        districts = [x for x in districts if "Unnamed: 0" not in x]
+        
         # create empty dataframe to hold all final data
         df_all = pd.DataFrame()
 
@@ -104,7 +122,7 @@ def read_hmis_csv(year, filepath):
         for dist in districts:
 
             # identify all the columns with data for this district, along with identiyfing columns
-            cols = ["level_0", "level_1"] + list(df.columns[(df.loc[0]==dist).values])
+            cols = index_col_map[year] + list(df.columns[(df.loc[0]==dist).values])
 
             # extract the data
             temp = df[cols].copy()
@@ -123,10 +141,28 @@ def read_hmis_csv(year, filepath):
 
         # replace meaningless names with true names
         df_all = df_all.rename(columns={"Unnamed: 1_level_0.Unnamed: 3_level_0": "month",
-                                        "Unnamed: 1_level_1.Unnamed: 3_level_1": "category"})
+                                        "Unnamed: 1_level_1.Unnamed: 3_level_1": "category",
+                                        "Unnamed: 1.Unnamed: 3": "month"})
 
+
+        #set dictionary for index
+        index_set_map = {
+            "2019-2020": ["district", "month", "category"],
+            "2018-2019": ["district", "month", "category"],
+            "2017-2018": ["district", "month", "category"],
+            "2016-2017": ["district", "month"],
+            "2015-2016": ["district", "month"],
+            "2014-2015": ["district", "month"],
+            "2013-2014": ["district", "month"],
+            "2012-2013": ["district", "month"],
+            "2011-2012": ["district", "month"],
+            "2010-2011": ["district", "month"],
+            "2009-2010": ["district", "month"],
+            "2008-2009": ["district", "month"]
+        }
+        
         # set the index
-        df_all = df_all.set_index(["district", "month", "category"])
+        df_all = df_all.set_index(index_set_map[year])
 
         # save the data to a csv
         df_all.to_csv(os.path.join(fp, f"{i.split('.')[0]}.csv"))
@@ -136,3 +172,5 @@ def read_hmis_csv(year, filepath):
     
     # save the variable definitions out to a csv
     df_vars.to_csv(os.path.join(fp, "hmis_variable_definitions.csv"), index=False)
+
+
