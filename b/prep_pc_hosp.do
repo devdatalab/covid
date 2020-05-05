@@ -31,7 +31,7 @@ prog def clean_collapsed_data
   la var clinics "Total clinics "
   la var pmeds "Total paramedics in position"
   la var docs "Total doctors in hospitals and clinics"
-  la var docs "Total doctors in hospitals only"
+  la var docs_hosp "Total doctors in hospitals only"
   la var num_hospitals "Total hospitals"
   
   ren * pc_*
