@@ -1,6 +1,8 @@
 /* Get the most up to date case data
-data source: https://www.covid19india.org/
-direct link to api: https://api.covid19india.org/raw_data.json
+Parts A and B- data source: https://www.covid19india.org/
+               direct link to api: https://api.covid19india.org/raw_data.json
+Part C - data source: https://covindia.com/
+         direct link to api: https://v1.api.covindia.com/covindia-raw-data
 
 This file does the folllowing steps for both case data and death data:
 1. Retrieves the most recent case data, labels variables, and saves a full stata file
@@ -231,6 +233,52 @@ drop _merge
 save $covidpub/covid/covid_deaths_recoveries, replace
 cap mkdir $covid/covid/csv
 export delimited $covidpub/covid/csv/covid_deaths_recoveries.csv, replace
+
+
+/***********************************/
+/* C. COMBINED CASE AND DEATH DATA */
+/***********************************/
+/* Added 05/05/2020: pull in case data from covindia as well. */
+cd $ddl/covid
+
+/* 1. Retrieve the data */
+/* call python function to retrieve the patient-level covid data */
+shell python -c "from b.retrieve_case_data import retrieve_covindia_case_data; retrieve_covindia_case_data('https://v1.api.covindia.com/covindia-raw-data', '$tmp')"
+
+/* import the data we just pulled */
+import delimited $tmp/covindia-raw-data, clear varn(1)
+
+/* drop the python date object column */
+drop date_obj
+
+/* label variables - according to data definitions:
+   https://covindia-api-docs.readthedocs.io/en/latest/api-reference/ */
+label var date "date of case dd/mm/yyyy"
+label var time "time of the report hh:mm, if known"
+label var district "the name of the district"
+label var state "the name of the state"
+label var infected "the number of infected cases in this entry (report)"
+label var death "the number of deaths in this entry (report)"
+label var source "the source link for this entry (report)"
+
+/* save data */
+save $covidpub/covid/covindia_raw_data, replace
+
+/* get the list of states and districts used by covindia */
+shell python -c "from b.retrieve_case_data import retrieve_covindia_state_district_list; retrieve_covindia_state_district_list('$tmp')"
+
+/* import the csv output from the python function */
+import delimited $tmp/covindia_state_district_list.csv, clear varn(1)
+
+/* sort values */
+sort state district
+
+/* remove underscores */
+replace state = subinstr(state, "_", " ", .)
+replace district = subinstr(district, "_", " ", .)
+
+/* save dta file */
+save $covidpub/covid/covindia_state_district_list, replace
 
 
 /* the covid folder:

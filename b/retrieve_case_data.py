@@ -1,5 +1,5 @@
-
 from bs4 import BeautifulSoup
+import datetime
 import json
 import pandas as pd
 import os
@@ -57,6 +57,36 @@ def retrieve_covindia_case_data(url, output_fp):
     # write the dataframe out as a csv
     df.to_csv(os.path.join(output_fp, f"{fn}.csv"))
 
+def retrieve_covindia_state_district_list(output_fp):
+    """
+    get the json of states and district used by covindia
+    """
+    url = "https://covindia-api-docs.readthedocs.io/en/latest/resources/covindia-resources-list.json"
+
+    # retrieve the json file
+    r = requests.get(url)
+
+    # read in the data
+    data = r.json()
+
+    # create empty dataframe to hold all states and districts
+    df = pd.DataFrame(columns=["state", "district"])
+
+    # cycle through dictionary 
+    for k, v in data.items():
+
+        # create a dataframe for this state
+        temp = pd.DataFrame(data[k], columns=["district"])
+        temp['state'] = k
+
+        # append this state to the complete dataframe
+        df = df.append(temp, sort=False)
+
+    # order the columns
+    df = df[["state", "district"]]
+
+    # write out the dataframe
+    df.to_csv(os.path.join(output_fp, "covindia_state_district_list.csv"), index=False)
     
 def retrieve_state_case_data(output_fp):
     """
