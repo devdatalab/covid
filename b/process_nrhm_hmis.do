@@ -188,3 +188,104 @@ rename district hmis_district
 rename year hmis_year
 
 save $health/nrhm_hmis/built/district_wise_health_data_all_key, replace
+
+
+/******************************************************/
+/* Merge HMIS district key with lgd pc11 district key */
+/******************************************************/
+
+/* import data */
+use $health/nrhm_hmis/built/district_wise_health_data_all_key, clear
+
+/* format variables */
+gen lgd_state_name = lower(hmis_state)
+gen lgd_district_name = lower(hmis_district)
+
+/* format state names for merge */
+replace lgd_state_name = "andaman and nicobar islands" if hmis_state == "A & N Islands"
+replace lgd_state_name = subinstr(lgd_state_name, "&", "and", .)
+
+/* these districts are in ladakh in using data */
+replace lgd_state_name = "ladakh" if inlist(lgd_district_name, "leh ladakh", "kargil")
+
+/* format district names for merge */
+replace lgd_district_name = subinstr(lgd_district_name, "paschim", "west", .)
+replace lgd_district_name = subinstr(lgd_district_name, "purba", "east", .)
+replace lgd_district_name = subinstr(lgd_district_name, "paschimi", "west", .)
+replace lgd_district_name = subinstr(lgd_district_name, "purbi", "east", .)
+
+/* extract lgd state names and ids */
+merge m:1 lgd_state_name using $keys/lgd_pc11_state_key, gen(state_merge)
+drop state_merge
+
+/* fix lgd district name spellings */
+fix_spelling lgd_district_name, src($keys/lgd_pc11_district_key.dta) group(lgd_state_name) replace
+
+/* drop duplicates */
+bys lgd_state_name lgd_district_name : keep if _n == 1
+/* 3 duplicate obs dropped */
+
+/* merge with lgd pc11 district key */
+merge 1:1 lgd_state_name lgd_district_name using $keys/lgd_pc11_district_key, gen(hmis_lgd_merge)
+
+/* save matched and unmatched obs separately */
+savesome using $tmp/hmis_matched if hmis_lgd_merge == 3, replace
+savesome using $tmp/hmis_unmatched if hmis_lgd_merge == 1, replace
+savesome using $tmp/lgd_unmatched if hmis_lgd_merge == 2, replace
+
+/* prep for masala merge */
+use $tmp/hmis_unmatched, clear
+
+/* generate ids */
+gen idm = lgd_state_name + "=" + lgd_district_name
+
+/* drop extra vars */
+drop lgd_state_id - pc01_district_name *_merge
+
+/* these obs were masala merging incorrectly */
+replace lgd_district_name = "ayodhya" if hmis_district == "Faizabad"
+replace lgd_district_name = "purbi champaran" if hmis_district == "East Champaran"
+
+/* manual merges after checking unmatched output */
+replace lgd_district_name = "y s r" if hmis_district == "Cuddapah"
+replace lgd_district_name = "nuh" if hmis_district == "Mewat"
+replace lgd_district_name = "kalaburagi" if hmis_district == "Gulbarga"
+replace lgd_district_name = "east nimar" if hmis_district == "Khandwa"
+replace lgd_district_name = "amethi" if hmis_district == "C S M Nagar"
+replace lgd_district_name = "amroha" if hmis_district == "Jyotiba Phule Nagar"
+
+/* save */
+save $tmp/hmis_fmm, replace
+
+use $tmp/lgd_unmatched, clear
+
+/* generate ids */
+gen idu = lgd_state_name + "=" + lgd_district_name
+
+/* drop extra vars */
+drop hmis_* _fre *_merge
+
+/* save */
+save $tmp/lgd_fmm, replace
+
+/* prep using data for masala merge */
+use $tmp/hmis_fmm, clear
+
+/* merge */
+masala_merge lgd_state_name using $tmp/lgd_fmm, s1(lgd_district_name) idmaster(idm) idusing(idu) minbigram(0.2) minscore(0.6) outfile($tmp/hmis_lgd)
+drop lgd_district_name_master
+ren lgd_district_name_using lgd_district_name
+
+/* save matched separately */
+savesome using $tmp/hmis_matched_r2 if match_source < 7, replace
+
+/* append matched obs */
+use $tmp/hmis_matched, clear
+append using $tmp/hmis_matched_r2
+
+/* clean up dataset */
+drop masala* match_source idm idu *_merge
+
+/* save matched dataset */
+/* in temp folder for now, check before saving in data tree */
+save $tmp/lgd_pc11_hmis_district_key, replace
