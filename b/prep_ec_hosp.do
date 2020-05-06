@@ -1,4 +1,12 @@
-use $covidpub/hospitals/ec13_hosp_microdata, clear
+use $covidpub/hospitals/ec_hosp_microdata, clear
+
+/* require employment of at least 5 to be counted */
+/* NOTE: National Health Profile used 20, we get better correlation with DLHS/PC
+         on gov hospitals with smaller thresholds. */
+keep if emp_all >= 5
+
+/* create a firm-level counter t oget a firm count */
+gen count_all = 1
 
 /* collapse count and employment in each type of facility, by ec13 code */
 /* note village id and town id are the same thing */
@@ -42,13 +50,18 @@ ren count_all_* num_*
 drop *862* *871* *872* *879* *869* *873*
 
 ren *861* *hosp*
-
-gen     match_sector = "matched to village" if _merge_v == 3
-replace match_sector = "matched to town" if _merge_t == 3
-replace match_sector = "unmatched" if _merge_t == 1 & _merge_v == 1
 drop _merge*
 
+/* label urban/rural sector */
+recode sector 1=1 2=0
+rename sector rural
+
+/* label variables */
+// label_from_gdoc, docid("1h6G4vYL3lvy4Bi8DTY3pMT2-5aVWOBoxAm3plx4M7qQ")
+
 save $covidpub/hospitals/ec_hospitals_tv, replace
+cap mkdir $covidpub/hospitals/csv
+export delimited $covidpub/hospitals/csv/ec_hospitals_tv.csv, replace
 
 /* COLLAPSE TO DISTRICT LEVEL */
 use $covidpub/hospitals/ec_hospitals_tv, clear
@@ -59,6 +72,7 @@ ren pc11_district_id tmp_pc11_district_id
 
 /* get pc11 district ids */
 merge m:1 ec13_state_id ec13_district_id using $covidpub/keys/pc11_ec13_district_key, keepusing(pc11_state_id pc11_district_id)
+drop if _merge == 2
 assert _merge == 3
 drop _merge
 
@@ -77,4 +91,8 @@ collapse (sum) *hosp*, by(pc11_state_id pc11_district_id)
 /* prefix all vars with EC prefix */
 ren *hosp* ec_*hosp*
 
+/* label from the google sheet dictionary */
+// label_from_gdoc, docid("1h6G4vYL3lvy4Bi8DTY3pMT2-5aVWOBoxAm3plx4M7qQ")
 save $covidpub/hospitals/ec_hospitals_dist, replace
+cap mkdir $covidpub/hospitals/csv
+export delimited $covidpub/hospitals/csv/ec_hospitals_dist.csv, replace

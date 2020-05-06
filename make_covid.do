@@ -3,7 +3,7 @@
 /* globals that need to be set:
 $tmp -- a temporary folder
 $ccode -- this root folder for this repo
-$hosp -- output folder for hospital data
+$covidpub -- processed data used as inputs for COVID variable construction
 */
 
 global fast 1
@@ -24,8 +24,11 @@ do $ccode/b/prep_dlhs4_district
 /* in: TD/VD.  out: $covidpub/pc11r_hosp, pc11r_hosp */
 do $ccode/b/prep_hosp_pca_vd
 
+/* generate demographic data and save in public repo */
+do $ccode/b/gen_demographics
+
 /* prepare EC microdata on hospitals */
-/* in: raw economic census 2013.  out: $covidpub/ec13_hosp_microdata */
+/* in: raw economic census 2013.  out: $covidpub/ec_hosp_microdata */
 do $ccode/b/prep_ec_hosp_microdata
 
 /* build age distribution by district/subdistrict, using SECC + PC */

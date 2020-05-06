@@ -88,9 +88,8 @@ drop pc11_td_vet_* pc11_td_veth_*
 local centers_r pc11_td_ch_cntr pc11_td_ph_cntr pc11_td_phs_cntr pc11_td_tb_cln pc11_td_all_hosp pc11_td_disp pc11_td_mh_cln pc11_td_med_in_out_pat pc11_td_med_c_hosp_home
 local centers_u pc11_td_all_hosp pc11_td_disp pc11_td_tbc pc11_td_nh pc11_td_mh pc11_td_in_out_pat pc11_td_c_hosp_home
 
-/* drop villages that are just a couple households */
-drop if pc11_pca_tot_p < 5
-/* 1718 such cases - all rural*/
+/* drop villages that are too small to plausibly have a clinic */
+drop if pc11_pca_tot_p < 50
 
 /* REVIEW CENTERS/CLINICS OUTLIERS */
 
@@ -148,7 +147,7 @@ foreach x of var `centers_u' {
   /* list clinic outliers */
   sum `x'_pc if urban == 1, d
   list `x'_pc `x'_doc_pc `x'_beds_pc `x' `x'_doc_pos `x'_beds pc11_pca_tot_p if `x'_pc > 0.1 & !mi(`x'_pc) & urban == 1
-
+  
   /* list doc outliers */
   sum `x'_doc_pc if urban == 1, d
   list `x'_pc `x'_doc_pc `x'_beds_pc `x' `x'_doc_pos `x'_beds pc11_pca_tot_p if `x'_doc_pc > 0.1 & !mi(`x'_doc_pc) & urban == 1
@@ -180,6 +179,50 @@ list pc11_td_tbc_pc pc11_td_tbc_beds_pc pc11_td_tbc_beds_pc pc11_td_tbc pc11_td_
 sum pc11_td_mh_beds_pc, d
 sort pc11_td_mh_pc 
 list pc11_td_mh_pc pc11_td_mh_beds_pc pc11_td_mh_beds_pc pc11_td_mh pc11_td_mh_beds pc11_td_mh_beds pc11_pca_tot_p if pc11_td_mh_beds_pc > 0.005 & !mi(pc11_td_mh_beds_pc) & urban == 1
+
+/* Flag obs with high population and 0 allo beds and docs per thousand ppl */
+/* High population defined as pop >= 100,000  */
+/* Note: we are focusing just on allopathic hosp as they are the most prevalent facility type in towns */
+/* For flagged obs, doc and bed vars were replaced with district means */
+
+/* doctors */
+gen pc11_td_all_hosp_doc_pk =  pc11_td_all_hosp_doc_pc * 1000
+gen docs_impute = 1 if pc11_td_all_hosp_doc_pk == 0 & !mi(pc11_td_all_hosp_doc_pk) & pc11_pca_tot_p >= 100000 & urban == 1
+
+/* note - 38 towns have been flagged by the docs_impute variable */
+
+/* beds */
+gen pc11_td_all_hosp_beds_pk =  pc11_td_all_hosp_beds_pc * 1000
+gen beds_impute = 1 if pc11_td_all_hosp_beds_pk == 0 & !mi(pc11_td_all_hosp_beds_pk) & pc11_pca_tot_p >= 100000 & urban == 1
+
+/* note - 37 towns have been flagged, these overlap with towns flagged above */
+
+cap drop *_pc *_pk
+
+/* calculate means at the district level to impute values */
+
+/* beds */
+foreach x of var *_beds {
+
+  /* calculate district level means for each variable */
+  bys pc11_state_id pc11_district_id: egen m_`x' = mean(`x') if urban == 1
+
+  /* replace values with mean in flagged vars */
+  replace `x' = m_`x' if beds_impute == 1
+}
+
+/* doctors */
+foreach x of var *_doc_tot *_doc_pos {
+  
+  /* calculate district level means for each variable */
+  bys pc11_state_id pc11_district_id: egen m_`x' = mean(`x') if urban == 1
+
+  /* replace values with mean in flagged vars */
+  replace `x' = m_`x' if docs_impute == 1
+}
+
+/* drop unnecessary vars */
+drop m_* *_impute
 
 
 /* in the end, we didn't drop any urban outliers because all of these were either
@@ -227,10 +270,14 @@ clean_collapsed_data
 
 /* save subdistrict dataset */
 save $covidpub/hospitals/pc_hospitals_subdist, replace
+cap mkdir $covidpub/hospitals/csv
+export delimited $covidpub/hospitals/csv/pc_hospitals_subdist.csv, replace
 
 /* REPEAT COLLAPSE AT DISTRICT LEVEL */
 use $tmp/precollapse, clear
 collapse (sum) hosp* pmed_* docs_* clinics_* clinic_beds_u  pc11_pca_tot_p, by(pc11_state_id pc11_district_id )
 clean_collapsed_data
 save $covidpub/hospitals/pc_hospitals_dist, replace
+cap mkdir $covidpub/hospitals/csv
+export delimited $covidpub/hospitals/csv/pc_hospitals_dist.csv, replace
 

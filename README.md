@@ -30,16 +30,25 @@ continue to provide and develop this service. If you are interested in
 funding more rapid development of this data platform, please contact
 us at covid@devdatalab.org.
 
-## Data Currently Available
+<p align="center"><a target="_blank" href="https://www.dropbox.com/sh/y949ncp39towulf/AABs8_dECTzr38GdS7BneTH7a?dl=0"><img src="https://raw.githubusercontent.com/devdatalab/covid/master/assets/download_button.png"/></a></p>
 
-| Data              | Description | Geographic level |
-| ----------- | ----------- | ----------- |
-| Public Hospital capacity | Facilities, doctors, and beds. Sources: 2011 Population Census and DLHS-4 (2012-14). | District, Subdistrict (PC only) |
-| Private Hospitals | Public and private hospital employment from 2013 Economic Census. Can estimate private system beds based on public employment:bed ratios. | District |
-| Predicted COVID-19 mortality rates | Predictions based strictly on local age distributions, which create substantial risk differences across locations. | Subdistrict |
-|District correspondences | Keys linking current districts to 2011 Population Census districts, which are the basis of many datasets | District |
-| Demographics | 2011 Population Census (most recent) population, density, literacy rate, urbanization | State/District/Subdistrict/Town/Village |
+## Data Folder Structure and Metadata
 
+Relative paths here refer to paths in the data folder. CSV files are
+in a csv/ subfolder in each path.
+
+| Folder   | Description                                                                       | Data Files                             | Metadata                                                                                                                                         |
+| ----------- | -----------                                                                       | ----------                             | --------                                                                                                                                         |
+| covid/      | Number of confirmed cases and deaths by date, district                            | `covid/covid_cases_deaths_district`    | [Link](https://docs.google.com/spreadsheets/d/e/2PACX-1vTKTuciRsUd6pk5kWhlMyhF85Iv5x04b0njSrWzCkaN5IeEZpBwwvmSdw-mUJOp215jBgv2NPMeTHXK/pubhtml)  |
+|             | Case-level patient data with state/district ids                                   | `covid/covid_deaths_recoveries`        |                                                                                                                                                  |
+| demography/ | Age pyramid of every district and subdistrict                                     | `demography/age_bins_(sub)district_t`  | [Link](https://docs.google.com/spreadsheets/d/e/2PACX-1vSyQghmU8rKxC_1NWAUKMa1-DwjT95XmmmQO5b1nuzj48Tjmq8cDvZRaN1C59JgY7eRapMHtnmYY3_k/pubhtml)  |
+|             | (Sub)district level slum populations, pop density, urbanization rates (PC)        | `demography/pc11_demographics_(sub)district`  | [Link](https://docs.google.com/spreadsheets/d/e/2PACX-1vRX8_Qog9_KBasIRa6jjPoCPXJW5H-GHhJfCAXMotwcaAhbVQOWDxrjzBKY2m675keKVwK_2FQhTiKZ/pubhtml)  |
+| estimates/  | Modeled district hospital/clinic bed and doctor counts (EC,PC,DLHS)               | `estimates/hospitals_dist`             | [Link](https://docs.google.com/spreadsheets/d/e/2PACX-1vQL3zu-_LMCV3gIjk1NOGWJVwDwcspl2lI7lvvRUuUgRN3I-X9QFe9BUhdr3dhROpTItTiiUxP_-kU9/pubhtml)  |
+|             | Modeled age-structured based fatality rate predictions                            | `estimates/(sub)district_age_dist_cfr` |                                                                                                                                                  |
+| hospitals/  | District-level public hospital/clinic bed and doctor counts from DLHS             | `hospitals/dlhs4_hospitals_dist`       | [Link](https://docs.google.com/spreadsheets/d/e/2PACX-1vR8pkaS86ZlwcSe0ljKyL6wR_YOGE380JrHgAhG5Z66Oq1WtD4xtsJCsdCt-yAv8Qw0X74twBeIQ9of/pubhtml#) |
+|             | (Sub)district-level public hospital/clinic bed and doctor counts from Pop Census  | `hospitals/pc_hospitals_(sub)dist`     | [Link](https://docs.google.com/spreadsheets/d/e/2PACX-1vTpGgFszhHhMlzh-ePv3tRj5Arpv7uyicPPDgkCS7-Ms3nE6OvofQWBFuOxOWBPtELzSmBFttxvLc20/pubhtml)  |
+|             | District- and town/village-level hospital public/private hospital employment (EC) | `hospitals/ec_hospitals_(dist,tv)`     | [Link](https://docs.google.com/spreadsheets/d/e/2PACX-1vTpGgFszhHhMlzh-ePv3tRj5Arpv7uyicPPDgkCS7-Ms3nE6OvofQWBFuOxOWBPtELzSmBFttxvLc20/pubhtml)  |
+| keys/       | Correspondences to link different datasets                                        |                                        |                                                                                                                                                  |
 
 ## Data Identified for Inclusion
 
@@ -53,11 +62,11 @@ us at covid@devdatalab.org.
 | Health staff | Number of doctors, nurses, employees of health centers, etc. | State/District/Subdistrict | Total/Urban/Rural | COVID testing and cases | Numbers tested and infected, date of first confirmed case, etc | State (potentially district) | 
 | Sectoral composition | Share of employment in important sectors of the economy | State/District/Subdistrict | 
 
-| ![Hospital Beds by District](assets/dlhs4_perk_beds_pubpriv.png?raw=true "Hospital Beds") | 
+| <a href="http://www.devdatalab.org/covid_hospital_beds" target="_blank"><img src="https://raw.githubusercontent.com/devdatalab/covid/master/assets/hospital-beds.png" width="600" height="600"></a> | 
 |:--:| 
 | *Hospital Bed Availability by District* |
 
-## Repo Structure
+## Repo / Code Structure
 
 | Directory   | Explanation |
 | ----------- | ----------- |
@@ -69,50 +78,43 @@ us at covid@devdatalab.org.
 The root path of the folder only has one code file:
 - `make_covid.do`, which runs the full build and the full analysis.
 
-## Data Folder Structure
-
-| Directory   | Explanation |
-| ----------- | ----------- |
-| covid/      | Confirmed cases and deaths by date, state, district
-| demography/ | Age structure of every district and subdistrict  |
-| estimates/  | All estimates/outputs requiring assumption/imputation, e.g. district bed counts, case fatality rate predictions based on age structure |
-| hospitals/  | Hospital and clinic bed and doctor counts (Population Census, Economic Census, DLHS4)  |
-| keys/       | Correspondences to link different datasets  |
-
 ### Code Globals
 
 This repository's build refers to locations of code and data using
 Stata global variables. You will need to set the following globals to
 run the code:
 
-| Global   | Explanation |
-| ----------- | ----------- |
-| `$tmp`          | A temporary folder for intermediate data and outputs.
-| `$ccode`          | Root folder for this repository.  |
-| `$hosp`          | Output folder for hospital data. |
+| Global      | Explanation                                           |
+| ----------- | -----------                                           |
+| `$tmp`      | A temporary folder for intermediate data and outputs. |
+| `$ccode`    | Root folder for this repository.                      |
+| `$covidpub` | Root data folder for this repo.                       |
 
 A global can be set in Stata with e.g. `global tmp temporary/directory/location`.
+
+### Build Diagram
+
+The full build, including both code and data, is diagrammatically described [here](build.md).
 
 ## Downloading the Data
 
 This repository is structured such that the first half runs on
 DDL servers to produce datasets that serve as inputs
 for the COVID-related analytics, like the EC microdata file, the DLHS
-district-level aggregates, and a shortened VD/TD/PCA. These files have
-been compressed into a single archive available
-[here](https://dl.dropboxusercontent.com/s/80igbve4f751rz1/ddl_covid_input_data.tar.gz?dl=0). 
+district-level aggregates, and a shortened VD/TD/PCA. The second half 
+then needs to run on those files to produce the final
+outputs, like the hospital bed estimates. 
 
-The second half then needs to run on those files to produce the final
-outputs, like the hospital bed estimates. If you are interested in
-downloading those data without running any of the code, you can do so
-[here](https://dl.dropboxusercontent.com/s/ig9u8ol45445vdl/ddl_covid_output_data.tar.gz?dl=0).
+You can download the data here:
 
-## Metadata
+[![Download Data](assets/download_button.png)](https://www.dropbox.com/sh/y949ncp39towulf/AABs8_dECTzr38GdS7BneTH7a?dl=0)
 
-Metadata tables describing the datasets and variable specifications
-for these data can be found
-[here](https://github.com/devdatalab/covid/blob/master/assets/metadata.md).
+## Bugs / Requests
+
+If you come across bugs in the data or have a specific data request
+that we are likely to have, you can email covid@devdatalab.org or
+email Paul, Sam or Toby directly.
 
 ## The Team
 
-This repo is a collaborative effort led by the Development Data Lab, co-founded by Sam Asher, Toby Lunt, and Paul Novosad. Additional contributors: Aditi Bhowmick, Ali Campion, Radhika Jain, Sam Besse. 
+This repo is a collaborative effort led by the Development Data Lab, co-founded by Sam Asher, Toby Lunt, and Paul Novosad. Additional contributors: Aditi Bhowmick, Ali Campion, Radhika Jain, Sam Besse, Kritarth Jha. 

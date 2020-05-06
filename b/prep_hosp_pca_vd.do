@@ -16,6 +16,8 @@ drop _merge
 /* save rural PCA and VD subset in git repo */
 compress
 save $covidpub/hospitals/pc11r_hosp, replace
+cap mkdir $covidpub/hospitals/csv
+export delimited $covidpub/hospitals/csv/pc11r_hosp.csv, replace
 
 /*********/
 /* Towns */
@@ -42,3 +44,5 @@ drop _merge
 /* save urban PCA and VD subset in git repo */
 compress
 save $covidpub/hospitals/pc11u_hosp, replace
+cap mkdir $covidpub/hospitals/csv
+export delimited $covidpub/hospitals/csv/pc11u_hosp.csv, replace
