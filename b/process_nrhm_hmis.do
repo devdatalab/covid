@@ -197,6 +197,10 @@ save $health/nrhm_hmis/built/district_wise_health_data_all_key, replace
 /* import data */
 use $health/nrhm_hmis/built/district_wise_health_data_all_key, clear
 
+/* define programs to merge variables */
+qui do $ddl/tools/do/lgd_state_match.do
+qui do $ddl/tools/do/lgd_district_match.do
+
 /* format variables */
 lgd_state_format hmis_state
 lgd_dist_format hmis_district
