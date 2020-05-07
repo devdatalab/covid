@@ -17,12 +17,16 @@ prog def lgd_state_clean
    replace lgd_state_name = substr(lgd_state_name, 1, strpos(lgd_state_name, "(") - 1) if regexm(lgd_state_name, "\(")
     
    /* format state and clean names for merge */
-   replace lgd_state_name = "andaman and nicobar islands" if `0' == "A & N Islands"
    replace lgd_state_name = subinstr(lgd_state_name, "&", "and", .)
+   replace lgd_state_name = trim(lgd_state_name)
+   replace lgd_state_name = "andaman and nicobar islands" if `0' == "A and N Islands"
    replace lgd_state_name = "jammu and kashmir" if inlist(lgd_state_name, "jammu", "kashmir")
    replace lgd_state_name = "dadra and nagar haveli" if lgd_state_name == "d and n haveli"
    replace lgd_state_name = "andaman and nicobar islands" if lgd_state_name == "a"
    drop if inlist(lgd_state_name, "code", "state/u.t.")
+
+   /* fill in state vars */
+   replace lgd_state_name = lgd_state_name[_n-1] if mi(lgd_state_name)
 
   }
 
@@ -45,6 +49,17 @@ prog def lgd_state_match
 
    /* extract lgd state names and ids */
    merge m:1 lgd_state_name using $keys/lgd_pc11_state_key, gen(state_merge) 
+
+   /* list states that didn't merge from key  */
+   disp_nice "Unmatched master"
+   list `0' if state_merge == 1
+   disp_nice "Unmatched using"
+   list lgd_state_name if state_merge == 2
+
+   /* keep merged obs */
+   drop if state_merge == 2 
+   drop state_merge
+   drop `0'
 
   }
 
@@ -90,7 +105,7 @@ prog def lgd_dist_clean
    if "`0'" == "nss_district_name" {
    
    /* these obs masala merge incorrectly */
-   replace lgd_district_name = "ayodhya" if `0' == "faizabad"
+   replace lgd_district_name = "ayodhya" if `0' == "Faizabad"
 
    }
     
@@ -136,9 +151,6 @@ prog def lgd_dist_match
    /* prep for masala merge */
    use $tmp/master_unmatched_r1, clear
 
-   /* generate ids */
-   gen idm = lgd_state_name + "=" + lgd_district_name
-
    /* drop extra vars */
    cap drop *_merge
    cap drop lgd_state_id lgd_state_version lgd_state_name_local lgd_state_status 
@@ -160,21 +172,24 @@ prog def lgd_dist_match
    if "`0'" == "nss_district_name" {
 
    /* manual merges after checking unmatched output */   
-   replace lgd_district_name = "nuh" if `0' == "mewat"
-   replace lgd_district_name = "kalaburagi" if `0' == "gulbarga"
-   replace lgd_district_name = "amroha" if `0' == "jyotiba phule nagar"
-   replace lgd_district_name = "leh ladakh" if `0' == "leh"
-   replace lgd_district_name = "hathras" if `0' == "mahamaya nagar" 
-   replace lgd_district_name = "s.a.s nagar" if `0' == "sahibzada ajit singh"
+   replace lgd_district_name = "nuh" if `0' == "Mewat"
+   replace lgd_district_name = "kalaburagi" if `0' == "Gulbarga"
+   replace lgd_district_name = "amroha" if `0' == "Jyotiba Phule Nagar"
+   replace lgd_district_name = "leh ladakh" if `0' == "Leh"
+   replace lgd_district_name = "hathras" if `0' == "Mahamaya Nagar" 
+   replace lgd_district_name = "s.a.s nagar" if `0' == "Sahibzada Ajit Singh"
 
 
    /*expand jaintia hills into two obs*/
-   expand_n 1 if lgd_district_name == "jaintia hills", gen(dups)
+   expand 2 if lgd_district_name == "jaintia hills", gen(dups)
    replace lgd_district_name = "east jaintia hills" if dups == 1
    replace lgd_district_name = "west jaintia hills" if lgd_district_name == "jaintia hills"   
    drop dups
    }
 
+   /* generate ids */
+   gen idm = lgd_state_name + "=" + lgd_district_name
+    
    /* save */
    save $tmp/master_fmm, replace
 
@@ -214,7 +229,10 @@ prog def lgd_dist_match
 
    /* clean up dataset */
    drop masala* match_source idm idu *_merge
-   label variable lgd_dist_match "Merge level"
+   drop *_version *_local *_match *_status `0' pc01* *pc11_district_name
+   keep *_name *_id
+   order lgd_state_id lgd_district_id, first 
+   order *id
   }
 
 end    
