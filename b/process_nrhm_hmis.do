@@ -35,11 +35,11 @@ cd $ddl/covid
 /* Save all years in a macro by Looping over all years in district directory*/
 local years: dir "$tmp/nrhm_hmis/itemwise_monthly/district/" dirs "*"
 
-/* After loopig over the years macro:
-1.Make directory for all the years
+/* After looping over the years macro:
+1.Make directory for all the years(This is independent of the python code)
 2.Convert XML Data into csv for all years using the .py script */
 foreach year in `years'{
-  cap mkdir $health/nrhm_hmis/built/`i'
+  cap mkdir $health/nrhm_hmis/built/`year'
   shell python -c "from b.retrieve_case_data import read_hmis_csv; read_hmis_csv('`year'','$tmp')"
 
 }
@@ -145,12 +145,93 @@ foreach year in `years'{
 
 }
 
- /**********************************************************************************/
- /* Loop through folders and append all .dta files across years into one .dta file */
- /* for new regime of data from 2017-2018 to 2019-2020                             */
- /**********************************************************************************/
+/**********************************************************/
+/* Process Number of Hospitals/data_reporting_status data */
+/**********************************************************/
+cap mkdir $tmp/nrhm_hmis
+cap mkdir $tmp/nrhm_hmis/data_reporting_status/
 
-/* Create a local again, just in case we run this part separately. */
+/* Unzip District Reporting Status Data from zip files and save .xls files in $tmp*/
+local filelist : dir "$health/nrhm_hmis/raw/data_reporting_status" files "*.zip"
+foreach file in `filelist' {
+  !unzip -u $health/nrhm_hmis/raw/data_reporting_status/`file' -d $tmp/nrhm_hmis/data_reporting_status
+}
+
+/* Change directory so you can reference the python script correctly */
+cd $ddl/covid
+
+/* Loop over all years to extract .xls(xml) files to csv */
+/* Since the .xls files are actually xml files we extract them through a python function below */
+local years: dir "$tmp/nrhm_hmis/data_reporting_status" dirs "*-*"
+foreach year in `years'{
+  shell python -c "from b.retrieve_case_data import read_hmis_csv_hospitals; read_hmis_csv_hospitals('`year'','$tmp')"
+}
+
+/* Loop over all csv files and append them into a .dta file */
+foreach year in `years'{
+  
+  /* Append all csv data for the year */
+  local filelist : dir "$tmp/nrhm_hmis/data_reporting_status/`year'" files "*.csv"
+  
+  /* save an empty tempfile to hold all appended states */
+  clear
+  save $tmp/hmis_allstates_hospitals, replace emptyok
+  
+  /* cycle through each state file */
+  foreach i in `filelist'{
+
+    /* import  the csv*/
+    import delimited "$tmp/nrhm_hmis/data_reporting_status/`year'/`i'", varn(1) clear
+    
+    /* generate a state and year variable */
+    gen state = "`i'"
+    gen year = "`year'"
+
+    /* append the new state to the full data */
+    append using $tmp/hmis_allstates_hospitals, force
+    save $tmp/hmis_allstates_hospitals, replace
+  }
+
+  
+  /* remove the .csv from the state name */
+  replace state = subinstr(state, ".csv", "", .)
+  
+  /* replace month as a numeric integer from 1-12 */
+  gen month_num = month(date(month,"M"))
+  
+  /*  put month name as value labels
+  (labutil has a useful function for this, hence the ssc install) */
+  ssc install labutil
+  labmask month_num, values(month) lblname(name_of_the_month)
+  
+  /* Keep just one month variable */
+  drop month
+  rename month_num month
+  
+  /* Save the financial year as a separate variable, remove it if necessary */
+  gen year_financial = year
+  
+  /* Replace year as integer; earlier part of string if Apr-Dec; latter part if  Jan-Mar */
+  replace year = regexs(1) if (regexm(year, "^(.+)-(.+)$") & month <=12 & month >= 4) 
+  replace year = regexs(2) if (regexm(year, "^(.+)-(.+)$") & month <4) 
+  destring year, replace
+
+  /* get identifying variables to the front */
+  order state district year month category
+
+  /* save the data */
+  save $health/nrhm_hmis/built/`year'/district_wise_health_data_hospitals_`year', replace
+
+}
+
+/*************************************************************/
+/* Merge hospitals reporting data with itemwise_monthly data */
+/* And append them across years                              */
+/*************************************************************/
+
+/* Create a local for recent years */
+/* Is redefining a local you've used before in a do file
+a good idea?*/
 local years "2017-2018 2018-2019 2019-2020"
 
 /* Create temopfile to store all years' data */
@@ -159,7 +240,8 @@ save $tmp/hmis_allyears, replace emptyok
 
 /* Loop over different years, and use tempfile to append all years' data into one file */
 foreach year in `years'{
-  use $health/nrhm_hmis/built/`year'/district_wise_health_data,clear
+  use $health/nrhm_hmis/built/`year'/district_wise_health_data_`year',clear
+  merge 1:1 state district year month category year_financial using $health/nrhm_hmis/built/`year'/district_wise_health_data_hospitals_`year'
   append using $tmp/hmis_allyears
   save $tmp/hmis_allyears, replace
 }
@@ -174,19 +256,27 @@ label var year "Calendar Year"
 label var category "Total/Rural/Urban/Private/Public"
 label var year_financial "Financial Year for whcih the data is reported"
 
-/* Save data */
+/*  Rename and label necessary/interesting variables*/
+
+/* Drop unnecessary variables */
+drop v* _merge
+
+/* Save Recent Years' data */
 save $health/nrhm_hmis/built/district_wise_health_data_all, replace
+
 
 /**************************************/
 /* Create state district matching key */
 /**************************************/
-
+use $health/nrhm_hmis/built/district_wise_health_data_all, clear
 contract year state district
 
 rename state hmis_state
 rename district hmis_district
 rename year hmis_year
 
+/* Currently for 2017/18- 2019-2020 data, all years have same # of districts */
+contract hmis_state hmis_district
 save $health/nrhm_hmis/built/district_wise_health_data_all_key, replace
 
 
