@@ -20,11 +20,15 @@ prog def lgd_state_clean
    replace lgd_state_name = subinstr(lgd_state_name, "&", "and", .)
    replace lgd_state_name = trim(lgd_state_name)
    replace lgd_state_name = "andaman and nicobar islands" if `0' == "A & N Islands"
-   replace lgd_state_name = "jammu and kashmir" if inlist(lgd_state_name, "jammu", "kashmir")
+   replace lgd_state_name = "jammu and kashmir" if inlist(lgd_state_name, "jammu", "kashmir", "pok")
    replace lgd_state_name = "dadra and nagar haveli" if lgd_state_name == "d and n haveli"
    replace lgd_state_name = "andaman and nicobar islands" if lgd_state_name == "a"
    drop if inlist(lgd_state_name, "code", "state/u.t.")
-
+   replace lgd_state_name = "andaman and nicobar islands" if lgd_state_name == "andaman and nicobar"
+   replace lgd_state_name = "maharashtra" if lgd_state_name == "maharastra"
+   replace lgd_state_name = "chhattisgarh" if lgd_state_name == "chattisgarh"
+   replace lgd_state_name = "odisha" if lgd_state_name == "orissa"
+    
    /* fill in state vars */
    replace lgd_state_name = lgd_state_name[_n-1] if mi(lgd_state_name)
 
@@ -92,8 +96,12 @@ prog def lgd_dist_clean
    replace lgd_district_name = subinstr(lgd_district_name, "purbi", "east", .)
 
    /*these districts are in ladakh in using data, but may not be in master data */
-   replace lgd_state_name = "ladakh" if inlist(lgd_district_name, "leh ladakh", "kargil", "leh")
- 
+   replace lgd_state_name = "ladakh" if inlist(lgd_district_name, "leh ladakh", "kargil", "leh", "ladakh")
+
+   /*these districts are in telangana in using data but may not be in master data  */
+   replace lgd_state_name = "telangana" if inlist(lgd_district_name, "mahbubnagar", "nalgonda", "khammam", "nizamabad", "hyderabad")
+   replace lgd_state_name = "telangana" if inlist(lgd_district_name, "warangal", "karimnagar", "medak", "rangareddi", "adilabad")
+    
    if "`0'" == "hmis_district" {
       
    /* these obs masala merge incorrectly */
@@ -109,6 +117,14 @@ prog def lgd_dist_clean
 
    }
     
+   if "`0'" == "district" {
+
+   /* these obs masala merge incorrectly */
+   replace lgd_district_name = "purbi champaran" if `0' == "Purba Champaran"
+   replace lgd_district_name = "shahid bhagat singh nagar" if `0' == "SBS Nagar"
+   replace lgd_district_name = "ayodhya" if `0' == "Faizabad"
+    }
+      
    /*fix lgd district name spellings */
    fix_spelling lgd_district_name, src($keys/lgd_pc11_district_key.dta) group(lgd_state_name) replace
 
@@ -174,7 +190,7 @@ prog def lgd_dist_match
    /* manual merges after checking unmatched output */   
    replace lgd_district_name = "nuh" if `0' == "Mewat"
    replace lgd_district_name = "kalaburagi" if `0' == "Gulbarga"
-   replace lgd_district_name = "amroha" if `0' == "Jyotiba Phule Nagar"
+   replace lgd_district_name = "amroha" if `0' == "Jyotiba Nagar"
    replace lgd_district_name = "leh ladakh" if `0' == "Leh"
    replace lgd_district_name = "hathras" if `0' == "Mahamaya Nagar" 
    replace lgd_district_name = "s.a.s nagar" if `0' == "Sahibzada Ajit Singh"
@@ -187,6 +203,32 @@ prog def lgd_dist_match
    drop dups
    }
 
+   if "`0'" == "district" {
+
+   /* manual merges after checking unmatched output */   
+   replace lgd_district_name = "nuh" if `0' == "Mewat"
+   replace lgd_district_name = "kalaburagi" if `0' == "Gulbarga"
+   replace lgd_district_name = "amroha" if `0' == "Phule"
+   replace lgd_district_name = "leh ladakh" if `0' == "Ladakh"
+   replace lgd_district_name = "sant kabeer nagar" if `0' == "SKN"
+   replace lgd_district_name = "bhadohi" if `0' == "SRNB"
+   replace lgd_district_name = "hathras" if `0' == "Mahamaya Nagar"    
+
+   /*expand jaintia hills into two obs*/
+   expand 2 if lgd_district_name == "jaintia hills", gen(dups)
+   replace lgd_district_name = "east jaintia hills" if dups == 1
+   replace lgd_district_name = "west jaintia hills" if lgd_district_name == "jaintia hills"   
+   drop dups
+      
+   /*expand warangal into two obs*/
+   expand 2 if lgd_district_name == "warangal", gen(dups)
+   replace lgd_district_name = "warangal rural" if dups == 1
+   replace lgd_district_name = "warangal urban" if lgd_district_name == "warangal"   
+   drop dups
+      
+   }
+
+    
    /* generate ids */
    gen idm = lgd_state_name + "=" + lgd_district_name
     
