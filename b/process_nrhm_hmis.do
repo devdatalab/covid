@@ -288,18 +288,21 @@ save $health/nrhm_hmis/built/district_wise_health_data_all_key, replace
 use $health/nrhm_hmis/built/district_wise_health_data_all_key, clear
 
 /* define programs to merge variables */
-qui do $ddl/tools/do/lgd_state_match.do
-qui do $ddl/tools/do/lgd_district_match.do
+qui do $ddl/covid/covid_progs.do
+
+/* gen hmis id */
+gen hmis_id = hmis_state + "=" + hmis_district
 
 /* format variables */
-lgd_state_format hmis_state
-lgd_dist_format hmis_district
+lgd_state_clean hmis_state
+lgd_dist_clean hmis_district
 
 /* merge */
 lgd_state_match hmis_state
 lgd_dist_match hmis_district
 
 /* check dataset before saving */
+order hmis_id, first
 
 /* save matched dataset */
 /* in temp folder for now, check before saving in data tree */

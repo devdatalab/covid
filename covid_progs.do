@@ -19,7 +19,7 @@ prog def lgd_state_clean
    /* format state and clean names for merge */
    replace lgd_state_name = subinstr(lgd_state_name, "&", "and", .)
    replace lgd_state_name = trim(lgd_state_name)
-   replace lgd_state_name = "andaman and nicobar islands" if `0' == "A and N Islands"
+   replace lgd_state_name = "andaman and nicobar islands" if `0' == "A & N Islands"
    replace lgd_state_name = "jammu and kashmir" if inlist(lgd_state_name, "jammu", "kashmir")
    replace lgd_state_name = "dadra and nagar haveli" if lgd_state_name == "d and n haveli"
    replace lgd_state_name = "andaman and nicobar islands" if lgd_state_name == "a"
