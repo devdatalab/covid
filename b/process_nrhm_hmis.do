@@ -35,11 +35,11 @@ cd $ddl/covid
 /* Save all years in a macro by Looping over all years in district directory*/
 local years: dir "$tmp/nrhm_hmis/itemwise_monthly/district/" dirs "*"
 
-/* After loopig over the years macro:
-1.Make directory for all the years
+/* After looping over the years macro:
+1.Make directory for all the years(This is independent of the python code)
 2.Convert XML Data into csv for all years using the .py script */
 foreach year in `years'{
-  cap mkdir $health/nrhm_hmis/built/`i'
+  cap mkdir $health/nrhm_hmis/built/`year'
   shell python -c "from b.retrieve_case_data import read_hmis_csv; read_hmis_csv('`year'','$tmp')"
 
 }
@@ -145,12 +145,93 @@ foreach year in `years'{
 
 }
 
- /**********************************************************************************/
- /* Loop through folders and append all .dta files across years into one .dta file */
- /* for new regime of data from 2017-2018 to 2019-2020                             */
- /**********************************************************************************/
+/**********************************************************/
+/* Process Number of Hospitals/data_reporting_status data */
+/**********************************************************/
+cap mkdir $tmp/nrhm_hmis
+cap mkdir $tmp/nrhm_hmis/data_reporting_status/
 
-/* Create a local again, just in case we run this part separately. */
+/* Unzip District Reporting Status Data from zip files and save .xls files in $tmp*/
+local filelist : dir "$health/nrhm_hmis/raw/data_reporting_status" files "*.zip"
+foreach file in `filelist' {
+  !unzip -u $health/nrhm_hmis/raw/data_reporting_status/`file' -d $tmp/nrhm_hmis/data_reporting_status
+}
+
+/* Change directory so you can reference the python script correctly */
+cd $ddl/covid
+
+/* Loop over all years to extract .xls(xml) files to csv */
+/* Since the .xls files are actually xml files we extract them through a python function below */
+local years: dir "$tmp/nrhm_hmis/data_reporting_status" dirs "*-*"
+foreach year in `years'{
+  shell python -c "from b.retrieve_case_data import read_hmis_csv_hospitals; read_hmis_csv_hospitals('`year'','$tmp')"
+}
+
+/* Loop over all csv files and append them into a .dta file */
+foreach year in `years'{
+  
+  /* Append all csv data for the year */
+  local filelist : dir "$tmp/nrhm_hmis/data_reporting_status/`year'" files "*.csv"
+  
+  /* save an empty tempfile to hold all appended states */
+  clear
+  save $tmp/hmis_allstates_hospitals, replace emptyok
+  
+  /* cycle through each state file */
+  foreach i in `filelist'{
+
+    /* import  the csv*/
+    import delimited "$tmp/nrhm_hmis/data_reporting_status/`year'/`i'", varn(1) clear
+    
+    /* generate a state and year variable */
+    gen state = "`i'"
+    gen year = "`year'"
+
+    /* append the new state to the full data */
+    append using $tmp/hmis_allstates_hospitals, force
+    save $tmp/hmis_allstates_hospitals, replace
+  }
+
+  
+  /* remove the .csv from the state name */
+  replace state = subinstr(state, ".csv", "", .)
+  
+  /* replace month as a numeric integer from 1-12 */
+  gen month_num = month(date(month,"M"))
+  
+  /*  put month name as value labels
+  (labutil has a useful function for this, hence the ssc install) */
+  ssc install labutil
+  labmask month_num, values(month) lblname(name_of_the_month)
+  
+  /* Keep just one month variable */
+  drop month
+  rename month_num month
+  
+  /* Save the financial year as a separate variable, remove it if necessary */
+  gen year_financial = year
+  
+  /* Replace year as integer; earlier part of string if Apr-Dec; latter part if  Jan-Mar */
+  replace year = regexs(1) if (regexm(year, "^(.+)-(.+)$") & month <=12 & month >= 4) 
+  replace year = regexs(2) if (regexm(year, "^(.+)-(.+)$") & month <4) 
+  destring year, replace
+
+  /* get identifying variables to the front */
+  order state district year month category
+
+  /* save the data */
+  save $health/nrhm_hmis/built/`year'/district_wise_health_data_hospitals_`year', replace
+
+}
+
+/*************************************************************/
+/* Merge hospitals reporting data with itemwise_monthly data */
+/* And append them across years                              */
+/*************************************************************/
+
+/* Create a local for recent years */
+/* Is redefining a local you've used before in a do file
+a good idea?*/
 local years "2017-2018 2018-2019 2019-2020"
 
 /* Create temopfile to store all years' data */
@@ -159,7 +240,8 @@ save $tmp/hmis_allyears, replace emptyok
 
 /* Loop over different years, and use tempfile to append all years' data into one file */
 foreach year in `years'{
-  use $health/nrhm_hmis/built/`year'/district_wise_health_data,clear
+  use $health/nrhm_hmis/built/`year'/district_wise_health_data_`year',clear
+  merge 1:1 state district year month category year_financial using $health/nrhm_hmis/built/`year'/district_wise_health_data_hospitals_`year'
   append using $tmp/hmis_allyears
   save $tmp/hmis_allyears, replace
 }
@@ -174,19 +256,27 @@ label var year "Calendar Year"
 label var category "Total/Rural/Urban/Private/Public"
 label var year_financial "Financial Year for whcih the data is reported"
 
-/* Save data */
+/*  Rename and label necessary/interesting variables*/
+
+/* Drop unnecessary variables */
+drop v* _merge
+
+/* Save Recent Years' data */
 save $health/nrhm_hmis/built/district_wise_health_data_all, replace
+
 
 /**************************************/
 /* Create state district matching key */
 /**************************************/
-
+use $health/nrhm_hmis/built/district_wise_health_data_all, clear
 contract year state district
 
 rename state hmis_state
 rename district hmis_district
 rename year hmis_year
 
+/* Currently for 2017/18- 2019-2020 data, all years have same # of districts */
+contract hmis_state hmis_district
 save $health/nrhm_hmis/built/district_wise_health_data_all_key, replace
 
 
@@ -197,94 +287,19 @@ save $health/nrhm_hmis/built/district_wise_health_data_all_key, replace
 /* import data */
 use $health/nrhm_hmis/built/district_wise_health_data_all_key, clear
 
+/* define programs to merge variables */
+qui do $ddl/tools/do/lgd_state_match.do
+qui do $ddl/tools/do/lgd_district_match.do
+
 /* format variables */
-gen lgd_state_name = lower(hmis_state)
-gen lgd_district_name = lower(hmis_district)
-
-/* format state names for merge */
-replace lgd_state_name = "andaman and nicobar islands" if hmis_state == "A & N Islands"
-replace lgd_state_name = subinstr(lgd_state_name, "&", "and", .)
-
-/* these districts are in ladakh in using data */
-replace lgd_state_name = "ladakh" if inlist(lgd_district_name, "leh ladakh", "kargil")
-
-/* format district names for merge */
-replace lgd_district_name = subinstr(lgd_district_name, "paschim", "west", .)
-replace lgd_district_name = subinstr(lgd_district_name, "purba", "east", .)
-replace lgd_district_name = subinstr(lgd_district_name, "paschimi", "west", .)
-replace lgd_district_name = subinstr(lgd_district_name, "purbi", "east", .)
-
-/* extract lgd state names and ids */
-merge m:1 lgd_state_name using $keys/lgd_pc11_state_key, gen(state_merge)
-drop state_merge
-
-/* fix lgd district name spellings */
-fix_spelling lgd_district_name, src($keys/lgd_pc11_district_key.dta) group(lgd_state_name) replace
-
-/* drop duplicates */
-bys lgd_state_name lgd_district_name : keep if _n == 1
-/* 3 duplicate obs dropped */
-
-/* merge with lgd pc11 district key */
-merge 1:1 lgd_state_name lgd_district_name using $keys/lgd_pc11_district_key, gen(hmis_lgd_merge)
-
-/* save matched and unmatched obs separately */
-savesome using $tmp/hmis_matched if hmis_lgd_merge == 3, replace
-savesome using $tmp/hmis_unmatched if hmis_lgd_merge == 1, replace
-savesome using $tmp/lgd_unmatched if hmis_lgd_merge == 2, replace
-
-/* prep for masala merge */
-use $tmp/hmis_unmatched, clear
-
-/* generate ids */
-gen idm = lgd_state_name + "=" + lgd_district_name
-
-/* drop extra vars */
-drop lgd_state_id - pc01_district_name *_merge
-
-/* these obs were masala merging incorrectly */
-replace lgd_district_name = "ayodhya" if hmis_district == "Faizabad"
-replace lgd_district_name = "purbi champaran" if hmis_district == "East Champaran"
-
-/* manual merges after checking unmatched output */
-replace lgd_district_name = "y s r" if hmis_district == "Cuddapah"
-replace lgd_district_name = "nuh" if hmis_district == "Mewat"
-replace lgd_district_name = "kalaburagi" if hmis_district == "Gulbarga"
-replace lgd_district_name = "east nimar" if hmis_district == "Khandwa"
-replace lgd_district_name = "amethi" if hmis_district == "C S M Nagar"
-replace lgd_district_name = "amroha" if hmis_district == "Jyotiba Phule Nagar"
-
-/* save */
-save $tmp/hmis_fmm, replace
-
-use $tmp/lgd_unmatched, clear
-
-/* generate ids */
-gen idu = lgd_state_name + "=" + lgd_district_name
-
-/* drop extra vars */
-drop hmis_* _fre *_merge
-
-/* save */
-save $tmp/lgd_fmm, replace
-
-/* prep using data for masala merge */
-use $tmp/hmis_fmm, clear
+lgd_state_format hmis_state
+lgd_dist_format hmis_district
 
 /* merge */
-masala_merge lgd_state_name using $tmp/lgd_fmm, s1(lgd_district_name) idmaster(idm) idusing(idu) minbigram(0.2) minscore(0.6) outfile($tmp/hmis_lgd)
-drop lgd_district_name_master
-ren lgd_district_name_using lgd_district_name
+lgd_state_match hmis_state
+lgd_dist_match hmis_district
 
-/* save matched separately */
-savesome using $tmp/hmis_matched_r2 if match_source < 7, replace
-
-/* append matched obs */
-use $tmp/hmis_matched, clear
-append using $tmp/hmis_matched_r2
-
-/* clean up dataset */
-drop masala* match_source idm idu *_merge
+/* check dataset before saving */
 
 /* save matched dataset */
 /* in temp folder for now, check before saving in data tree */
