@@ -123,6 +123,7 @@ prog def lgd_dist_clean
    replace lgd_district_name = "purbi champaran" if `0' == "Purba Champaran"
    replace lgd_district_name = "shahid bhagat singh nagar" if `0' == "SBS Nagar"
    replace lgd_district_name = "ayodhya" if `0' == "Faizabad"
+   replace lgd_district_name = "faridabad" if `0' == "GBN Faridabad"
     }
       
    /*fix lgd district name spellings */
@@ -208,12 +209,13 @@ prog def lgd_dist_match
    /* manual merges after checking unmatched output */   
    replace lgd_district_name = "nuh" if `0' == "Mewat"
    replace lgd_district_name = "kalaburagi" if `0' == "Gulbarga"
-   replace lgd_district_name = "amroha" if `0' == "Phule"
    replace lgd_district_name = "leh ladakh" if `0' == "Ladakh"
    replace lgd_district_name = "sant kabeer nagar" if `0' == "SKN"
    replace lgd_district_name = "bhadohi" if `0' == "SRNB"
    replace lgd_district_name = "hathras" if `0' == "Mahamaya Nagar"    
-
+   replace lgd_district_name = "faridabad" if `0' == "GBN Faridabad"
+   replace lgd_district_name = "amroha" if `0' == "Jyotiba Nagar"
+      
    /*expand jaintia hills into two obs*/
    expand 2 if lgd_district_name == "jaintia hills", gen(dups)
    replace lgd_district_name = "east jaintia hills" if dups == 1
