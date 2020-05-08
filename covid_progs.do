@@ -24,7 +24,7 @@ prog def lgd_state_clean
     if they do in the future, put them in dataset-specific `if`
     blocks. */
     replace lgd_state_name = "andaman and nicobar islands" if `0' == "A & N Islands"
-    replace lgd_state_name = "jammu and kashmir" if inlist(lgd_state_name, "jammu", "kashmir", "pok")
+    replace lgd_state_name = "jammu and kashmir" if inlist(lgd_state_name, "jammu", "kashmir")
     replace lgd_state_name = "dadra and nagar haveli" if lgd_state_name == "d and n haveli"
     replace lgd_state_name = "andaman and nicobar islands" if lgd_state_name == "a"
     drop if inlist(lgd_state_name, "code", "state/u.t.")
@@ -98,6 +98,19 @@ prog def lgd_dist_clean
       /* these obs masala merge incorrectly */
       replace lgd_district_name = "ayodhya" if `0' == "Faizabad"
       replace lgd_district_name = "purbi champaran" if `0' == "East Champaran"
+      replace lgd_district_name = "kamrup metro" if `0' == "Kamrup M"
+      replace lgd_district_name = "kamrup rural" if `0' == "Kamrup R"
+      replace lgd_district_name = "bhadohi" if `0' == "Sant Ravidas Nagar"
+      replace lgd_district_name = "prayagraj" if `0' == "Allahabad"
+      
+      /* manual merges that aren't getting picked up by masala merge */
+      replace lgd_district_name = "y s r" if `0' == "Cuddapah"
+      replace lgd_district_name = "nuh" if `0' == "Mewat"
+      replace lgd_district_name = "kalaburagi" if `0' == "Gulbarga"
+      replace lgd_district_name = "east nimar" if `0' == "Khandwa"
+      replace lgd_district_name = "amethi" if `0' == "C S M Nagar"
+      replace lgd_district_name = "amroha" if `0' == "Jyotiba Phule Nagar"
+
     }
 
     /* idiosyncratic NSS changes */
@@ -105,6 +118,23 @@ prog def lgd_dist_clean
       
       /* these obs masala merge incorrectly */
       replace lgd_district_name = "ayodhya" if `0' == "Faizabad"
+
+      /* manual merges that aren't getting picked up by masala merge */
+      replace lgd_district_name = "nuh" if `0' == "Mewat"
+      replace lgd_district_name = "kalaburagi" if `0' == "Gulbarga"
+      replace lgd_district_name = "amroha" if `0' == "Jyotiba Phule Nagar"
+      replace lgd_district_name = "leh ladakh" if `0' == "Leh"
+      replace lgd_district_name = "hathras" if `0' == "Mahamaya Nagar" 
+      replace lgd_district_name = "s.a.s nagar" if `0' == "Sahibzada Ajit Singh"
+      replace lgd_district_name = "bhadohi" if `0' == "Sant Ravidas Nagar"
+      replace lgd_district_name = "prayagraj" if `0' == "Allahabad"
+      
+      /*expand jaintia hills into two obs*/
+      expand 2 if lgd_district_name == "jaintia hills", gen(dups)
+      replace lgd_district_name = "east jaintia hills" if dups == 1
+      replace lgd_district_name = "west jaintia hills" if lgd_district_name == "jaintia hills"   
+      drop dups
+
     }
     
     /* idiosyncratic covid case data changes */
@@ -114,6 +144,36 @@ prog def lgd_dist_clean
       replace lgd_district_name = "purbi champaran" if `0' == "Purba Champaran"
       replace lgd_district_name = "shahid bhagat singh nagar" if `0' == "SBS Nagar"
       replace lgd_district_name = "ayodhya" if `0' == "Faizabad"
+      replace lgd_district_name = "faridabad" if `0' == "GBN Faridabad"
+      replace lgd_district_name = "east nimar" if `0' == "East Nimar"
+
+      /* dropping a district called "Lower" in Arunachal  */
+      drop if `0' == "Lower"
+      
+      /* manual merges that aren't getting picked up by masala merge */
+      replace lgd_district_name = "nuh" if `0' == "Mewat"
+      replace lgd_district_name = "kalaburagi" if `0' == "Gulbarga"
+      replace lgd_district_name = "amroha" if `0' == "Jyotiba Nagar"
+      replace lgd_district_name = "leh ladakh" if `0' == "Ladakh"
+      replace lgd_district_name = "sant kabeer nagar" if `0' == "SKN"
+      replace lgd_district_name = "bhadohi" if `0' == "SRNB"
+      replace lgd_district_name = "hathras" if `0' == "Mahamaya Nagar"    
+      replace lgd_district_name = "prayagraj" if `0' == "Allahabad"
+      replace lgd_district_name = "khandwa" if `0' == "East Nimar"
+      replace lgd_district_name = "janjgir-champa" if `0' == "Janjgir"
+      
+      /*expand jaintia hills into two obs*/
+      expand 2 if lgd_district_name == "jaintia hills", gen(dups)
+      replace lgd_district_name = "east jaintia hills" if dups == 1
+      replace lgd_district_name = "west jaintia hills" if lgd_district_name == "jaintia hills"   
+      drop dups
+
+      
+      /*expand warangal into two obs*/
+      expand 2 if lgd_district_name == "warangal", gen(dups)
+      replace lgd_district_name = "warangal rural" if dups == 1
+      replace lgd_district_name = "warangal urban" if lgd_district_name == "warangal"   
+      drop dups
 
     }
     
@@ -155,62 +215,6 @@ prog def lgd_dist_match
     cap drop *_merge
     cap drop lgd_state_id lgd_state_version lgd_state_name_local lgd_state_status 
     cap drop lgd_district_id lgd_district_version lgd_district_name_local pc11* pc01*
-
-    /* further idiosyncratic changes for HMIS */
-    if "`0'" == "hmis_district" {
-
-      /* manual merges after checking unmatched output */
-      replace lgd_district_name = "y s r" if `0' == "Cuddapah"
-      replace lgd_district_name = "nuh" if `0' == "Mewat"
-      replace lgd_district_name = "kalaburagi" if `0' == "Gulbarga"
-      replace lgd_district_name = "east nimar" if `0' == "Khandwa"
-      replace lgd_district_name = "amethi" if `0' == "C S M Nagar"
-      replace lgd_district_name = "amroha" if `0' == "Jyotiba Phule Nagar"
-    }
-
-    /* further idiosyncratic changes for NSS */
-    if "`0'" == "nss_district_name" {
-
-      /* manual merges after checking unmatched output */   
-      replace lgd_district_name = "nuh" if `0' == "Mewat"
-      replace lgd_district_name = "kalaburagi" if `0' == "Gulbarga"
-      replace lgd_district_name = "amroha" if `0' == "Jyotiba Nagar"
-      replace lgd_district_name = "leh ladakh" if `0' == "Leh"
-      replace lgd_district_name = "hathras" if `0' == "Mahamaya Nagar" 
-      replace lgd_district_name = "s.a.s nagar" if `0' == "Sahibzada Ajit Singh"
-
-      /*expand jaintia hills into two obs*/
-      expand 2 if lgd_district_name == "jaintia hills", gen(dups)
-      replace lgd_district_name = "east jaintia hills" if dups == 1
-      replace lgd_district_name = "west jaintia hills" if lgd_district_name == "jaintia hills"   
-      drop dups
-    }
-
-    /* further idiosyncratic changes for covid case data */
-    if "`0'" == "district" {
-
-      /* manual merges after checking unmatched output */   
-      replace lgd_district_name = "nuh" if `0' == "Mewat"
-      replace lgd_district_name = "kalaburagi" if `0' == "Gulbarga"
-      replace lgd_district_name = "amroha" if `0' == "Phule"
-      replace lgd_district_name = "leh ladakh" if `0' == "Ladakh"
-      replace lgd_district_name = "sant kabeer nagar" if `0' == "SKN"
-      replace lgd_district_name = "bhadohi" if `0' == "SRNB"
-      replace lgd_district_name = "hathras" if `0' == "Mahamaya Nagar"    
-
-      /*expand jaintia hills into two obs*/
-      expand 2 if lgd_district_name == "jaintia hills", gen(dups)
-      replace lgd_district_name = "east jaintia hills" if dups == 1
-      replace lgd_district_name = "west jaintia hills" if lgd_district_name == "jaintia hills"   
-      drop dups
-
-      
-      /*expand warangal into two obs*/
-      expand 2 if lgd_district_name == "warangal", gen(dups)
-      replace lgd_district_name = "warangal rural" if dups == 1
-      replace lgd_district_name = "warangal urban" if lgd_district_name == "warangal"   
-      drop dups
-    }
 
     /* generate ids */
     gen idm = lgd_state_name + "=" + lgd_district_name
@@ -255,8 +259,8 @@ prog def lgd_dist_match
 
     /* clean up dataset */
     drop masala* match_source idm idu *_merge
-    drop *_version *_local *_match *_status `0' pc01* *pc11_district_name
-    keep *_name *_id
+    drop *_version *_local *_match *_status pc01* `0' *pc11_district_name
+    keep *_name *_id 
     order lgd_state_id lgd_district_id, first 
     order *id
   }

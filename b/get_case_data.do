@@ -287,8 +287,9 @@ save $covidpub/covid/covindia_state_district_list, replace
 /* import data */
 use $iec/covid/covid/covindia_state_district_list, clear
 
-/* gen covid_id */
-gen covid_id = state + "=" + district
+/* gen covid state and district */
+gen covid_state_name = state
+gen covid_district_name = district
 
 /* define lgd matching programs */
 qui do $ddl/covid/covid_progs.do
@@ -302,9 +303,10 @@ lgd_state_match state
 /* note covindia key doesn't have chandigarh */
 
 lgd_dist_match district
+/* 2 districts don't match - pak occupied kashmir, and phule (dup obs) */
 
-/* order covid id first */
-order covid_id, first
+/* save the key */
+save $iec/covid/covid/covindia_lgd_pc11_district_key, replace
 
 /* the covid folder:
 

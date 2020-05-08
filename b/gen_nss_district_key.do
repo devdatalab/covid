@@ -20,7 +20,6 @@ drop if real(nss_district_id) == . | real(nss_district_id) < 0
 /* format nss id variables */
 destring nss_district_id, replace
 
-
 /* state and district name cleaning */
 lgd_state_clean nss_state_name
 lgd_dist_clean nss_district_name
@@ -37,11 +36,9 @@ lgd_dist_match nss_district_name
 /* re-order vars */
 order nss_state_id nss_district_id, first
 
-/* the final key has 647 obs */
+/* the final key has 649 obs */
 /* original key had 648 obs */
-/* 2 duplicates were dropped */
 /* jaintia hills was expanded into 2 obs */
-
 
 /* save */
 save $iec1/nss/nss-75-health/nss75_lgd_district_key, replace
