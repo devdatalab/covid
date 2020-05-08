@@ -168,7 +168,6 @@ prog def lgd_dist_clean
       replace lgd_district_name = "west jaintia hills" if lgd_district_name == "jaintia hills"   
       drop dups
 
-      
       /*expand warangal into two obs*/
       expand 2 if lgd_district_name == "warangal", gen(dups)
       replace lgd_district_name = "warangal rural" if dups == 1
