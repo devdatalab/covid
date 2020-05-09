@@ -21,13 +21,17 @@ gen dh_count = 1
 /* generate staff count var */
 egen dh_staff = rowtotal(qd2*_r)
 
+/* generate icu beds count var */
+gen dh_icu_beds = qd68_total
+
 /* collapse */
-collapse (sum) dh_beds dh_count dh_staff, by(pc11_state_id pc11_district_id)
+collapse (sum) dh_beds dh_count dh_staff dh_icu_beds, by(pc11_state_id pc11_district_id)
 
 /* clean up */
 label var dh_beds "Total beds in district hospitals"
 label var dh_count "Total district hospitals"
 label var dh_staff "Total staff district hospitals"
+label var dh_icu_beds "Total beds in intensive medicare units"
 
 /* save */
 save $tmp/dlhs4_dh_dist_beds, replace
@@ -52,13 +56,17 @@ gen chc_count = 1
 /* generate staff count var */
 egen chc_staff = rowtotal(qc2*a)
 
+/* gen bed count with available ventilator, mask, and oxygen */
+gen chc_beds_ven = qc571 if qc72<3  &  qc73<3 &  qc44<3  &  qc78<3 & qc554k<3
+
 /* collapse */
-collapse (sum) chc_beds chc_count chc_staff, by(pc11_state_id pc11_district_id)
+collapse (sum) chc_beds chc_count chc_staff chc_beds_ven, by(pc11_state_id pc11_district_id)
 
 /* clean up */
 label var chc_beds "Total beds in community health centers"
 label var chc_count "Total community health centers"
 label var chc_staff "Total staff in community health centers"
+label var chc_beds_ven "Total beds in CHC with ventilator, oxygen, and cardiac monitor"
 
 /* save */
 save $tmp/dlhs4_chc_dist_beds, replace
@@ -87,17 +95,21 @@ egen phc_staff = rowtotal(qp2*a)
 /* generate population served for calculation of multiplier */
 gen phc_pop = qp3
 
+/* gen bed count with oxygen */
+gen phc_beds_oxy = qp429b if qp428kk<3
+
 /* drop if bad data (zero pop/staff, or missing data) -- assuming random bad data so multiplier accurate */
 drop if mi(phc_pop) | phc_pop == 0 | mi(phc_beds) | phc_staff == 0
 
 /* collapse */
-collapse (sum) phc_beds phc_count phc_staff phc_pop, by(pc11_state_id pc11_district_id)
+collapse (sum) phc_beds phc_count phc_staff phc_pop phc_beds_oxy, by(pc11_state_id pc11_district_id)
 
 /* clean up */
 label var phc_beds "Total beds in primary health centers"
 label var phc_count "Total primary health centers"
 label var phc_staff "Total staff in primary health centers"
 label var phc_pop "Population covered by sampled primary health centers"
+label var phc_beds_oxy "Total beds in PHC with oxygen cylinders"
 
 /* save */
 save $tmp/dlhs4_phc_dist_beds, replace
