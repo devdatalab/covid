@@ -35,7 +35,6 @@ save $tmp/dlhs4_dh_dist_beds, replace
 /****************************/
 /* community health centers */
 /****************************/
-
 use $health/DLHS4_FacilitySurveyData/AHS_FACILITY/AHS_chc.dta , clear
 append using $health/DLHS4_FacilitySurveyData/NON_AHS_FACILITY/CHC_NONAHS.dta
 
@@ -106,7 +105,6 @@ save $tmp/dlhs4_phc_dist_beds, replace
 /******************/
 /* merge together */
 /******************/
-
 use $tmp/dlhs4_dh_dist_beds, clear
 merge 1:1 pc11_state_id pc11_district_id using $tmp/dlhs4_chc_dist_beds, gen(_m_chc)
 drop _m_chc
