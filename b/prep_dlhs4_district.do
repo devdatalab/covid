@@ -57,7 +57,7 @@ gen chc_count = 1
 egen chc_staff = rowtotal(qc2*a)
 
 /* gen bed count with available ventilator, mask, and oxygen */
-gen chc_beds_ven = qc571 if qc72<3  &  qc73<3 &  qc44<3  &  qc78<3 & qc554k<3
+gen chc_beds_ven = qc571 if qc72 < 3 & (qc73 < 3 | qc44 < 3) & qc78 < 3 & qc554k < 3
 
 /* collapse */
 collapse (sum) chc_beds chc_count chc_staff chc_beds_ven, by(pc11_state_id pc11_district_id)
@@ -96,7 +96,7 @@ egen phc_staff = rowtotal(qp2*a)
 gen phc_pop = qp3
 
 /* gen bed count with oxygen */
-gen phc_beds_oxy = qp429b if qp428kk<3
+gen phc_beds_oxy = qp429b if qp428kk < 3
 
 /* drop if bad data (zero pop/staff, or missing data) -- assuming random bad data so multiplier accurate */
 drop if mi(phc_pop) | phc_pop == 0 | mi(phc_beds) | phc_staff == 0
