@@ -13,7 +13,7 @@ rename day date
 /* modify date variable to create stata data */
 gen year = 20
 tostring year, generate(year2)
-gen date2 = date+year2
+gen date2 = date + year2
 drop date year year2
 rename date2 date
 
@@ -33,10 +33,10 @@ rename cough cough_score
 rename fever fever_score
 
 /* drop missing values if any */
-drop if fever_score==.
+drop if mi(fever_score)
 
 /* sort by state date */
 sort pc11_state_id date
 
 /* save as stata dataset */
-save $iec/covid/google/google_top10_may.dta, replace
+save $covidpub/google/google_top10_may.dta, replace
