@@ -24,17 +24,19 @@ egen dh_staff = rowtotal(qd2*_r)
 /* generate icu beds count var */
 gen dh_icu_beds = qd68_total
 
+/* rename doctor variables */
+ren qd213_r dh_doc_reg
+ren qd214_c dh_doc_contract
+
 /* collapse */
-collapse (sum) dh_beds dh_count dh_staff dh_icu_beds qd213_r qd214_c, by(pc11_state_id pc11_district_id)
+collapse (sum) dh_beds dh_count dh_staff dh_icu_beds dh_doc_reg dh_doc_contract, by(pc11_state_id pc11_district_id)
 
 /* clean up */
 label var dh_beds "Total beds in district hospitals"
 label var dh_count "Total district hospitals"
 label var dh_staff "Total staff district hospitals"
 label var dh_icu_beds "Total beds in intensive medicare units"
-ren qd213_r dh_doc_reg
 label var dh_doc_reg "General Duty Doctor (regular)"
-ren qd214_c dh_doc_contract
 label var dh_doc_contract "General Duty Doctor (contractual)"
 
 /* save */
@@ -63,17 +65,19 @@ egen chc_staff = rowtotal(qc2*a)
 /* gen bed count with available ventilator, mask, and oxygen */
 gen chc_beds_ven = qc571 if qc72 < 3 & (qc73 < 3 | qc44 < 3) & qc78 < 3 & qc554k < 3
 
+/*  rename doctor variables */
+ren qc22a chc_doc_reg
+ren qc22b chc_doc_contract
+
 /* collapse */
-collapse (sum) chc_beds chc_count chc_staff chc_beds_ven qc22a qc22b, by(pc11_state_id pc11_district_id)
+collapse (sum) chc_beds chc_count chc_staff chc_beds_ven chc_doc_reg chc_doc_contract, by(pc11_state_id pc11_district_id)
 
 /* clean up */
 label var chc_beds "Total beds in community health centers"
 label var chc_count "Total community health centers"
 label var chc_staff "Total staff in community health centers"
 label var chc_beds_ven "Total beds in CHC with ventilator, oxygen, and cardiac monitor"
-ren qc22a chc_doc_reg
 label var chc_doc_reg "number of regular physician in position at CHC"
-ren qc22b chc_doc_contract
 label var chc_doc_contract "number of contractual physician in position at CHC"
 
 /* save */
@@ -106,11 +110,15 @@ gen phc_pop = qp3
 /* gen bed count with oxygen */
 gen phc_beds_oxy = qp429b if qp428kk < 3
 
+/* rename doctor variables */
+ren qp21a phc_doc_reg
+ren qp21b phc_doc_contract
+
 /* drop if bad data (zero pop/staff, or missing data) -- assuming random bad data so multiplier accurate */
 drop if mi(phc_pop) | phc_pop == 0 | mi(phc_beds) | phc_staff == 0
 
 /* collapse */
-collapse (sum) phc_beds phc_count phc_staff phc_pop phc_beds_oxy qp21a qp21b, by(pc11_state_id pc11_district_id)
+collapse (sum) phc_beds phc_count phc_staff phc_pop phc_beds_oxy phc_doc_reg phc_doc_contract, by(pc11_state_id pc11_district_id)
 
 /* clean up */
 label var phc_beds "Total beds in primary health centers"
@@ -118,9 +126,7 @@ label var phc_count "Total primary health centers"
 label var phc_staff "Total staff in primary health centers"
 label var phc_pop "Population covered by sampled primary health centers"
 label var phc_beds_oxy "Total beds in PHC with oxygen cylinders"
-ren qp21a phc_doc_reg
 label var phc_doc_reg "Regular MO in position at PHC"
-ren qp21b phc_doc_contract
 label var phc_doc_contract "contactual MO in position at PHC"
 
 /* save */
