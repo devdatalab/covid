@@ -207,8 +207,8 @@ foreach x of var *_beds {
   /* calculate district level means for each variable */
   bys pc11_state_id pc11_district_id: egen m_`x' = mean(`x') if urban == 1
 
-  /* replace values with mean in flagged vars */
-  replace `x' = m_`x' if beds_impute == 1
+  /* replace values with mean in flagged vars in obs with missing/zero content*/
+  replace `x' = m_`x' if beds_impute == 1 & (`x' == 0 | mi(`x'))
 }
 
 /* doctors */
