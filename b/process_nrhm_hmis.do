@@ -44,6 +44,9 @@ foreach year in `years'{
 
 }
 
+/* Save all years in a macro by Looping over all years in district directory*/
+local years: dir "$tmp/nrhm_hmis/itemwise_monthly/district/" dirs "*"
+
 foreach year in `years'{
   
   /* Append all csv data for 2019-2020*/
@@ -81,19 +84,9 @@ foreach year in `years'{
   /* remove the .csv from the state name */
   replace state = subinstr(state, ".csv", "", .)
   
-  /* Rename important varibales */
-  rename v405 gloves_balance_last_month  
-  rename v193 inpatient_acute_respiratory
-  rename v194 inpatient_tuberculosis
-  rename v198 emergency_total
-  rename v231 testing_lab_tests_total
-  rename v108 bcg_vaccination
-  rename v93 pentav1_vaccination
-  rename v104 polio_ipv1_vaccination
-  
   /* replace month as a numeric integer from 1-12 */
   gen month_num = month(date(month,"M"))
-  
+
   /*  put month name as value labels
   (labutil has a useful function for this, hence the ssc install) */
   ssc install labutil
@@ -105,15 +98,16 @@ foreach year in `years'{
   
   /* Drop missing months, generated when month was named "Total" */
   drop if mi(month)
-  
+
   /* Save the financial year as a separate variable, remove it if necessary */
   gen year_financial = year
-  
+
   /* Replace year as integer; earlier part of string if Apr-Dec; latter part if  Jan-Mar */
   replace year = regexs(1) if (regexm(year, "^(.+)-(.+)$") & month <=12 & month >= 4) 
   replace year = regexs(2) if (regexm(year, "^(.+)-(.+)$") & month <4) 
   destring year, replace
 
+  
   /* bring identifying variables to the front */
   /* For  years 2017-2020, where category exists*/
   capture confirm variable category
@@ -126,6 +120,18 @@ foreach year in `years'{
   capture confirm variable category
   if (_rc != 0){
   order state district year month 
+  }
+  
+  /* Replace variable names with their labels(stata friendly) */
+  foreach v of varlist v* {
+      local varlabel : variable label `v'
+      local varlabel = subinstr("`varlabel'", "." , "_" , .)
+      local varlabel = subinstr("`varlabel'", "'", "", .) 
+      local varlabel = subinstr("`varlabel'", " ", "_", .)
+      local varlabel = subinstr("`varlabel'", "(","_",.)
+      local varlabel = subinstr("`varlabel'", ")","",.)    
+      di "`varlabel'"
+      rename `v'  v_`varlabel'
   }
       
   /* save the data */
@@ -168,6 +174,7 @@ foreach year in `years'{
 }
 
 /* Loop over all csv files and append them into a .dta file */
+local years: dir "$tmp/nrhm_hmis/data_reporting_status" dirs "*-*"
 foreach year in `years'{
   
   /* Append all csv data for the year */
@@ -214,15 +221,28 @@ foreach year in `years'{
   /* Replace year as integer; earlier part of string if Apr-Dec; latter part if  Jan-Mar */
   replace year = regexs(1) if (regexm(year, "^(.+)-(.+)$") & month <=12 & month >= 4) 
   replace year = regexs(2) if (regexm(year, "^(.+)-(.+)$") & month <4) 
-  destring year, replace
-
-  /* get identifying variables to the front */
-  order state district year month category
-
+  destring year, replace  
+  
+  /* bring identifying variables to the front */
+  /* For  years 2017-2020, where category exists*/
+  capture confirm variable category
+  if (_rc == 0){ 
+    order state district year month category
+  }
+  
+  
+  /* bring identifying variables to the front */
+  /* For years 2008-2017, where category doesn't exist*/
+  capture confirm variable category
+  if (_rc != 0){
+  order state district year month 
+  }
+    
   /* save the data */
   save $health/nrhm_hmis/built/`year'/district_wise_health_data_hospitals_`year', replace
 
 }
+
 
 /*************************************************************/
 /* Merge hospitals reporting data with itemwise_monthly data */
@@ -232,22 +252,131 @@ foreach year in `years'{
 /* Create a local for recent years */
 /* Is redefining a local you've used before in a do file
 a good idea?*/
-local years "2017-2018 2018-2019 2019-2020"
+local years "2017-2018 2018-2019 2019-2020 2020-2021"
 
 /* Create temopfile to store all years' data */
 clear
 save $tmp/hmis_allyears, replace emptyok 
 
-/* Loop over different years, and use tempfile to append all years' data into one file */
+/* Loop over different years' and 
+1) Merge itemwise_monthly data with hospitals reporting data
+2) use tempfile to append all years' data into one file */
 foreach year in `years'{
   use $health/nrhm_hmis/built/`year'/district_wise_health_data_`year',clear
+  /* Child Immunisations  */
+  rename v_9_1_2_TOTAL	vaccine_birth_BCG
+  rename v_9_1_13_TOTAL	vaccine_birth_HepB
+  rename v_9_1_9_TOTAL vaccine_birth_OPV0
+  rename v_9_7_2_TOTAL vaccine_sessions
+  
+  /* Hospital Attendance Numbers */
+  rename v_14_3_1_b_TOTAL	inpatient_adult_male 
+  rename v_14_3_2_b_TOTAL	inpatient_adult_female
+  rename v_14_3_1_a_TOTAL	inpatient_kids_male
+  rename v_14_3_2_a_TOTAL	inpatient_kids_female
+  rename v_14_4_4_TOTAL	inpatient_respiratory
+  rename v_14_1_1_TOTAL	outpatient_diabetes
+  rename v_14_1_2_TOTAL	outpatient_hypertension
+  rename v_14_1_9_TOTAL	outpatient_cancer
+  rename v_14_5_TOTAL	emergency_total
+  rename v_14_6_1_TOTAL	emergency_trauma
+  rename v_14_6_5_TOTAL	emergency_heart_attack
+  rename v_14_8_1_TOTAL	operation_major
+  rename v_14_8_4_TOTAL	operation_minor
+
+  /* Testing */
+  rename v_15_1_TOTAL	tests_total 
+  rename v_15_3_1_a_TOTAL	 tests_hiv_male
+  rename v_15_3_2_a_TOTAL	tests_hiv_female
+  rename v_15_3_3_a_TOTAL test_hiv_female_anc  
+  /* Maternal Health */
+  rename v_1_1_TOTAL maternal_anc_registered
+  rename v_2_2_TOTAL maternal_delivery_institutional
+  rename v_2_1_1_a_TOTAL maternal_delivery_anm	
+  rename v_2_1_1_b_TOTAL  maternal_delivery_no_anm
+  rename v_4_1_1_b_TOTAL maternal_birth_female	
+  rename v_4_1_1_a_TOTAL maternal_birth_male
+  rename v_2_1_3_TOTAL maternal_care_home
+  rename v_2_2_2_TOTAL maternal_care_institution	
+
+  /* PPE */
+  rename v_19_1_1 gloves_balance
+  rename v_19_1_2	gloves_received 
+  rename v_19_1_3	gloves_unusable
+  rename v_19_1_4	gloves_distributed
+  rename v_19_1_5	gloves_total
+  
   merge 1:1 state district year month category year_financial using $health/nrhm_hmis/built/`year'/district_wise_health_data_hospitals_`year'
-  append using $tmp/hmis_allyears
+  
+  qui append using $tmp/hmis_allyears
   save $tmp/hmis_allyears, replace
+
+  /* Drop all other variables */
+  drop v_* _merge
+
+}
+
+local years "2008-2009 2010-2011 2011-2012 2012-2013 2013-2014 2014-2015 2015-2016 2016-2017"
+foreach year in `years'{
+  
+  use $health/nrhm_hmis/built/`year'/district_wise_health_data_`year',clear
+
+   /* Child Immunisations  */
+  rename v_10_1_01_TOTAL	vaccine_birth_BCG
+  rename v_10_1_09A_TOTAL	vaccine_birth_HepB
+  rename v_10_1_05_TOTAL vaccine_birth_OPV0
+  rename v_10_4_2_TOTAL vaccine_sessions
+  
+  /* Hospital Attendance Numbers */
+  rename v_14_10_1_a_2	inpatient_adult_male 
+  rename v_14_10_1_b_2	inpatient_adult_female
+  rename v_14_10_1_a_1	inpatient_kids_male
+  rename v_14_10_1_b_1	inpatient_kids_female
+  rename v_14_13_1_TOTAL	operation_major
+  rename v_14_13_2_TOTAL	operation_minor
+
+  /* Testing */
+  rename v_15_1_2_a_1 tests_hiv_male
+  rename v_15_1_2_b_1	tests_hiv_female
+  rename v_15_1_2_c_1 tests_hiv_female_anc
+  
+  /* Maternal Health */
+  rename v_1_1_TOTAL maternal_anc_registered
+  /* Insttituional Deliveries broken into public and private, so add them both*/
+  gen maternal_delivery_institutional = v_2_2_TOTAL + v_2_3_TOTAL
+  rename v_2_1_1_a_TOTAL maternal_delivery_anm	
+  rename v_2_1_1_b_TOTAL maternal_delivery_no_anm
+  rename v_4_1_1_b_TOTAL maternal_birth_female	
+  rename v_4_1_1_a_TOTAL maternal_birth_male 
+
+  /* PPE */
+  rename v_16_3_02_1 gloves_balance
+  rename v_16_3_02_2 gloves_received 
+  rename v_16_3_02_3 gloves_unusable
+  rename v_16_3_02_4 gloves_distributed
+  rename v_16_3_02_5 gloves_total
+
+  /* drop other variables */
+  drop v_*
+
+  /* Merge with hospitals data */
+  merge 1:1 state district year month  year_financial using $health/nrhm_hmis/built/`year'/district_wise_health_data_hospitals_`year'
+  
+  qui append using $tmp/hmis_allyears
+  save $tmp/hmis_allyears, replace
+  
 }
 
 /* Get identifiers to the front */
 order state district year month category year_financial 
+
+/* rename hospitals with their full names */
+rename sc sub_center
+rename phc primary_health_center
+rename chc community_health_center
+rename sdh sub_district_hospital
+rename dh district_hospital
+rename total total_hospitals
 
 /* Label identifiers */
 label var state "Name of the State"
@@ -256,27 +385,26 @@ label var year "Calendar Year"
 label var category "Total/Rural/Urban/Private/Public"
 label var year_financial "Financial Year for whcih the data is reported"
 
-/*  Rename and label necessary/interesting variables*/
+/* For unmerged district, keep itemwise_monthly data*/
+keep if _merge == 1 | _merge == 3
 
 /* Drop unnecessary variables */
-drop v* _merge
+drop v_* _merge
 
 /* Save Recent Years' data */
 save $health/nrhm_hmis/built/district_wise_health_data_all, replace
-
 
 /**************************************/
 /* Create state district matching key */
 /**************************************/
 use $health/nrhm_hmis/built/district_wise_health_data_all, clear
-contract year state district
+contract year_financial state district
 
 rename state hmis_state
 rename district hmis_district
 rename year hmis_year
 
 /* Currently for 2017/18- 2019-2020 data, all years have same # of districts */
-contract hmis_state hmis_district
 save $health/nrhm_hmis/built/district_wise_health_data_all_key, replace
 
 

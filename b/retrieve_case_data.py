@@ -246,85 +246,118 @@ def read_hmis_csv_hospitals(year, filepath):
     """
     # get full filepath
     fp = os.path.join(filepath, "nrhm_hmis", "data_reporting_status", year)
-
+    
     # get all files in this folder
     filelist = os.listdir(fp)
-
+    
     # only keep xls files
     filelist = [x for x in filelist if x.endswith(".xls")]
-
+    
     #Loop over all the state .xls file
     df_cols = pd.DataFrame()
     for i in filelist:
-
+    
         #Skip.xls files not for the state
         if i in ("_All_India_DataUploadStatus.xls")  :
             continue
-
+    
         # read in the data
         df = pd.read_html(os.path.join(fp, i))[0]
-
+    
         # transpose the dataframe
         df = df.T.reset_index()
-
+    
         # drop empty column
         df = df.drop(0, axis=1)
-
+    
         # Identify all the districts
         districts = list(Counter(df.loc[0]).keys())
-
+    
         # remove non-district names from district list
         districts = [x for x in districts if 'Unnamed: 0_level_1' not in x]
         districts = [x for x in districts if 'Unnamed: 0_level_2' not in x]
-
+    
         # Remove the state name in the district list of the state
         districts = [x for x in districts if f"{i.upper().split('.')[0]}" not in x]
-
+    
         # create empty dataframe to hold all final data
         df_all = pd.DataFrame()
-
+    
+        # make a dictionaryto take care of different years
+        index_col_map = {
+                    "2020-2021": ["level_1","level_2"],
+                    "2019-2020": ["level_1", "level_2"],
+                    "2018-2019": ["level_1", "level_2"],
+                    "2017-2018": ["level_1", "level_2"],
+                    "2016-2017": ["level_1"],
+                    "2015-2016": ["level_1"],
+                    "2014-2015": ["level_1"],
+                    "2013-2014": ["level_1"],
+                    "2012-2013": ["level_1"],
+                    "2011-2012": ["level_1"],
+                    "2010-2011": ["level_1"],
+                    "2009-2010": ["level_1"],
+                    "2008-2009": ["level_1"]
+            }
+        
         # cycle through the districts
         for dist in districts:
-
+    
             # identify all the columns with data for this district, along with identiyfing columns
-            cols = ['level_1', 'level_2'] + list(df.columns[(df.loc[0]==dist).values])
-
+            cols = index_col_map[year] + list(df.columns[(df.loc[0]==dist).values])
+    
             # extract the data
             temp = df[cols].copy()
-
+    
             # set the columns to be the variable names
             temp.columns = temp.loc[1]
-
+    
             # set the district to be a column
             temp["district"] = dist
-
+    
             # drop unneeded rows and columns with no data
             temp = temp.drop([0,1]).reset_index(drop=True)
-
+    
             # append this district to the final dataframe
             df_all = df_all.append(temp)
-
+    
         # replace meaningless names with true names
         df_all = df_all.rename(columns={"Unnamed: 1_level_1": "month",
                                         "Unnamed: 1_level_2": "category",
         })
-
+    
         #drop unnecessary column
-        df_all = df_all.drop('Unnamed: 1_level_0', axis =1)
-
+        df_all = df_all.drop(labels = ['Unnamed: 1_level_0', 'Reporting at District Level'], axis =1, errors = 'ignore')
+    
         #drop total/active facilities to clean 'month variable'  
         df_all = df_all.loc[~df_all['month'].isin(['Total Facility', 'Active Facilities'])]
-
+    
         #drop non-districts from district variable.
         df_all = df_all.loc[~df_all['district'].isin(['Unnamed: 0_level_0', 'WARANGAL U'])]
-
-        # set the index
-        df_all = df_all.set_index(["district", "month", "category"])
-
+    
+        # set the dictionary for the index
+        index_set_map = {
+                    "2020-2021": ["district", "month", "category"],
+                    "2019-2020": ["district", "month", "category"],
+                    "2018-2019": ["district", "month", "category"],
+                    "2017-2018": ["district", "month", "category"],
+                    "2016-2017": ["district", "month"],
+                    "2015-2016": ["district", "month"],
+                    "2014-2015": ["district", "month"],
+                    "2013-2014": ["district", "month"],
+                    "2012-2013": ["district", "month"],
+                    "2011-2012": ["district", "month"],
+                    "2010-2011": ["district", "month"],
+                    "2009-2010": ["district", "month"],
+                    "2008-2009": ["district", "month"]
+                }
+        # set index based on year    
+        df_all = df_all.set_index(index_set_map[year])
+    
         # save the data to a csv
         df_all.to_csv(os.path.join(fp, f"{i.split('.')[0]}.csv"))
-
-
-
+    
+    
+    
 
 
