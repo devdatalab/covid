@@ -1,0 +1,8 @@
+master,lgd_district_name,lgd_state_name
+kaimur (bhabua),kaimur bhabua,bihar
+pashchim champaran,west champaran,bihar
+purbi champaran,east champaran,bihar
+purnia,purnea,bihar
+kaimur (bhabua),kaimur,bihar
+muzaffarpur,muzzafarpur,bihar
+sheikhpura,sheikpura,bihar
