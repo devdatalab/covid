@@ -39,11 +39,11 @@ foreach level in district subdistrict {
     foreach state in $statelist {
       disp_nice "`sector'-`level'-`state'"
 
-      /* use telangana from parsed_draft/ folder */
-      if "`state'" == "telangana" & "`sector'" == "rural" {
-        use $secc/parsed_draft/dta/rural/`state'_members_clean, clear
-      }
-      else {
+      // /* use telangana from parsed_draft/ folder */
+      // if "`state'" == "telangana" & "`sector'" == "rural" {
+      //   use $secc/parsed_draft/dta/rural/`state'_members_clean, clear
+      // }
+      // else {
         
         /* open the members file */
         cap confirm file "`path'/`state'_members_clean.dta"
@@ -53,7 +53,7 @@ foreach level in district subdistrict {
         
         /* open the file if it exists */
         use `path'/`state'_members_clean, clear
-      }
+      // }
       
       /* drop if missing geographic identifiers */
       drop if mi(pc11_state_id) | mi(pc11_district_id)
@@ -268,6 +268,8 @@ foreach level in district subdistrict {
   /* save totals */
   label data ""
   cap mkdir $covidpub/demography
-  save $covidpub/demography/secc_age_bins_`level'_t, replace
+  save $covidpub/demography/age_bins_`level'_t, replace
+  cap mkdir $covidpub/demography/csv
+  export delimited $covidpub/demography/csv/age_bins_`level'_t.csv, replace
 }
 

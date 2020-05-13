@@ -153,3 +153,14 @@ drop if pc11_pca_tot_p < 5000000
 /* generate absolute values table */
 sort pc_docs_hosp
 list pc11_state_name pc_docs_hosp dlhs4_total_doc
+
+/****************************************************/
+/* Analysis based on regular/contractual difference */
+/****************************************************/
+
+/* Generate ratios based on regular and contractual */
+gen pc_dlhs4_ratio_total = pc_docs_hosp / dlhs4_total_doc
+gen pc_dlhs4_ratio_reg = pc_docs_hosp / dlhs4_total_doc_reg
+
+list pc_docs_hosp pc_dlhs4_ratio_total pc_dlhs4_ratio_reg
+

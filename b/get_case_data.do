@@ -280,6 +280,33 @@ replace district = subinstr(district, "_", " ", .)
 /* save dta file */
 save $covidpub/covid/covindia_state_district_list, replace
 
+/****************************************************/
+/* matching covindia state district key to lgd-pc11 */
+/****************************************************/
+
+/* import data */
+use $covidpub/covid/covindia_state_district_list, clear
+
+/* gen covid state and district */
+gen covid_state_name = state
+gen covid_district_name = district
+
+/* define lgd matching programs */
+qui do $ddl/covid/covid_progs.do
+
+/* clean state and district names */
+lgd_state_clean state
+lgd_dist_clean district
+
+/* match to lgd-pc11 key */
+lgd_state_match state
+/* note covindia key doesn't have chandigarh */
+
+lgd_dist_match district
+/* 2 districts don't match - pak occupied kashmir, and phule (dup obs) */
+
+/* save the key */
+save $covidpub/covid/covindia_lgd_pc11_district_key, replace
 
 /* the covid folder:
 

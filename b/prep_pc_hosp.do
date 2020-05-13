@@ -57,7 +57,6 @@ save $tmp/healthcare_pca_r, replace
 /*********/
 /* Towns */
 /*********/
-
 use $covidpub/hospitals/pc11u_hosp, clear
 
 /* separate urban and rural populations */
@@ -65,8 +64,6 @@ gen pc11_pca_tot_p_u = pc11_pca_tot_p
 
 compress
 save $tmp/healthcare_pca_u, replace
-
-
 
 /******************************************/
 /* append rural and urban healthcare data */
@@ -82,11 +79,13 @@ replace urban = 0 if mi(urban)
 /* drop the veterinary hospitals variables */
 drop pc11_td_vet_* pc11_td_veth_*
 
+/* define urban and rural clinic types that will be collapsed into total beds */
+local centers_r pc11_td_ch_cntr pc11_td_ph_cntr pc11_td_phs_cntr pc11_td_tb_cln pc11_td_all_hosp pc11_td_disp pc11_td_mh_cln pc11_td_med_in_out_pat pc11_td_med_c_hosp_home
+local centers_u pc11_td_all_hosp pc11_td_disp pc11_td_tbc pc11_td_nh pc11_td_mh pc11_td_in_out_pat pc11_td_c_hosp_home
+
 /*****************************************/
 /* drop outliers after manual inspection */
 /*****************************************/
-local centers_r pc11_td_ch_cntr pc11_td_ph_cntr pc11_td_phs_cntr pc11_td_tb_cln pc11_td_all_hosp pc11_td_disp pc11_td_mh_cln pc11_td_med_in_out_pat pc11_td_med_c_hosp_home
-local centers_u pc11_td_all_hosp pc11_td_disp pc11_td_tbc pc11_td_nh pc11_td_mh pc11_td_in_out_pat pc11_td_c_hosp_home
 
 /* drop villages that are too small to plausibly have a clinic */
 drop if pc11_pca_tot_p < 50
@@ -157,6 +156,10 @@ foreach x of var `centers_u' {
   list `x'_pc `x'_doc_pc `x'_beds_pc `x' `x'_doc_pos `x'_beds pc11_pca_tot_p if `x'_doc_pc > 0.1 & !mi(`x'_doc_pc) & urban == 1
 }
 
+/*****************************************/
+/* IMPUTE BIG CITIES WITH ZERO BEDS/DOCS */
+/*****************************************/
+
 /* the upper limit of hospital beds per capita seems fine-- these are mainly driven by small
   towns and are thus plausible and won't affect our district counts that much.  The lower
   limit is more of a concern-- there are 35 towns with pop > 100,000 and zero reported hospitals.
@@ -186,18 +189,15 @@ list pc11_td_mh_pc pc11_td_mh_beds_pc pc11_td_mh_beds_pc pc11_td_mh pc11_td_mh_b
 /* For flagged obs, doc and bed vars were replaced with district means */
 
 /* doctors */
-gen pc11_td_all_hosp_doc_pk =  pc11_td_all_hosp_doc_pc * 1000
-gen docs_impute = 1 if pc11_td_all_hosp_doc_pk == 0 & !mi(pc11_td_all_hosp_doc_pk) & pc11_pca_tot_p >= 100000 & urban == 1
+gen docs_impute = 1 if pc11_td_all_hosp_doc_pc == 0 & !mi(pc11_td_all_hosp_doc_pc) & pc11_pca_tot_p >= 100000 & urban == 1 & !mi(pc11_pca_tot_p)
 
 /* note - 38 towns have been flagged by the docs_impute variable */
 
 /* beds */
-gen pc11_td_all_hosp_beds_pk =  pc11_td_all_hosp_beds_pc * 1000
-gen beds_impute = 1 if pc11_td_all_hosp_beds_pk == 0 & !mi(pc11_td_all_hosp_beds_pk) & pc11_pca_tot_p >= 100000 & urban == 1
+gen beds_impute = 1 if pc11_td_all_hosp_beds_pc == 0 & !mi(pc11_td_all_hosp_beds_pc) & pc11_pca_tot_p >= 100000 & urban == 1 & !mi(pc11_pca_tot_p)
 
 /* note - 37 towns have been flagged, these overlap with towns flagged above */
-
-cap drop *_pc *_pk
+drop *_pc
 
 /* calculate means at the district level to impute values */
 
@@ -207,8 +207,8 @@ foreach x of var *_beds {
   /* calculate district level means for each variable */
   bys pc11_state_id pc11_district_id: egen m_`x' = mean(`x') if urban == 1
 
-  /* replace values with mean in flagged vars */
-  replace `x' = m_`x' if beds_impute == 1
+  /* replace values with mean in flagged vars in obs with missing/zero content*/
+  replace `x' = m_`x' if beds_impute == 1 & (`x' == 0 | mi(`x'))
 }
 
 /* doctors */

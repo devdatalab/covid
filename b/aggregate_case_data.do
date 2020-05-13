@@ -15,7 +15,7 @@ gen new_deaths = 1
 collapse (sum) new_deaths, by(pc11_state_id pc11_district_id date)
 
 /* save as a tempfile */
-save $tmp/deaths
+save $tmp/deaths, replace
 
 /*********/
 /* Cases */
