@@ -13,7 +13,7 @@ gen lgd_state_name = "bihar"
 drop if lgd_district_name == "bihar"
 
 /* run standard district name fixes */
-synonym_fix lgd_district_name, synfile(~/ddl/covid/b/dist_strings.txt) replace group(lgd_state_name)
+synonym_fix lgd_district_name, synfile(~/ddl/covid/b/str/lgd_district_fixes.txt) replace group(lgd_state_name)
 
 /* merge to the district key to get standardized ids */
 merge 1:1 lgd_state_name lgd_district_name using $keys/lgd_district_key, assert(using match) keepusing(lgd_state_id lgd_district_id)
@@ -45,7 +45,7 @@ ren district lgd_district_name
 gen lgd_state_name = "bihar"
 
 /* run standard district name fixes */
-synonym_fix lgd_district_name, synfile(~/ddl/covid/b/dist_strings.txt) replace group(lgd_state_name)
+synonym_fix lgd_district_name, synfile(~/ddl/covid/b/str/lgd_district_fixes.txt) replace group(lgd_state_name)
 
 /* merge to the district key to get standardized ids */
 /* note we keep using-only districts --- they have no cases yet  */
