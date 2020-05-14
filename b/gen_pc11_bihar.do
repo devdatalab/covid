@@ -5,21 +5,50 @@
 /*****************/
 
 /* merge total/urban/rural pca district data together */
-use $pc11/pc11r_pca_district_clean.dta, clear
-ren pc11_pca* pc11r_pca*
-merge 1:1 pc11_state_id pc11_district_id using $pc11/pc11u_pca_district_clean, gen(_m_pc11u)
-ren pc11_pca* pc11u_pca*
-merge 1:1 pc11_state_id pc11_district_id using $pc11/pc11_pca_district_clean, gen(_m_pc11r)
-drop _m*
-
-/* drop unnecessary variables */
-drop pc11*tru pc11*level
+use $pc11/pc11r_pca_clean.dta, clear
 
 /* keep obs for bihar */
 keep if pc11_state_id == "10"
 
 /* keep necessary vars */
-keep *pca_tot_p *pca_no_hh *pca_main_al_p *_mainwork_p pc11_state* pc11_dist* 
+keep *pca_tot_p *pca_no_hh *pca_main_cl_p *pca_main_al_p *_mainwork_p pc11_state* pc11_dist* 
+
+/* rename vars */
+ren pc11_pca* pc11r_pca*
+
+/* collapse at district level */
+collapse (sum) *pca_tot* *no_hh *al_p *cl_p *work_p, by(pc11_state_id pc11_district_id)
+
+/* save */
+save $tmp/pc11r_pca_bihar, replace
+
+use $pc11/pc11u_pca_clean.dta, clear
+
+/* keep obs for bihar */
+keep if pc11_state_id == "10"
+
+/* keep necessary vars */
+keep *pca_tot_p *pca_no_hh *pca_main_cl_p *pca_main_al_p *_mainwork_p pc11_state* pc11_dist* 
+
+/* rename vars */
+ren pc11_pca* pc11u_pca*
+
+/* collapse at district level */
+collapse (sum) *pca_tot* *no_hh *al_p *cl_p *work_p, by(pc11_state_id pc11_district_id)
+
+/* save */
+save $tmp/pc11u_pca_bihar, replace
+
+/* merge the three datasets */
+use $tmp/pc11r_pca_bihar, clear
+merge 1:1 pc11_state_id pc11_district_id using $tmp/pc11u_pca_bihar, nogen
+
+/* create total vars */
+egen pc11_pca_tot_p = rowtotal(pc11r_pca_tot_p pc11u_pca_tot_p)
+egen pc11_pca_no_hh = rowtotal(pc11r_pca_no_hh pc11u_pca_no_hh)
+egen pc11_pca_main_al_p = rowtotal(pc11r_pca_main_al_p pc11u_pca_main_al_p)
+egen pc11_pca_main_cl_p = rowtotal(pc11r_pca_main_cl_p pc11u_pca_main_cl_p)
+egen pc11_pca_mainwork_p = rowtotal(pc11r_pca_mainwork_p pc11u_pca_mainwork_p)
 
 /* save */
 save $tmp/pc11_pca_district_bihar, replace
@@ -35,7 +64,7 @@ keep if pc11_state_id == "10"
 
 /* collapse to level: land area */
 collapse (sum) pc11_td_area , by(pc11_state_id pc11_district_id)
-label var pc11_td_area "Total geographical area (sq km)"
+label var pc11_td_area "Total geographical area (sq km) - Urban"
 
 /* save level data */
 save $tmp/pc11_td_district_bihar, replace
@@ -49,9 +78,12 @@ use $pc11/pc11_vd_clean.dta , clear
 /* keep obs for bihar */
 keep if pc11_state_id == "10"
 
+/* generate area variable */
+gen area = pc11_vd_area/100
+
 /* collapse to level: land area */
-collapse (sum) pc11_vd_area , by(pc11_state_id pc11_district_id)
-label var pc11_vd_area "Total geographical area (hectares)"
+collapse (sum) pc11_vd_area area, by(pc11_state_id pc11_district_id)
+label var pc11_vd_area "Total geographical area (hectares) - Rural"
 
 /* save level data*/
 save $tmp/pc11_vd_district_bihar, replace
@@ -60,37 +92,69 @@ save $tmp/pc11_vd_district_bihar, replace
 /* Prep households listing data */
 /********************************/
 
+/* rural */
+
 use $pc11/houselisting_pca/pc11r_hpca_village.dta , clear
 
 /* keep obs for bihar */
 keep if pc11_state_id == "10"
 
+/* merge with pc11_pca to get number of households */
+merge 1:1 pc11_state_id pc11_village_id using $pc11/pc11r_pca_clean, keepusing(pc11_pca_no_hh) gen(hhmerge)
+keep if hhmerge == 3
+/* 260 obs get dropped */
+drop hhmerge
+
+/* create no. of households with clean water */
+ren pc11_pca_no_hh pc11r_pca_no_hh
+
+foreach x of var pc11r_hl_dw*{
+  gen `x'_no = `x'*pc11r_pca_no_hh
+}
+
 /* collapse to level: access to water */
-collapse (mean) pc11r_hl_dw_loc_* , by(pc11_state_id pc11_district_id)
-label var pc11r_hl_dw_loc_inprem "Prop. of households with drinking water in premise"
-label var pc11r_hl_dw_loc_nearprem "Prop. of households with drinking water near premise"
-label var pc11r_hl_dw_loc_far "Prop. of households with drinking water far from premise"
+collapse (sum) *_no *no_hh , by(pc11_state_id pc11_district_id)
 
 /* save level data */
 save $tmp/pc11r_water_district_bihar, replace
 
-
+/* urban */
 use $pc11/houselisting_pca/pc11u_hpca_town.dta , clear
 
 /* keep obs for bihar */
 keep if pc11_state_id == "10"
 
+save $tmp/master, replace
+
+/* pc11 pca urban is not unique  */
+use $pc11/pc11u_pca_clean, clear
+bys pc11_state_id pc11_town_id : keep if _n == 1
+save $tmp/using, replace
+
+use $tmp/master, clear
+
+/* merge with pc11_pca to get number of households */
+merge 1:1 pc11_state_id pc11_town_id using $tmp/using, keepusing(pc11_pca_no_hh) gen(hhmerge)
+keep if hhmerge == 3
+
+/* create no. of households with clean water */
+ren pc11_pca_no_hh pc11u_pca_no_hh
+
+foreach x of var pc11u_hl_dw*{
+  gen `x'_no = `x'*pc11u_pca_no_hh
+}
+
 /* collapse to level: access to water */
-collapse (mean) pc11u_hl_dw_loc_* , by(pc11_state_id pc11_district_id)
-label var pc11u_hl_dw_loc_inprem "Prop. of households with drinking water in premise"
-label var pc11u_hl_dw_loc_nearprem "Prop. of households with drinking water near premise"
-label var pc11u_hl_dw_loc_far "Prop. of households with drinking water far from premise"
+collapse (sum) *_no *no_hh , by(pc11_state_id pc11_district_id)
 
 /* save level data */
 save $tmp/pc11u_water_district_bihar, replace
 
 /* merge rural and urban households data */
 merge 1:1 pc11_state_id pc11_district_id using $tmp/pc11r_water_district_bihar, nogen
+
+/* drop unnecessary vars */
+drop *hl_dwelling* *dw_source*
 
 /* save */
 save $tmp/pc11_water_district_bihar, replace
@@ -151,7 +215,7 @@ merge 1:1 pc11_state_id pc11_district_id using $tmp/pc11_healthcapacity_district
 drop *merge
 
 /* gen area variable */
-gen area = pc11_td_area + (pc11_vd_area/100)
+replace area = pc11_td_area + area
 la var area "Total area of district (sq km)"
 
 /* create population density */
@@ -165,10 +229,10 @@ la var pc11r_pdensity "Population density (Rural)"
 
 /* create agri workers shares */
 foreach i in r u {
-gen pc11`i'_ag_main_share = pc11`i'_pca_main_al_p/pc11_pca_mainwork_p
+  gen pc11`i'_ag_main_share = (pc11`i'_pca_main_al_p + pc11`i'_pca_main_cl_p)/pc11_pca_mainwork_p
 }
 
-gen pc11_ag_main_share = pc11_pca_main_al_p/pc11_pca_mainwork_p
+gen pc11_ag_main_share = (pc11_pca_main_al_p + pc11`i'_pca_main_cl_p)/pc11_pca_mainwork_p
 
 la var pc11r_ag_main_share "Share of main workers in agri (Rural)"
 la var pc11u_ag_main_share "Share of main workers in agri (Urban)"
@@ -176,31 +240,36 @@ la var pc11_ag_main_share "Share of main workers in agriculture"
 
 la var pc11r_pca_main_al_p "No. of main workers - agri (Rural)"
 la var pc11u_pca_main_al_p "No. of main workers - agri (Urban)"
+la var pc11r_pca_main_cl_p "No. of main workers - cultivation (Rural)"
+la var pc11u_pca_main_cl_p "No. of main workers - cultivation (Urban)"
+la var pc11u_pca_main_cl_p "No. of main workers - cultivation"
 
 /* create no. of households with clean water */
 foreach x of var pc11r_hl_dw*{
-  gen `x'_no = `x'*pc11r_pca_no_hh
+  gen `x'sh = `x'/pc11r_pca_no_hh
 }
 
 foreach x of var pc11u_hl_dw*{
-  gen `x'_no = `x'*pc11u_pca_no_hh
+  gen `x'sh = `x'/pc11u_pca_no_hh
 }
+
+ren *nosh *sh
 
 la var pc11r_hl_dw_loc_inprem_no "No. of hh with access to drinking water in premise (Rural)"
 la var pc11r_hl_dw_loc_nearprem_no "No. of hh with access to drinking water near premise (Rural)"
 la var pc11r_hl_dw_loc_far_no "No. of hh with access to drinking water far from premise (Rural)"
 
-la var pc11r_hl_dw_loc_inprem "Share of hh with access to drinking water in premise (Rural)"
-la var pc11r_hl_dw_loc_nearprem "Share of hh with access to drinking water near premise (Rural)"
-la var pc11r_hl_dw_loc_far_no "Share of hh with access to drinking water far from premise (Rural)"
+la var pc11r_hl_dw_loc_inprem_sh "Share of hh with access to drinking water in premise (Rural)"
+la var pc11r_hl_dw_loc_nearprem_sh "Share of hh with access to drinking water near premise (Rural)"
+la var pc11r_hl_dw_loc_far_sh "Share of hh with access to drinking water far from premise (Rural)"
 
 la var pc11u_hl_dw_loc_inprem_no "No. of hh with access to drinking water in premise (Urban)"
 la var pc11u_hl_dw_loc_nearprem_no "No. of hh with access to drinking water near premise (Urban)"
 la var pc11u_hl_dw_loc_far_no "No. of hh with access to drinking water far from premise (Urban)"
 
-la var pc11u_hl_dw_loc_inprem "Share of hh with access to drinking water in premise (Urban)"
-la var pc11u_hl_dw_loc_nearprem "Share of hh with access to drinking water near premise (Urban)"
-la var pc11u_hl_dw_loc_far "Share of hh with access to drinking water far from premise (Urban)"
+la var pc11u_hl_dw_loc_inprem_sh "Share of hh with access to drinking water in premise (Urban)"
+la var pc11u_hl_dw_loc_nearprem_sh "Share of hh with access to drinking water near premise (Urban)"
+la var pc11u_hl_dw_loc_far_sh "Share of hh with access to drinking water far from premise (Urban)"
 
 /* clean dataset */
 drop *version pc01* 
@@ -215,7 +284,7 @@ la var pc11r_pca_no_hh "No of hh (rural)"
 la var pc11u_pca_no_hh "No of hh (urban)"
 
 /* order dataset */
-order lgd* pc11_state_id pc11_district_id pc11_state_name pc11_district_name
+order lgd* pc11_state_id pc11_district_id pc11_district_name
 order *pca_tot_p, after(pc11_district_name)
 order *ag_main_share *al_p, after(pc11_pca_tot_p)
 order *pdensity, after(pc11_pca_main_al_p)
