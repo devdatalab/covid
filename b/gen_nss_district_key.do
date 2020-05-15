@@ -26,6 +26,7 @@ lgd_dist_clean nss_district_name
 
 /* state match to lgd key */
 lgd_state_match nss_state_name
+/* arunachal pradesh and mizoram missing in nss key */
 
 /* generate nss state id from the lgd state id variable*/
 gen nss_state_id = lgd_state_id
@@ -35,10 +36,11 @@ lgd_dist_match nss_district_name
 
 /* re-order vars */
 order nss_state_id nss_district_id, first
+order nss_district_name, before(lgd_district_name)
 
 /* the final key has 649 obs */
 /* original key had 648 obs */
-/* jaintia hills was expanded into 2 obs */
+/* jaintia hills was expanded into 2 obs bc lgd data has e & w. jaintia hills */
 
 /* save */
 save $iec1/nss/nss-75-health/nss75_lgd_district_key, replace
