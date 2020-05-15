@@ -13,8 +13,8 @@ replace area = pc11_td_area + area
 la var area "Total area of district (sq km)"
 
 /* create population density */
-gen pc11r_pdensity = pc11r_pca_tot_p/(pc11_vd_area/100)
-gen pc11u_pdensity = pc11u_pca_tot_p/pc11_td_area
+gen pc11r_pdensity = pc11r_pca_tot_p/area
+gen pc11u_pdensity = pc11u_pca_tot_p/area
 gen pc11_pdensity = pc11_pca_tot_p/area
 
 la var pc11_pdensity "Population density"
@@ -336,6 +336,8 @@ use $tmp/master, clear
 merge 1:1 pc11_state_id pc11_district_id pc11_town_id using $tmp/using, gen(m)
 drop if m == 2
 /* 23 towns dropped */
+
+/* replace empty pca total population variable with pc11 td total population */
 replace pc11_pca_tot_p = pc11_tot_p if m == 1
 drop m
 
@@ -343,6 +345,7 @@ drop m
 keep if pc11_state_id == "10"
 
 /* process block name variable */
+/* town block names are in all caps, vd block names are proper */
 ren pc11_td_block_name pc11_vd_block_name
 replace pc11_vd_block_name = proper(pc11_vd_block_name)
 
@@ -374,7 +377,7 @@ gen area = pc11_vd_area/100
 
 /* collapse to level: land area */
 collapse (sum) pc11_vd_area area *pca_tot_p *pca_no_hh *pca_main_al_p *pca_main_cl_p *_mainwork_p, by(pc11_state_id pc11_district_id pc11_vd_block_name)
-label var pc11_vd_area "Total geographical area (sq km)"
+label var pc11_vd_area "Total geographical area (ha)"
 
 ren pc11_pca* pc11r_pca*
 
@@ -438,6 +441,7 @@ keep if pc11_state_id == "10"
 /* keep relevant vars */
 keep *nh *mh *_cln *cntr *disp *all_hosp *all_hosp_doc_tot *all_hosp_pmed_tot pc11_state_id pc11_district_id pc11_town_id urban pc11_village_id
 
+/* extract block names for rural/urban health capacity data from vd */
 preserve
 
 /* keep rural obs */
@@ -476,7 +480,7 @@ restore
 use $tmp/healthr_bihar, clear
 append using $tmp/healthu_bihar
 
-/* collapse at district level */
+/* collapse at block level */
 collapse (sum) pc11_td*, by(pc11_state_id pc11_district_id pc11_vd_block_name)
 
 /* clean */
