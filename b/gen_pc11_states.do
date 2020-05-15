@@ -9,7 +9,9 @@ prog def finalsteps
 {
 
     /* gen area variable */
-    replace area = pc11_td_area + area
+    egen area_final = rowtotal(area pc11_td_area)
+    drop area
+    ren area_final area
     la var area "Total area of district (sq km)"
 
     /* create population density */
@@ -76,8 +78,8 @@ prog def finalsteps
     la var pc11u_pca_no_hh "No of hh (urban)"
 
     /* order dataset */
-    order lgd* pc11_state_id pc11_district_id pc11_district_name
-    order *pca_tot_p, after(pc11_district_name)
+    order lgd*
+    order *pca_tot_p, after(lgd_district_name_local)
     order *ag_main_share *al_p, after(pc11_pca_tot_p)
     order *pdensity, after(pc11_pca_main_al_p)
     order *dw_loc*, after(pc11_pdensity)
@@ -98,16 +100,12 @@ foreach id in 10 36{
 
   /* merge total/urban/rural pca district data together */
   use $pc11/pc11r_pca_clean.dta, clear
-  merge m:m pc11_district_id using $keys/lgd_pc11_district_key, keepusing(lgd_state_id lgd_state_name lgd_district_id lgd_district_name)
+  merge m:m pc11_district_id using $keys/lgd_pc11_district_key, keepusing(lgd_state_id lgd_state_name lgd_district_id `ldname')
   keep if _merge == 3
 
   /* keep obs for state */
   keep if lgd_state_id == "`id'"
 
-  /* code to retain one obs for a multiparent lgd district  */
-  drop if lgd_district_name == "siddipet" & pc11_district_id == "535"
-  drop if lgd_district_name == "siddipet" & pc11_district_id == "540"
-  
   /* keep necessary vars */
   keep *pca_tot_p *pca_no_hh *pca_main_cl_p *pca_main_al_p *_mainwork_p pc11_state* pc11_dist* lgd*
 
@@ -115,21 +113,17 @@ foreach id in 10 36{
   ren pc11_pca* pc11r_pca*
 
   /* collapse at district level */
-  collapse (sum) *pca_tot* *no_hh *al_p *cl_p *work_p, by(lgd_state_id pc11_state_id pc11_district_id)
+  collapse (sum) *pca_tot* *no_hh *al_p *cl_p *work_p, by(lgd_state_id pc11_state_id lgd_district_id)
 
   /* save */
   save $tmp/pc11r_pca_`state', replace
 
   use $pc11/pc11u_pca_clean.dta, clear
-  merge m:m pc11_district_id using $keys/lgd_pc11_district_key, keepusing(lgd_state_id lgd_state_name lgd_district_id lgd_district_name)
+  merge m:m pc11_district_id using $keys/lgd_pc11_district_key, keepusing(lgd_state_id lgd_state_name lgd_district_id `ldname')
   keep if _merge == 3
   
   /* keep obs for state */
   keep if lgd_state_id == "`id'"
-
-  /* code to retain one obs for a multiparent lgd district  */
-  drop if lgd_district_name == "siddipet" & pc11_district_id == "535"
-  drop if lgd_district_name == "siddipet" & pc11_district_id == "540"
 
   /* keep necessary vars */
   keep *pca_tot_p *pca_no_hh *pca_main_cl_p *pca_main_al_p *_mainwork_p pc11_state* pc11_dist* lgd*
@@ -138,14 +132,14 @@ foreach id in 10 36{
   ren pc11_pca* pc11u_pca*
 
   /* collapse at district level */
-  collapse (sum) *pca_tot* *no_hh *al_p *cl_p *work_p, by(lgd_state_id pc11_state_id pc11_district_id)
+  collapse (sum) *pca_tot* *no_hh *al_p *cl_p *work_p, by(lgd_state_id pc11_state_id lgd_district_id)
 
   /* save */
   save $tmp/pc11u_pca_`state', replace
 
   /* merge the three datasets */
   use $tmp/pc11r_pca_`state', clear
-  merge 1:1 pc11_state_id pc11_district_id using $tmp/pc11u_pca_`state', nogen
+  merge 1:1 lgd_state_id lgd_district_id using $tmp/pc11u_pca_`state', nogen
 
   /* create total vars */
   egen pc11_pca_tot_p = rowtotal(pc11r_pca_tot_p pc11u_pca_tot_p)
@@ -163,18 +157,14 @@ foreach id in 10 36{
 
   use $pc11/pc11_td_clean.dta , clear
 
-  merge m:m pc11_district_id using $keys/lgd_pc11_district_key, keepusing(lgd_state_id lgd_state_name lgd_district_id lgd_district_name)
+  merge m:m pc11_district_id using $keys/lgd_pc11_district_key, keepusing(lgd_state_id lgd_state_name lgd_district_id `ldname')
   keep if _merge == 3
   
   /* keep obs for state */
   keep if lgd_state_id == "`id'"
 
-  /* code to retain one obs for a multiparent lgd district  */
-  drop if lgd_district_name == "siddipet" & pc11_district_id == "535"
-  drop if lgd_district_name == "siddipet" & pc11_district_id == "540"
-
   /* collapse to level: land area */
-  collapse (sum) pc11_td_area , by(lgd_state_id pc11_state_id pc11_district_id)
+  collapse (sum) pc11_td_area , by(lgd_state_id pc11_state_id lgd_district_id)
   label var pc11_td_area "Total geographical area (sq km) - Urban"
 
   /* save level data */
@@ -186,21 +176,17 @@ foreach id in 10 36{
 
   use $pc11/pc11_vd_clean.dta , clear
 
-  merge m:m pc11_district_id using $keys/lgd_pc11_district_key, keepusing(lgd_state_id lgd_state_name lgd_district_id lgd_district_name)
+  merge m:m pc11_district_id using $keys/lgd_pc11_district_key, keepusing(lgd_state_id lgd_state_name lgd_district_id `ldname')
   keep if _merge == 3
   
   /* keep obs for state */
   keep if lgd_state_id == "`id'"
   
-  /* code to retain one obs for a multiparent lgd district  */
-  drop if lgd_district_name == "siddipet" & pc11_district_id == "535"
-  drop if lgd_district_name == "siddipet" & pc11_district_id == "540"
-
   /* generate area variable */
   gen area = pc11_vd_area/`id'0
 
   /* collapse to level: land area */
-  collapse (sum) pc11_vd_area area, by(lgd_state_id pc11_state_id pc11_district_id)
+  collapse (sum) pc11_vd_area area, by(lgd_state_id pc11_state_id lgd_district_id)
   label var pc11_vd_area "Total geographical area (hectares) - Rural"
 
   /* save level data*/
@@ -214,15 +200,11 @@ foreach id in 10 36{
 
   use $pc11/houselisting_pca/pc11r_hpca_village.dta , clear
 
-  merge m:m pc11_district_id using $keys/lgd_pc11_district_key, keepusing(lgd_state_id lgd_state_name lgd_district_id lgd_district_name)
+  merge m:m pc11_district_id using $keys/lgd_pc11_district_key, keepusing(lgd_state_id lgd_state_name lgd_district_id `ldname')
   keep if _merge == 3
   
   /* keep obs for state */
   keep if lgd_state_id == "`id'"
-
-  /* code to retain one obs for a multiparent lgd district  */
-  drop if lgd_district_name == "siddipet" & pc11_district_id == "535"
-  drop if lgd_district_name == "siddipet" & pc11_district_id == "540"
 
   /* merge with pc11_pca to get number of households */
   merge 1:1 pc11_state_id pc11_village_id using $pc11/pc11r_pca_clean, keepusing(pc11_pca_no_hh) gen(hhmerge)
@@ -241,7 +223,7 @@ foreach id in 10 36{
   save $tmp/pc11r_water_precol_`state', replace
 
   /* collapse to level: access to water */
-  collapse (sum) *_no *no_hh , by(lgd_state_id pc11_state_id pc11_district_id)
+  collapse (sum) *_no *no_hh , by(lgd_state_id pc11_state_id lgd_district_id)
 
   /* save level data */
   save $tmp/pc11r_water_district_`state', replace
@@ -249,7 +231,7 @@ foreach id in 10 36{
   /* urban */
   use $pc11/houselisting_pca/pc11u_hpca_town.dta , clear
 
-  merge m:m pc11_district_id using $keys/lgd_pc11_district_key, keepusing(lgd_state_id lgd_state_name lgd_district_id lgd_district_name)
+  merge m:m pc11_district_id using $keys/lgd_pc11_district_key, keepusing(lgd_state_id lgd_state_name lgd_district_id `ldname')
   keep if _merge == 3
 
   /* keep obs unique at town id level */
@@ -257,10 +239,6 @@ foreach id in 10 36{
   
   /* keep obs for state */
   keep if lgd_state_id == "`id'"
-
-  /* code to retain one obs for a multiparent lgd district  */
-  drop if lgd_district_name == "siddipet" & pc11_district_id == "535"
-  drop if lgd_district_name == "siddipet" & pc11_district_id == "540"
 
   save $tmp/master, replace
 
@@ -286,13 +264,13 @@ foreach id in 10 36{
   save $tmp/pc11u_water_precol_`state', replace
 
   /* collapse to level: access to water */
-  collapse (sum)  *_no *no_hh , by(lgd_state_id pc11_state_id pc11_district_id)
+  collapse (sum)  *_no *no_hh , by(lgd_state_id pc11_state_id lgd_district_id)
 
   /* save level data */
   save $tmp/pc11u_water_district_`state', replace
 
   /* merge rural and urban households data */
-  merge 1:1 pc11_state_id pc11_district_id using $tmp/pc11r_water_district_`state', nogen
+  merge 1:1 lgd_state_id lgd_district_id using $tmp/pc11r_water_district_`state', nogen
 
   /* drop unnecessary vars */
   drop *hl_dwelling* *dw_source*
@@ -308,21 +286,17 @@ foreach id in 10 36{
   /* Using this version bc outliers were checked and dropped in this version */
   use $tmp/precollapse, clear
 
-  merge m:m pc11_district_id using $keys/lgd_pc11_district_key, keepusing(lgd_state_id lgd_state_name lgd_district_id lgd_district_name)
+  merge m:m pc11_district_id using $keys/lgd_pc11_district_key, keepusing(lgd_state_id lgd_state_name lgd_district_id `ldname')
   keep if _merge == 3
   
   /* keep obs for state */
   keep if lgd_state_id == "`id'"
 
-  /* code to retain one obs for a multiparent lgd district  */
-  drop if lgd_district_name == "siddipet" & pc11_district_id == "535"
-  drop if lgd_district_name == "siddipet" & pc11_district_id == "540"
-
   /* keep relevant vars */
   keep *nh *mh *_cln *cntr *disp *all_hosp *all_hosp_doc_tot *all_hosp_pmed_tot pc11_state_id pc11_district_id lgd*
 
   /* collapse at district level */
-  collapse (sum)  pc11_td*, by(lgd_state_id pc11_state_id pc11_district_id)
+  collapse (sum)  pc11_td*, by(lgd_state_id pc11_state_id lgd_district_id)
 
   /* clean */
   ren pc11_td* pc11_tot*
@@ -347,21 +321,17 @@ foreach id in 10 36{
   /* Merge everything with lgd-pc11 district key */
   /***********************************************/
 
-  use $keys/lgd_pc11_district_key_weights, clear
+  use $keys/lgd_district_key, clear
 
   /* keep obs for state */
   keep if lgd_state_id == "`id'"
 
-  /* code to retain one obs for a multiparent lgd district  */
-  drop if lgd_district_name == "siddipet" & pc11_district_id == "535"
-  drop if lgd_district_name == "siddipet" & pc11_district_id == "540"
-
-   /* merge pca data */
-  merge m:1 lgd_state_id pc11_district_id using $tmp/pc11_pca_district_`state', gen(pcamerge)
-  merge m:1 lgd_state_id pc11_district_id using $tmp/pc11_td_district_`state', gen(td_merge)
-  merge m:1 lgd_state_id pc11_district_id using $tmp/pc11_vd_district_`state', gen(vd_merge)
-  merge m:1 lgd_state_id pc11_district_id using $tmp/pc11_water_district_`state', gen(water_merge)
-  merge m:1 lgd_state_id pc11_district_id using $tmp/pc11_healthcapacity_district_`state', gen(hosp_merge)
+  /* merge pca data */
+  merge 1:1 lgd_state_id lgd_district_id using $tmp/pc11_pca_district_`state', gen(pcamerge)
+  merge 1:1 lgd_state_id lgd_district_id using $tmp/pc11_td_district_`state', gen(td_merge)
+  merge 1:1 lgd_state_id lgd_district_id using $tmp/pc11_vd_district_`state', gen(vd_merge)
+  merge 1:1 lgd_state_id lgd_district_id using $tmp/pc11_water_district_`state', gen(water_merge)
+  merge 1:1 lgd_state_id lgd_district_id using $tmp/pc11_healthcapacity_district_`state', gen(hosp_merge)
 
   /* everything merged */
   drop *merge
@@ -373,6 +343,7 @@ foreach id in 10 36{
   save $covidpub/`state'/`state'_district_pc11, replace
 
 }
+
 
 /***************************************************************************************************/
 /* Repeat for blocks - this couldn't be put in a loop because blocks are not a normal location key */
