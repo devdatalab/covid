@@ -1,8 +1,34 @@
 master,lgd_district_name,lgd_state_name
 kaimur (bhabua),kaimur bhabua,bihar
 pashchim champaran,west champaran,bihar
+purba champaran,purbi champaran, bihar
 purbi champaran,east champaran,bihar
 purnia,purnea,bihar
 kaimur (bhabua),kaimur,bihar
 muzaffarpur,muzzafarpur,bihar
 sheikhpura,sheikpura,bihar
+ayodhya,faizabad,uttar pradesh
+prayagraj,allahabad,uttar pradesh
+kamrup metro,kamrup m,assam
+kamrup rural,kamrup r,assam
+y s r,cuddapah,andhra pradesh
+y s r,y.s.r. (cuddapah),andhra pradesh
+nuh,mewat,haryana
+kalaburagi,gulbarga,karnataka
+amethi,c s m nagar,uttar pradesh
+amroha,jyotiba phule nagar,uttar pradesh
+amroha,jyotiba nagar,uttar pradesh
+leh ladakh,leh,ladakh
+leh ladakh,ladakh,ladakh
+sant kabeer nagar,skn,uttar pradesh
+bhadohi,srnb,uttar pradesh
+bhadohi,sant ravidas nagar,uttar pradesh
+hathras,mahamaya nagar,uttar pradesh
+janjgir-champa,janjgir,chhattisgarh
+s.a.s nagar,sahibzada ajit singh,punjab
+shahid bhagat singh nagar,sbs nagar,punjab
+faridabad,gbn faridabad,haryana
+barddhaman,bardhaman,west bengal
+gurugram,gurgaon,haryana
+khargone,west nimar,madhya pradesh
+east nimar,khandwa,madhya pradesh

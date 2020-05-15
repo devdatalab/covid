@@ -461,13 +461,13 @@ save $health/hmis/hmis_clean_small_key, replace
 /******************************************************/
 
 /* import data */
-use $health/hmis/hmis_clean_all_key, clear
+use $health/hmis/hmis_clean_small_key, clear
 
 /* collapse dataset */
 bys hmis_state hmis_district: keep if _n == 1
 
 /* gen hmis state and district name vars */
-gen hmis_state_name = hmis_district
+gen hmis_state_name = hmis_state
 gen hmis_district_name = hmis_district
 
 /* define programs to merge variables */
@@ -485,5 +485,6 @@ lgd_dist_match hmis_district
 ren (hmis_state_name hmis_district_name) (hmis_state hmis_district)
 
 /* save matched dataset */
-save $health/hmis/lgd_pc11_hmis_district_key, replace
-/* "lgd_pc11_hmis_district_key.dta could probably be hmis_district_key.dta" -Paul */
+save $health/hmis/hmis_district_key, replace
+
+

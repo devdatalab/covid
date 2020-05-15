@@ -306,7 +306,7 @@ lgd_dist_match district
 /* 2 districts don't match - pak occupied kashmir, and phule (dup obs) */
 
 /* save the key */
-save $covidpub/covid/covindia_lgd_pc11_district_key, replace
+save $tmp/covindia_lgd_district_key, replace
 
 /* the covid folder:
 
