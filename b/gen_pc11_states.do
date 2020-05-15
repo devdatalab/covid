@@ -91,7 +91,7 @@ end
 /* Prep PCA data */
 /*****************/
 
-foreach id in 10 36{
+foreach id in 10 36 {
 
   if `id' == 10 local state "bihar"
   if `id' == 36 local state "telangana"
