@@ -107,7 +107,7 @@ def read_hmis_csv(year, filepath):
     and convert to csv
     """
     # get full filepath
-    fp = os.path.join(filepath, "nrhm_hmis", "itemwise_monthly", "district", year)
+    fp = os.path.join(filepath, "hmis", "itemwise_monthly", "district", year)
 
     # get all files in this folder
     filelist = os.listdir(fp)
@@ -119,8 +119,6 @@ def read_hmis_csv(year, filepath):
     #Add try and except to handle empty excel files for 2020-2021
     for i in filelist:
         try:
-            print(i)
-    
             #Skip.xls files not for the state
             if i in ( "All_India.xls", "M O Defence.xls", "M O Railways.xls")  :
                 continue
@@ -245,7 +243,7 @@ def read_hmis_csv_hospitals(year, filepath):
     and convert to csv
     """
     # get full filepath
-    fp = os.path.join(filepath, "nrhm_hmis", "data_reporting_status", year)
+    fp = os.path.join(filepath, "hmis", "data_reporting_status", year)
     
     # get all files in this folder
     filelist = os.listdir(fp)

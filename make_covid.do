@@ -36,6 +36,10 @@ if "$fast" != "1" {
   do $ccode/b/gen_age_distribution
 }
 
+/* Process and generate HMIS data*/
+// Need to keep checking if 2020/21 data has been updated. It's been taken down from the website.
+do $ccode/b/process_nrhm_hmis.do
+
 /* download latest district-level case data */
 // need to fix conda setup to make this universal
 // do $ccode/b/get_case_data
