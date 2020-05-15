@@ -57,5 +57,5 @@ drop _merge
 
 /* save clean bihar case data */
 order lgd_state_id lgd_district_id lgd_state_name lgd_district_name 
-save $health/bihar/bihar_moh_hospitals, replace
+save $health/bihar/bihar_moh_cases, replace
 
