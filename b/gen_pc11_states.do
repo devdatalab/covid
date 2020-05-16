@@ -1,5 +1,8 @@
 /* gen demographic and amenities data for bihar at lgd-pc11 district level */
 
+/* set context */
+set_context covid
+
 /******************************************************************/
 /* Define program for final cleaning steps after merging all data */
 /******************************************************************/
@@ -100,7 +103,7 @@ foreach id in 10 36 {
 
   /* merge total/urban/rural pca district data together */
   use $pc11/pc11r_pca_clean.dta, clear
-  merge m:m pc11_district_id using $keys/lgd_pc11_district_key, keepusing(lgd_state_id lgd_state_name lgd_district_id `ldname')
+  merge 1:1 pc11_state_id pc11_village_id using $keys/lgd_pc11_village_key, keepusing(lgd_state_id lgd_state_name lgd_district_id lgd_district_name)
   keep if _merge == 3
 
   /* keep obs for state */
@@ -119,7 +122,8 @@ foreach id in 10 36 {
   save $tmp/pc11r_pca_`state', replace
 
   use $pc11/pc11u_pca_clean.dta, clear
-  merge m:m pc11_district_id using $keys/lgd_pc11_district_key, keepusing(lgd_state_id lgd_state_name lgd_district_id `ldname')
+  bys pc11_state_id pc11_town_id : keep if _n == 1
+  merge 1:1 pc11_state_id pc11_town_id using $keys/lgd_pc11_town_key, keepusing(lgd_state_id lgd_state_name lgd_district_id lgd_district_name)
   keep if _merge == 3
   
   /* keep obs for state */
@@ -157,7 +161,11 @@ foreach id in 10 36 {
 
   use $pc11/pc11_td_clean.dta , clear
 
-  merge m:m pc11_district_id using $keys/lgd_pc11_district_key, keepusing(lgd_state_id lgd_state_name lgd_district_id `ldname')
+  /* keep obs unique on state and town id */
+  bys pc11_state_id pc11_town_id : keep if _n == 1
+
+  /* merge to get lgd ids */
+  merge 1:1 pc11_state_id pc11_town_id using $keys/lgd_pc11_town_key, keepusing(lgd_state_id lgd_state_name lgd_district_id lgd_district_name)
   keep if _merge == 3
   
   /* keep obs for state */
@@ -176,7 +184,11 @@ foreach id in 10 36 {
 
   use $pc11/pc11_vd_clean.dta , clear
 
-  merge m:m pc11_district_id using $keys/lgd_pc11_district_key, keepusing(lgd_state_id lgd_state_name lgd_district_id `ldname')
+  /* keep obs unique on state and vill id */
+  bys pc11_state_id pc11_village_id : keep if _n == 1
+
+  /* merge to get lgd ids */
+  merge 1:1 pc11_state_id pc11_village_id using $keys/lgd_pc11_village_key, keepusing(lgd_state_id lgd_state_name lgd_district_id `ldname')
   keep if _merge == 3
   
   /* keep obs for state */
@@ -200,7 +212,11 @@ foreach id in 10 36 {
 
   use $pc11/houselisting_pca/pc11r_hpca_village.dta , clear
 
-  merge m:m pc11_district_id using $keys/lgd_pc11_district_key, keepusing(lgd_state_id lgd_state_name lgd_district_id `ldname')
+  /* keep obs unique on state and village ids */
+  bys pc11_state_id pc11_village_id : keep if _n == 1
+
+  /* merge to get lgd ids */
+  merge 1:1 pc11_state_id pc11_village_id using $keys/lgd_pc11_village_key, keepusing(lgd_state_id lgd_state_name lgd_district_id `ldname')
   keep if _merge == 3
   
   /* keep obs for state */
@@ -231,7 +247,11 @@ foreach id in 10 36 {
   /* urban */
   use $pc11/houselisting_pca/pc11u_hpca_town.dta , clear
 
-  merge m:m pc11_district_id using $keys/lgd_pc11_district_key, keepusing(lgd_state_id lgd_state_name lgd_district_id `ldname')
+  /* keep unique obs on state and town id */
+  bys pc11_state_id pc11_town_id : keep if _n == 1
+
+  /* merge to extract lgd ids */
+  merge 1:1 pc11_state_id pc11_town_id using $keys/lgd_pc11_town_key, keepusing(lgd_state_id lgd_state_name lgd_district_id `ldname')
   keep if _merge == 3
 
   /* keep obs unique at town id level */
@@ -286,8 +306,32 @@ foreach id in 10 36 {
   /* Using this version bc outliers were checked and dropped in this version */
   use $tmp/precollapse, clear
 
-  merge m:m pc11_district_id using $keys/lgd_pc11_district_key, keepusing(lgd_state_id lgd_state_name lgd_district_id `ldname')
-  keep if _merge == 3
+  /* extract lgd ids */
+  
+  forval x = 0/1{
+
+    preserve
+    
+    if `x' == 0 local ids pc11_state_id pc11_village_id
+    if `x' == 1 local ids pc11_state_id pc11_town_id 
+    if `x' == 0 local level village 
+    if `x' == 1 local level town 
+
+    keep if urban == `x'
+
+    bys `ids' : keep if _n == 1
+    
+    merge 1:1 `ids' using $keys/lgd_pc11_`level'_key, keepusing(lgd_state_id lgd_state_name lgd_district_id lgd_district_name) gen(m)
+    keep if m == 3
+    drop m  
+
+    save $tmp/`level', replace
+
+    restore
+  }
+
+  use $tmp/village, clear
+  append using $tmp/town
   
   /* keep obs for state */
   keep if lgd_state_id == "`id'"
@@ -343,7 +387,6 @@ foreach id in 10 36 {
   save $covidpub/`state'/`state'_district_pc11, replace
 
 }
-
 
 /***************************************************************************************************/
 /* Repeat for blocks - this couldn't be put in a loop because blocks are not a normal location key */
