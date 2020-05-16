@@ -242,7 +242,7 @@ export delimited $covidpub/covid/csv/covid_deaths_recoveries.csv, replace
 cd $ddl/covid
 
 /* 1. Retrieve the data */
-/* call python function to retrieve the patient-level covid data */
+/* call python function to retrieve the district-date level covid data */
 shell python -c "from b.retrieve_case_data import retrieve_covindia_case_data; retrieve_covindia_case_data('https://v1.api.covindia.com/covindia-raw-data', '$tmp')"
 
 /* import the data we just pulled */
@@ -261,24 +261,51 @@ label var infected "the number of infected cases in this entry (report)"
 label var death "the number of deaths in this entry (report)"
 label var source "the source link for this entry (report)"
 
-/* save data */
-save $covidpub/covid/covindia_raw_data, replace
+/* replace missind district code with missing */
+replace district = "" if district == "DIST_NA"
 
-/* get the list of states and districts used by covindia */
-shell python -c "from b.retrieve_case_data import retrieve_covindia_state_district_list; retrieve_covindia_state_district_list('$tmp')"
-
-/* import the csv output from the python function */
-import delimited $tmp/covindia_state_district_list.csv, clear varn(1)
-
-/* sort values */
-sort state district
-
-/* remove underscores */
-replace state = subinstr(state, "_", " ", .)
+/* remove underscores from district names */
 replace district = subinstr(district, "_", " ", .)
 
-/* save dta file */
+/* make state and district lower case */
+replace district = trim(lower(district))
+replace state = trim(lower(state))
+
+/* correct internal misspellings of districts */
+synonym_fix district, synfile($ddl/covid/b/str/covid_district_fixes.txt) replace
+
+/* save data */
+save $tmp/covindia_raw_data, replace
+
+/* keep only states and districts to create the covid-lgd key */
+keep state district
+duplicates drop
+
+/* drop if missing district */
+drop if mi(district)
+
+/* save the state and district list */
+sort state district
 save $covidpub/covid/covindia_state_district_list, replace
+
+/* get the list of states and districts used by covindia - 
+  UPDATE 05/16/20: these do not match the list coming in from the data */
+// shell python -c "from b.retrieve_case_data import retrieve_covindia_state_district_list; retrieve_covindia_state_district_list('$tmp')"
+
+/* import the csv output from the python function */
+// import delimited $tmp/covindia_state_district_list.csv, clear varn(1)
+
+/* sort values */
+// sort state district
+
+/* remove underscores */
+// replace district = subinstr(district, "_", " ", .)
+
+/* correct spellings needed to match the actual data */
+// replace state = "Maharashtra" if state == "Maharastra"
+
+/* save dta file */
+// save $covidpub/covid/covindia_state_district_list, replace
 
 /****************************************************/
 /* matching covindia state district key to lgd-pc11 */
@@ -308,12 +335,24 @@ lgd_dist_match district
 /* save the key */
 save $tmp/covindia_lgd_district_key, replace
 
-/* the covid folder:
+/**********************************************/
+/* merge the lgd districts into the case data */
+/**********************************************/
+/* drop the only district (warangal rural) that has multiple covid districts mapping to a single lgd district */
+drop if lgd_district_id == "522"
 
-DTA
- - covid_cases_raw -- what we scraped
- - cfr_age_bins -- age-specific CFRs from Max Roser for S.Korea, Italy
- - covid_deaths_recoveries.dta -- cleaned death/recovery summary file
-  
-STUFF TO MOVE
-- secc_age_bins_t
+/* save as a temporary file */
+save $tmp/covid_key_tmp, replace
+
+/* open the case data */
+use $tmp/covindia_raw_data, clear
+
+/* rename state and district */
+ren state covid_state_name
+ren district covid_district_name
+
+/* merge in the lgd districts */
+merge m:1 covid_state_name covid_district_name using $tmp/covid_key_tmp, keep(match master) keepusing(lgd_state_id lgd_district_id)
+
+/* resacve the data */
+save $covidpub/covid/covindia_raw_data, replace
