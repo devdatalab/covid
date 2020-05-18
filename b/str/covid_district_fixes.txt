@@ -1,0 +1,15 @@
+master,district,state
+vizianagaram,vizianagram,andhra pradesh
+kaimur bhabua,kaimur,bihar
+darbhanga,dharbanga,bihar
+kolar,kolara,karnataka
+alappuzha,alapuzha,kerala
+ernakulam,kochi,kerala
+adilabad,asifabad,telangana
+pauri garhwal,garhwal,uttarakhand
+nainital,nanital,uttarakhand
+amroha,phule,uttar pradesh
+amroha,jyotiba nagar,uttar pradesh
+budaun,budaon,uttar pradesh
+deoria,devariya,uttar pradesh
+mahamaya nagar,hathras,uttar pradesh
