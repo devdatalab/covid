@@ -69,8 +69,37 @@ drop if mi(q77_intro)
 /* AGE - for now use age_test var which is almost always the same as the roster age, not the same as the CAB age */
 ren age_test age
 
-/* drop all people missing age */
+/* drop missing age and those under 18 */
 drop if mi(age)
+drop if age < 18
+
+/* generate age bins */
+gen age18_40 = 0
+replace age18_40 = 1 if (age >= 18 & age < 40)
+
+gen age40_50 = 0
+replace age40_50 = 1 if (age >= 40 & age < 50)
+
+gen age50_60 = 0
+replace age50_60 = 1 if (age >= 50 & age < 60)
+
+gen age60_70 = 0
+replace age60_70 = 1 if (age >= 60 & age < 70)
+
+gen age70_80 = 0
+replace age70_80 = 1 if (age >= 70 & age < 80)
+
+gen age80_ = 0
+replace age80_ = 1 if (age >= 80)
+
+/* sex */
+gen female = 0
+replace female = 1 if hv05 == 2
+replace female = . if (mi(hv05) | hv05 == 3)
+
+gen male = 0
+replace male = 1 if hv05 == 1
+replace male =. if (mi(hv05) | hv05 == 3)
 
 /* BMI */
 /* convert height to meters */
@@ -88,6 +117,27 @@ label var bmi "Body Mass Index kg/m^2"
 /* replace extreme outliers with missing values: q. should we do this based on physical values or stats? */
 replace bmi = . if bmi >= 100 & age >= 18
 replace bmi = . if bmi <10 & age >= 18
+
+/* get bmi categories */
+gen bmi_not_obese = 0
+replace bmi_not_obese = 1 if (bmi < 30)
+replace bmi_not_obese = . if mi(bmi)
+label var bmi_not_obese "not obese, bmi < 30"
+
+gen bmi_obeseI = 0
+replace bmi_obeseI = 1 if (bmi >= 30 & bmi < 35)
+replace bmi_obeseI = . if mi(bmi)
+label var bmi_obeseI "obese class I, bmi 30-<35"
+
+gen bmi_obeseII = 0
+replace bmi_obeseII = 1 if (bmi >= 35 & bmi < 40)
+replace bmi_obeseII = . if mi(bmi)
+label var bmi_obeseII "obese class II, bmi 35-<40"
+
+gen bmi_obeseIII = 0
+replace bmi_obeseIII = 1 if (bmi >= 40)
+replace bmi_obeseIII = . if mi(bmi)
+label var bmi_obeseIII "obese class III, bmi >=40"
 
 /* Blood Pressure */
 /* take the average of two systolic measurements */
@@ -141,15 +191,37 @@ label var bp_high "self-reported hypertension and/or measured BP high stage 2"
 
 /* Respiratory Disease */
 gen resp_illness = 0
-replace resp_illness = 1 if diagnosed_illness == 6
+replace resp_illness = 1 if diagnosed_illness == 7
 replace resp_illness = . if mi(diagnosed_illness)
 label var resp_illness "self-reported asthma or chronic respiratory failure"
+
+/* get respiratory symptoms */
+gen resp_symptoms = 0
+replace resp_symptoms = 1 if hv21 == 1
+replace resp_symptoms = . if mi(hv21)
+label var resp_symptoms "self-reported symptoms of respiratory illness"
+
+/* get acute respiratory symptoms */
+gen resp_acute = 0
+replace resp_acute = 1 if hv19 == 3
+replace resp_acute = . if mi(hv19)
+
+/* get ANY respiratory issue */
+gen resp_issue = 0
+replace resp_issue = 1 if resp_illness == 1 | resp_symptoms == 1 
+replace resp_issue = . if (mi(resp_illness) & mi(resp_illness))
+label var resp_issue "self-reported diagnosis or symptoms of respiratory illness"
 
 /* Chronic heart disease */
 gen chronic_heart_dz = 0
 replace chronic_heart_dz = 1 if diagnosed_illness == 3
 replace chronic_heart_dz = . if mi(diagnosed_illness)
 label var chronic_heart_dz "self-reported chronic heart disease"
+
+/* get cardiovascular system symptoms */
+gen cardio_symptoms = 0
+replace cardio_symptoms = 1 if hv21 == 2
+replace cardio_symptoms = . if mi(hv21)
 
 /* Diabetes */
 gen diabetes = 0
@@ -164,6 +236,12 @@ gen cancer_non_haem = 0
 replace cancer_non_haem = 1 if (diagnosed_illness == 11 | diagnosed_illness == 12 | diagnosed_illness == 13 | diagnosed_illness == 14 | diagnosed_illness == 27 | diagnosed_illness == 29)
 replace cancer_non_haem = . if mi(diagnosed_illness)
 label var cancer_non_haem "self-reported non haematological cancer"
+
+/* Haematological malignanies */
+gen haem_malig = 0
+replace haem_malig = 1 if (diagnosed_illness == 28)
+replace haem_malig = . if mi(diagnosed_illness)
+label var haem_malig "self-reported blood cancer/leukemia"
 
 /* Liver disease */
 gen liver_dz = 0
