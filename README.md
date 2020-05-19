@@ -115,6 +115,12 @@ If you come across bugs in the data or have a specific data request
 that we are likely to have, you can email covid@devdatalab.org or
 email Paul, Sam or Toby directly.
 
+## Contributing Data
+
+We invite researchers and data asset holders to contribute data to the public good by adding it to this platform. 
+To contribute your data, please [get in touch](mailto:covid@devdatalab.org). You can view the format requirements 
+[here](https://docs.google.com/document/d/e/2PACX-1vSOF5vA0O-OEhPC598A3nIh-FcWCc-BvpzzcfY-snIEPsHYEQp8d_jYBeNmpS69sXylbMmVRb6NgArX/pub).
+
 ## The Team
 
 This repo is a collaborative effort led by the Development Data Lab, co-founded by Sam Asher, Toby Lunt, and Paul Novosad. Additional contributors: Aditi Bhowmick, Ali Campion, Radhika Jain, Sam Besse, Kritarth Jha. 
