@@ -1,4 +1,54 @@
-/* Structure DLHS data */
+/* This file preps AHS and DLHS data
+
+1. structure AHS data, combine by state
+2. structure DLHS data, combine by state
+4. merge with PC11 state and district codes
+*/
+
+/*************************/
+/* 1. Structure AHS data */
+/************************/
+
+/* initiate empty files for each */
+cap mkdir $tmp/ahs
+clear
+save $tmp/ahs/ahs_cab, emptyok replace
+save $tmp/ahs/ahs_comb, emptyok replace
+save $tmp/ahs/ahs_mort, emptyok replace
+save $tmp/ahs/ahs_woman, emptyok replace
+save $tmp/ahs/ahs_wps, emptyok replace
+
+/* cycle through each file type */
+foreach type in cab comb mort woman wps {
+
+  /* cycle through states */
+  foreach state in 05 08 09 10 18 20 21 22 23 {
+  
+    /* read in the data */
+    import delimited $health/ahs/raw/`type'/`state'.csv, delimit("|") clear
+
+    /* convert state and district codes to standard format */
+    tostring state_code, format("%02.0f") replace
+    tostring district_code, format("%03.0f") replace
+
+    /* drop if the state code is not correct (this catches some data entry errors that disrupts appending) */
+    drop if state_code != "`state'"
+
+    /* correct the format of rural_urban indicator */
+    destring rural_urban, replace
+    compress state_code district_code rural_urban
+    
+    /* append to full file */
+    append using $tmp/ahs/ahs_`type', force
+
+    /* resave full file */
+    save $tmp/ahs/ahs_`type', replace    
+  }
+}
+
+/**************************/
+/* 2. Structure DLHS data */
+/**************************/
 
 /* initiate empty files for each  */
 cap mkdir $tmp/dlhs
@@ -44,231 +94,47 @@ foreach state in `statelist' {
 }
 
 
-/* open the new data files, clean and save */
+/****************************/
+/* 3. Match with PC11 codes */
+/****************************/
+/* 05/19/20 - for now this only deals with the cab data */
+
+/* open the DLHS data file, clean and save */
 use $tmp/dlhs/dlhs_cab, clear
 
-/* clean state names */
-replace state_name = subinstr(state_name, "pradesh", " pradesh", .)
-replace state_name = "andaman nicobar islands" if state_name == "andaman_nicobar"
-replace state_name = "tamil nadu" if state_name == "tamilnadu"
+/* clean state names to match pc11_state_name */
+gen pc11_state_name = state_name
+replace pc11_state_name = subinstr(pc11_state_name, "pradesh", " pradesh", .)
+replace pc11_state_name = "andaman nicobar islands" if pc11_state_name == "andaman_nicobar"
+replace pc11_state_name = "tamil nadu" if pc11_state_name == "tamilnadu"
+replace pc11_state_name = "andhra pradesh" if pc11_state_name == "telangana"
+replace pc11_state_name = "west bengal" if pc11_state_name == "westbengal"
 
-/* rename state name to match pc11 */
-// ren state_name pc11_state_name
+/* merge in pc11 id from key */
+merge m:1 pc11_state_name dist using $health/dlhs/dlhs4_district_key, keepusing(pc11_state_id pc11_district_id) keep(match master) nogen
 
-/* merge in pc11 district identifiers */
-// merge m:1 pc11_state_name dist using $health/dlhs/dlhs4_district_key, keep(master) keepusing(pc11_district_id)
-//drop _merge
+/* save in permanent dlhs folder */
+save $health/dlhs/dlhs_cab, replace
 
+/* open the AHS data file */
+use $tmp/ahs/ahs_cab, clear
 
-/************************/
-/* COMORBIDITY MEASURES */
-/************************/
-/* drop if the CAB module was not asked of this individual */
-drop if mi(q77_intro)
+/* clean missing values in the AHS */
+foreach var in weight_in_kg length_height_cm age haemoglobin_level bp_systolic bp_systolic_2_reading bp_diastolic bp_diastolic_2reading pulse_rate pulse_rate_2_reading fasting_blood_glucose_mg_dl first_breast_feeding is_cur_breast_feeding illness_type treatment_type illness_duration{
+  replace `var' = . if `var' == -1
+}
 
-/* AGE - for now use age_test var which is almost always the same as the roster age, not the same as the CAB age */
-ren age_test age
+/* rename bp variables */
+ren bp_systolic bp_systolic_1_reading
+ren bp_diastolic bp_diastolic_1_reading
+ren bp_diastolic_2reading bp_diastolic_2_reading
 
-/* drop missing age and those under 18 */
-drop if mi(age)
-drop if age < 18
+/* convert state and dist codes to byte to match key */
+destring state_code, gen(state)
+destring dist, gen(dist)
 
-/* generate age bins */
-gen age18_40 = 0
-replace age18_40 = 1 if (age >= 18 & age < 40)
+/* merge in pc11 id from key */
+merge m:1 state dist using $health/dlhs/dlhs4_district_key, keepusing(pc11_state_id pc11_district_id) keep(match master) nogen
 
-gen age40_50 = 0
-replace age40_50 = 1 if (age >= 40 & age < 50)
-
-gen age50_60 = 0
-replace age50_60 = 1 if (age >= 50 & age < 60)
-
-gen age60_70 = 0
-replace age60_70 = 1 if (age >= 60 & age < 70)
-
-gen age70_80 = 0
-replace age70_80 = 1 if (age >= 70 & age < 80)
-
-gen age80_ = 0
-replace age80_ = 1 if (age >= 80)
-
-/* sex */
-gen female = 0
-replace female = 1 if hv05 == 2
-replace female = . if (mi(hv05) | hv05 == 3)
-
-gen male = 0
-replace male = 1 if hv05 == 1
-replace male =. if (mi(hv05) | hv05 == 3)
-
-/* BMI */
-/* convert height to meters */
-gen height = hv85*.01
-label var height "height in meters"
-
-/* label weight */
-gen weight = hv82
-label var weight "weight in kg"
-
-/* calculate bmi */
-gen bmi = weight / (height^2)
-label var bmi "Body Mass Index kg/m^2"
-
-/* replace extreme outliers with missing values: q. should we do this based on physical values or stats? */
-replace bmi = . if bmi >= 100 & age >= 18
-replace bmi = . if bmi <10 & age >= 18
-
-/* get bmi categories */
-gen bmi_not_obese = 0
-replace bmi_not_obese = 1 if (bmi < 30)
-replace bmi_not_obese = . if mi(bmi)
-label var bmi_not_obese "not obese, bmi < 30"
-
-gen bmi_obeseI = 0
-replace bmi_obeseI = 1 if (bmi >= 30 & bmi < 35)
-replace bmi_obeseI = . if mi(bmi)
-label var bmi_obeseI "obese class I, bmi 30-<35"
-
-gen bmi_obeseII = 0
-replace bmi_obeseII = 1 if (bmi >= 35 & bmi < 40)
-replace bmi_obeseII = . if mi(bmi)
-label var bmi_obeseII "obese class II, bmi 35-<40"
-
-gen bmi_obeseIII = 0
-replace bmi_obeseIII = 1 if (bmi >= 40)
-replace bmi_obeseIII = . if mi(bmi)
-label var bmi_obeseIII "obese class III, bmi >=40"
-
-/* Blood Pressure */
-/* take the average of two systolic measurements */
-gen bp_systolic = (hv93a + hv93b) / 2
-label var bp_systolic "systolic BP taken as average of two measures"
-
-/* take the average of two systolic measurements */
-gen bp_diastolic = (hv94a + hv94b) / 2
-label var bp_diastolic "Diastolic BP taken as average of two measures"
-
-/* define high blood pressure categories based on NHS paper */
-
-/* normal */
-gen bp_normal = 0
-replace bp_normal = 1 if bp_systolic < 120 & bp_diastolic < 80
-replace bp_normal = . if mi(bp_systolic) | mi(bp_diastolic)
-label var bp_normal "systolic BP <120 mm Hg and diastolic BP < 80 mm Hg"
-
-/* elevated */
-gen bp_elevated = 0
-replace bp_elevated = 1 if (bp_systolic >= 120 & bp_systolic <= 129) & (bp_diastolic < 80)
-replace bp_elevated = . if mi(bp_systolic) | mi(bp_diastolic)
-label var bp_elevated "systolic BP 120-129 and BP diastolic < 80"
-
-/* high stage 1 */
-gen bp_high_stage1 = 0
-replace bp_high_stage1 = 1 if (bp_systolic >= 130 & bp_systolic <= 139) & (bp_diastolic >= 80 & bp_diastolic <=89)
-replace bp_high_stage1 = . if mi(bp_systolic) | mi(bp_diastolic)
-label var bp_high_stage1 "systolic BP 130-139 mm Hg and diastolic BP 80-89"
-
-/* high stage 2 */
-gen bp_high_stage2 = 0
-replace bp_high_stage2 = 1 if (bp_systolic >= 140) | (bp_diastolic >= 90)
-replace bp_high_stage2 = . if mi(bp_systolic) | mi(bp_diastolic)
-label var bp_high_stage2 "systolic BP >= 140 mm Hg or diastolic BP >= 90 mm Hg"
-
-/* self-reported hypertension */
-gen diagnosed_illness = hv23
-label var diagnosed_illness "self-reported diagnosis in the last 1 year"
-
-gen bp_hypertension = 0
-replace bp_hypertension = 1 if diagnosed_illness == 2
-replace bp_hypertension = . if mi(diagnosed_illness)
-label var bp_hypertension "self-reported diagnosis of hypertension"
-
-/* self-reported hypertension + BP high stage 2 */
-gen bp_high = 0
-replace bp_high = 1 if (bp_high_stage2 == 1 | bp_hypertension == 1)
-replace bp_high = . if mi(bp_high_stage2) & mi(bp_hypertension)
-label var bp_high "self-reported hypertension and/or measured BP high stage 2"
-
-/* Respiratory Disease */
-gen resp_illness = 0
-replace resp_illness = 1 if diagnosed_illness == 7
-replace resp_illness = . if mi(diagnosed_illness)
-label var resp_illness "self-reported asthma or chronic respiratory failure"
-
-/* get respiratory symptoms */
-gen resp_symptoms = 0
-replace resp_symptoms = 1 if hv21 == 1
-replace resp_symptoms = . if mi(hv21)
-label var resp_symptoms "self-reported symptoms of respiratory illness"
-
-/* get acute respiratory symptoms */
-gen resp_acute = 0
-replace resp_acute = 1 if hv19 == 3
-replace resp_acute = . if mi(hv19)
-
-/* get ANY respiratory issue */
-gen resp_issue = 0
-replace resp_issue = 1 if resp_illness == 1 | resp_symptoms == 1 
-replace resp_issue = . if (mi(resp_illness) & mi(resp_illness))
-label var resp_issue "self-reported diagnosis or symptoms of respiratory illness"
-
-/* Chronic heart disease */
-gen chronic_heart_dz = 0
-replace chronic_heart_dz = 1 if diagnosed_illness == 3
-replace chronic_heart_dz = . if mi(diagnosed_illness)
-label var chronic_heart_dz "self-reported chronic heart disease"
-
-/* get cardiovascular system symptoms */
-gen cardio_symptoms = 0
-replace cardio_symptoms = 1 if hv21 == 2
-replace cardio_symptoms = . if mi(hv21)
-
-/* Diabetes */
-gen diabetes = 0
-/* standard WHO definition of diabetes is >=126mg/dL if fasting and >=200 if not */
-replace diabetes = 1 if (hv91a >= 126 & hv91 == 1) | (hv91a >= 200 & hv91 == 2 & !mi(hv91a))
-replace diabetes = . if mi(hv91a) | mi(hv91)
-label var diabetes "blood sugar >126mg/dL if fasting, >200mg/dL if not"
-
-/* Cancer - non-haematological */
-gen cancer_non_haem = 0
-/* respiratory system, gastrointestinal system, genitourinary system, breast, tumor (any type), skin cancer */
-replace cancer_non_haem = 1 if (diagnosed_illness == 11 | diagnosed_illness == 12 | diagnosed_illness == 13 | diagnosed_illness == 14 | diagnosed_illness == 27 | diagnosed_illness == 29)
-replace cancer_non_haem = . if mi(diagnosed_illness)
-label var cancer_non_haem "self-reported non haematological cancer"
-
-/* Haematological malignanies */
-gen haem_malig = 0
-replace haem_malig = 1 if (diagnosed_illness == 28)
-replace haem_malig = . if mi(diagnosed_illness)
-label var haem_malig "self-reported blood cancer/leukemia"
-
-/* Liver disease */
-gen liver_dz = 0
-replace liver_dz = 1 if diagnosed_illness == 18
-replace liver_dz = . if mi(diagnosed_illness)
-label var liver_dz "self-reported chronic liver disease"
-
-/* Stroke */
-gen stroke = 0
-replace stroke = 1 if diagnosed_illness == 5
-replace stroke = . if mi(diagnosed_illness)
-label var stroke "self-reported stroke cerebro vascular accident"
-
-/* Kidney disease */
-gen kidney_dz = 0
-replace kidney_dz = 1 if (diagnosed_illness == 15 | diagnosed_illness == 16)
-replace kidney_dz = . if mi(diagnosed_illness)
-label var kidney_dz "self-reported renal stones or chronic renal disease"
-
-/* Autoimmune disease */
-gen autoimmune_dz = 0
-replace autoimmune_dz = 1 if (diagnosed_illness == 19 | diagnosed_illness == 20)
-replace autoimmune_dz = . if mi(diagnosed_illness)
-label var autoimmune_dz "self-reported psoriasis or rheumatoid arthritis"
-
-/* drop most raw question variables */
-drop hv* qe* qs* q77_intropersonalhabit flq85 
-
-/* save limited dataset with only comorbidity data */
-save $health/dlhs/data/dlhs_covid_comorbidities, replace
+/* save in permanent ahs folder */
+save $health/ahs/ahs_cab, replace
