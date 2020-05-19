@@ -1,4 +1,4 @@
-<svg version="1.1" baseProfile="full" width="2094" height="787" viewbox="0 0 2094 787" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:ev="http://www.w3.org/2001/xml-events" style="font-weight:bold; font-size:12pt; font-family:'Calibri', Helvetica, sans-serif;;stroke-width:3;stroke-linejoin:round;stroke-linecap:round">
+<svg version="1.1" baseProfile="full" width="1880.5" height="787" viewbox="0 0 1880.5 787" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:ev="http://www.w3.org/2001/xml-events" style="font-weight:bold; font-size:12pt; font-family:'Calibri', Helvetica, sans-serif;;stroke-width:3;stroke-linejoin:round;stroke-linecap:round">
   <title >nomnoml</title>
   <desc >#.instructions:
 #.1: navigate to nomnoml.com
@@ -19,9 +19,8 @@
 ]
 
 [COVID Case Data |
-[&lt;data&gt;pc11_district_key.dta]-&gt;[&lt;prog&gt;get_case_data.do]
-[&lt;web&gt; https://www.covid19india.org/]-&gt;[&lt;prog&gt;get_case_data.do]
-]o-&gt;[&lt;finaldata&gt;covid_cases_deaths_district.dta]
+[&lt;web&gt; https://covindia.com/]-&gt;[&lt;prog&gt;get_case_data.do]
+]o-&gt;[&lt;finaldata&gt;covindia_raw_data.dta]
 
 [Population Census |
 [&lt;data&gt;pc11r_hosp.dta | pc11u_hosp.dta]-&gt;[&lt;prog&gt;prep_pc_hosp.do]
@@ -45,12 +44,10 @@
 
 [&lt;finaldata&gt;hospitals_dist.dta]-&gt;[&lt;prog&gt;impute_additional_fields.do]
 [CFR by Age Bins]-&gt;[&lt;prog&gt;impute_additional_fields.do]
-[&lt;prog&gt;impute_additional_fields.do]-&gt;[&lt;finaldata&gt;district_age_dist_cfr_hospitals.dta]
-
-</desc>
-  <path d="M1794.5 208 L1794.5 263.5 L1794.5 327.5 L1794.5 327.5 " style="stroke:#33322E;fill:none;stroke-dasharray:none;"></path>
-  <path d="M1789.2 314.2 L1794.5 320.8 L1799.8 314.2 L1794.5 327.5 Z" style="stroke:#33322E;fill:#33322E;stroke-dasharray:none;"></path>
-  <path d="M1799.8 217.3 L1794.5 226.7 L1789.2 217.3 L1794.5 208 Z" style="stroke:#33322E;fill:#eee8d5;stroke-dasharray:none;"></path>
+[&lt;prog&gt;impute_additional_fields.do]-&gt;[&lt;finaldata&gt;district_age_dist_cfr_hospitals.dta]</desc>
+  <path d="M1747 208 L1747 263.5 L1747 327.5 L1747 327.5 " style="stroke:#33322E;fill:none;stroke-dasharray:none;"></path>
+  <path d="M1741.7 314.2 L1747 320.8 L1752.3 314.2 L1747 327.5 Z" style="stroke:#33322E;fill:#33322E;stroke-dasharray:none;"></path>
+  <path d="M1752.3 217.3 L1747 226.7 L1741.7 217.3 L1747 208 Z" style="stroke:#33322E;fill:#eee8d5;stroke-dasharray:none;"></path>
   <path d="M888 223.5 L888 263.5 L888 283.5 L888 283.5 " style="stroke:#33322E;fill:none;stroke-dasharray:none;"></path>
   <path d="M882.7 270.2 L888 276.8 L893.3 270.2 L888 283.5 Z" style="stroke:#33322E;fill:#33322E;stroke-dasharray:none;"></path>
   <path d="M893.3 232.8 L888 242.2 L882.7 232.8 L888 223.5 Z" style="stroke:#33322E;fill:#eee8d5;stroke-dasharray:none;"></path>
@@ -89,23 +86,19 @@
   <text x="106.5" y="150" style="fill: #33322E;font-weight:normal;text-anchor: middle;">Final Dataset</text>
   <path d="M64.5 199.5 L139.5 199.5 L147.5 215 L139.5 230.5 L64.5 230.5 Z" style="stroke:#33322E;fill:#D5F1FF;stroke-dasharray:none;"></path>
   <text x="106" y="221" style="fill: #33322E;font-weight:normal;font-style:italic;text-anchor: middle;">Program</text>
-  <rect x="1507.5" y="49.5" height="159" width="574" style="stroke:#33322E;fill:#eee8d5;stroke-dasharray:none;"></rect>
-  <text x="1794.5" y="71" style="fill: #33322E;text-anchor: middle;">COVID Case Data</text>
-  <path d="M1507.5 80.5 L2081.5 80.5" style="stroke:#33322E;fill:none;stroke-dasharray:none;"></path>
-  <path d="M1628.5 124.5 L1628.5 144.5 L1711.3 164.5 L1711.3 164.5 " style="stroke:#33322E;fill:none;stroke-dasharray:none;"></path>
-  <path d="M1697.1 166.6 L1704.8 162.9 L1699.6 156.2 L1711.3 164.5 Z" style="stroke:#33322E;fill:#33322E;stroke-dasharray:none;"></path>
-  <path d="M1922.5 124.5 L1922.5 144.5 L1839.7 164.5 L1839.7 164.5 " style="stroke:#33322E;fill:none;stroke-dasharray:none;"></path>
-  <path d="M1851.4 156.2 L1846.2 162.9 L1853.9 166.6 L1839.7 164.5 Z" style="stroke:#33322E;fill:#33322E;stroke-dasharray:none;"></path>
-  <rect x="1520.5" y="93.5" rx="15.5" ry="15.5" height="31" width="216" style="stroke:#33322E;fill:#fdf6e3;stroke-dasharray:none;"></rect>
-  <text x="1628.5" y="115" style="fill: #33322E;font-weight:normal;text-anchor: middle;">pc11_district_key.dta</text>
-  <path d="M1691.5 164.5 L1851.5 164.5 L1859.5 180 L1851.5 195.5 L1691.5 195.5 Z" style="stroke:#33322E;fill:#D5F1FF;stroke-dasharray:none;"></path>
-  <text x="1775.5" y="186" style="fill: #33322E;font-weight:normal;font-style:italic;text-anchor: middle;">get_case_data.do</text>
-  <rect x="1776.5" y="93.5" height="31" width="292" style="stroke:none; fill:#fdf6e3;"></rect>
-  <path d="M1776.5 89.5 L1776.5 120.5" style="stroke:#33322E;fill:none;stroke-dasharray:none;"></path>
-  <path d="M2068.5 89.5 L2068.5 120.5" style="stroke:#33322E;fill:none;stroke-dasharray:none;"></path>
-  <ellipse cx="1922.5" cy="89.5" rx="146" ry="6" style="stroke:#33322E;fill:#fdf6e3;stroke-dasharray:none;"></ellipse>
-  <path d="M1776.5 120.5A146 6 0 1 0 2068.5 120.5" style="stroke:#33322E;fill:#fdf6e3;stroke-dasharray:none;"></path>
-  <text x="1922.5" y="115" style="fill: #33322E;font-weight:normal;font-style:italic;text-anchor: middle;">https://www.covid19india.org/</text>
+  <rect x="1626.5" y="49.5" height="159" width="242" style="stroke:#33322E;fill:#eee8d5;stroke-dasharray:none;"></rect>
+  <text x="1747.5" y="71" style="fill: #33322E;text-anchor: middle;">COVID Case Data</text>
+  <path d="M1626.5 80.5 L1868.5 80.5" style="stroke:#33322E;fill:none;stroke-dasharray:none;"></path>
+  <path d="M1747.5 124.5 L1747.5 144.5 L1747.5 164.5 L1747.5 164.5 " style="stroke:#33322E;fill:none;stroke-dasharray:none;"></path>
+  <path d="M1742.2 151.2 L1747.5 157.8 L1752.8 151.2 L1747.5 164.5 Z" style="stroke:#33322E;fill:#33322E;stroke-dasharray:none;"></path>
+  <rect x="1639.5" y="93.5" height="31" width="216" style="stroke:none; fill:#fdf6e3;"></rect>
+  <path d="M1639.5 89.5 L1639.5 120.5" style="stroke:#33322E;fill:none;stroke-dasharray:none;"></path>
+  <path d="M1855.5 89.5 L1855.5 120.5" style="stroke:#33322E;fill:none;stroke-dasharray:none;"></path>
+  <ellipse cx="1747.5" cy="89.5" rx="108" ry="6" style="stroke:#33322E;fill:#fdf6e3;stroke-dasharray:none;"></ellipse>
+  <path d="M1639.5 120.5A108 6 0 1 0 1855.5 120.5" style="stroke:#33322E;fill:#fdf6e3;stroke-dasharray:none;"></path>
+  <text x="1747.5" y="115" style="fill: #33322E;font-weight:normal;font-style:italic;text-anchor: middle;">https://covindia.com/</text>
+  <path d="M1663.5 164.5 L1823.5 164.5 L1831.5 180 L1823.5 195.5 L1663.5 195.5 Z" style="stroke:#33322E;fill:#D5F1FF;stroke-dasharray:none;"></path>
+  <text x="1747.5" y="186" style="fill: #33322E;font-weight:normal;font-style:italic;text-anchor: middle;">get_case_data.do</text>
   <rect x="795.5" y="33.5" height="190" width="185" style="stroke:#33322E;fill:#eee8d5;stroke-dasharray:none;"></rect>
   <text x="888" y="55" style="fill: #33322E;text-anchor: middle;">Population Census</text>
   <path d="M795.5 64.5 L980.5 64.5" style="stroke:#33322E;fill:none;stroke-dasharray:none;"></path>
@@ -170,8 +163,8 @@
   <path d="M66.5 330.5 L336.5 330.5" style="stroke:#33322E;fill:none;stroke-dasharray:none;"></path>
   <rect x="79.5" y="343.5" rx="15.5" ry="15.5" height="31" width="244" style="stroke:#33322E;fill:#fdf6e3;stroke-dasharray:none;"></rect>
   <text x="201.5" y="365" style="fill: #33322E;font-weight:normal;text-anchor: middle;">dlhs4_hospitals_dist.dta</text>
-  <rect x="1639.5" y="327.5" rx="15.5" ry="15.5" height="31" width="311" style="stroke:#33322E;fill:#FC1;stroke-dasharray:none;"></rect>
-  <text x="1795" y="349" style="fill: #33322E;font-weight:normal;text-anchor: middle;">covid_cases_deaths_district.dta</text>
+  <rect x="1639.5" y="327.5" rx="15.5" ry="15.5" height="31" width="216" style="stroke:#33322E;fill:#FC1;stroke-dasharray:none;"></rect>
+  <text x="1747.5" y="349" style="fill: #33322E;font-weight:normal;text-anchor: middle;">covindia_raw_data.dta</text>
   <path d="M1263.5 442.5 L1442.5 442.5 L1450.5 458 L1442.5 473.5 L1263.5 473.5 Z" style="stroke:#33322E;fill:#D5F1FF;stroke-dasharray:none;"></path>
   <text x="1357" y="464" style="fill: #33322E;font-weight:normal;font-style:italic;text-anchor: middle;">predict_age_cfr.do</text>
   <path d="M370.5 442.5 L616.5 442.5 L624.5 458 L616.5 473.5 L370.5 473.5 Z" style="stroke:#33322E;fill:#D5F1FF;stroke-dasharray:none;"></path>
