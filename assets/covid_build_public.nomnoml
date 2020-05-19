@@ -17,9 +17,8 @@
 ]
 
 [COVID Case Data |
-[<data>pc11_district_key.dta]->[<prog>get_case_data.do]
-[<web> https://www.covid19india.org/]->[<prog>get_case_data.do]
-]o->[<finaldata>covid_cases_deaths_district.dta]
+[<web> https://covindia.com/]->[<prog>get_case_data.do]
+]o->[<finaldata>covindia_raw_data.dta]
 
 [Population Census |
 [<data>pc11r_hosp.dta | pc11u_hosp.dta]->[<prog>prep_pc_hosp.do]
@@ -44,4 +43,3 @@
 [<finaldata>hospitals_dist.dta]->[<prog>impute_additional_fields.do]
 [CFR by Age Bins]->[<prog>impute_additional_fields.do]
 [<prog>impute_additional_fields.do]->[<finaldata>district_age_dist_cfr_hospitals.dta]
-
