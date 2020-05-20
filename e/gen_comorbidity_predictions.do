@@ -231,7 +231,10 @@ replace autoimmune_dz = . if mi(diagnosed_for)
 label var autoimmune_dz "self-reported psoriasis or rheumatoid arthritis"
 
 /* keep only identifying information and comorbidity variables */
-keep pc11_state_id pc11_district_id psu prim_key* htype rcvid  supid tsend tsstart person_index hh* *wt survey rural_urban stratum psu_id ahs_house_unit  house_hold_no date_survey age* male female bmi* height weight_in_kg bp* resp* cardio_symptoms diabetes *haem* *_dz stroke diagnosed_for
+keep pc11* psu prim_key* htype rcvid  supid tsend tsstart person_index hh* *wt survey rural_urban stratum psu_id ahs_house_unit  house_hold_no date_survey age* male female bmi* height weight_in_kg bp* resp* cardio_symptoms diabetes *haem* *_dz stroke diagnosed_for
 
 /* save limited dataset with only comorbidity data */
 save $health/dlhs/data/dlhs_covid_comorbidities, replace
+
+
+/* Apply the UK Weightings */
