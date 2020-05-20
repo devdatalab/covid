@@ -240,10 +240,17 @@ finalsteps
 /* save final dataset */
 save $tmp/lgd_pc11_demographics_district, replace
 
+/* create state id locals */
+levelsof lgd_state_id, local(levelstate)
 
-/***************************************************************************************************/
-/* Repeat for blocks - this couldn't be put in a loop because blocks are not a normal location key */
-/***************************************************************************************************/
+/* save separate dataset for each state */
+foreach s of local levelstate{
+  savesome using $tmp/lgd_pc11_dem_district_`s' if lgd_state_id == "`s'", replace
+}
+
+/****************************************************************************************************************/
+/* Repeat for blocks - this couldn't be put in a loop because we only have a complete block key for bihar so far*/
+/****************************************************************************************************************/
 
 /* append covid rural and urban datasets */
 use $tmp/pc11r_covid_raw, clear
