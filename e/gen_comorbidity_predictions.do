@@ -1,7 +1,6 @@
 /***************************/
 /* Merge DLHS and AHS Data */
 /***************************/
-
 /* open the dlhs data */
 use $health/dlhs/dlhs_cab, clear
 
@@ -15,6 +14,9 @@ ren hv93a bp_systolic_1_reading
 ren hv93b bp_systolic_2_reading
 ren hv94a bp_diastolic_1_reading
 ren hv94b bp_diastolic_2_reading
+ren hv19 illness_type
+ren hv21 symptoms_pertaining_illness
+ren hv23 diagnosed_for
 
 /* mark as dlhs */
 gen survey = 1
@@ -135,12 +137,11 @@ replace bp_high_stage2 = . if mi(bp_systolic) | mi(bp_diastolic)
 label var bp_high_stage2 "systolic BP >= 140 mm Hg or diastolic BP >= 90 mm Hg"
 
 /* self-reported hypertension */
-gen diagnosed_illness = hv23
-label var diagnosed_illness "self-reported diagnosis in the last 1 year"
+label var diagnosed_for "self-reported diagnosis in the last 1 year"
 
 gen bp_hypertension = 0
-replace bp_hypertension = 1 if diagnosed_illness == 2
-replace bp_hypertension = . if mi(diagnosed_illness)
+replace bp_hypertension = 1 if diagnosed_for == 2
+replace bp_hypertension = . if mi(diagnosed_for)
 label var bp_hypertension "self-reported diagnosis of hypertension"
 
 /* self-reported hypertension + BP high stage 2 */
@@ -151,20 +152,20 @@ label var bp_high "self-reported hypertension and/or measured BP high stage 2"
 
 /* Respiratory Disease */
 gen resp_illness = 0
-replace resp_illness = 1 if diagnosed_illness == 7
-replace resp_illness = . if mi(diagnosed_illness)
+replace resp_illness = 1 if diagnosed_for == 7
+replace resp_illness = . if mi(diagnosed_for)
 label var resp_illness "self-reported asthma or chronic respiratory failure"
 
 /* get respiratory symptoms */
 gen resp_symptoms = 0
-replace resp_symptoms = 1 if hv21 == 1
-replace resp_symptoms = . if mi(hv21)
+replace resp_symptoms = 1 if symptoms_pertaining_illness == 1
+replace resp_symptoms = . if mi(symptoms_pertaining_illness)
 label var resp_symptoms "self-reported symptoms of respiratory illness"
 
 /* get acute respiratory symptoms */
 gen resp_acute = 0
-replace resp_acute = 1 if hv19 == 3
-replace resp_acute = . if mi(hv19)
+replace resp_acute = 1 if illness_type == 3
+replace resp_acute = . if mi(illness_type)
 label var resp_acute "self-reported respiratory symptoms in the past 15 days"
 
 /* get ANY respiratory issue */
@@ -175,14 +176,14 @@ label var resp_chronic "self-reported diagnosis or symptoms of respiratory illne
 
 /* Chronic heart disease */
 gen chronic_heart_dz = 0
-replace chronic_heart_dz = 1 if diagnosed_illness == 3
-replace chronic_heart_dz = . if mi(diagnosed_illness)
+replace chronic_heart_dz = 1 if diagnosed_for == 3
+replace chronic_heart_dz = . if mi(diagnosed_for)
 label var chronic_heart_dz "self-reported chronic heart disease"
 
 /* get cardiovascular system symptoms */
 gen cardio_symptoms = 0
-replace cardio_symptoms = 1 if hv21 == 2
-replace cardio_symptoms = . if mi(hv21)
+replace cardio_symptoms = 1 if symptoms_pertaining_illness == 2
+replace cardio_symptoms = . if mi(symptoms_pertaining_illness)
 
 /* Diabetes */
 gen diabetes = 0
@@ -195,42 +196,42 @@ label var diabetes "blood sugar >126mg/dL if fasting, >200mg/dL if not"
 /* Cancer - non-haematological */
 gen cancer_non_haem = 0
 /* respiratory system, gastrointestinal system, genitourinary system, breast, tumor (any type), skin cancer */
-replace cancer_non_haem = 1 if (diagnosed_illness == 11 | diagnosed_illness == 12 | diagnosed_illness == 13 | diagnosed_illness == 14 | diagnosed_illness == 27 | diagnosed_illness == 29)
-replace cancer_non_haem = . if mi(diagnosed_illness)
+replace cancer_non_haem = 1 if (diagnosed_for == 11 | diagnosed_for == 12 | diagnosed_for == 13 | diagnosed_for == 14 | diagnosed_for == 27 | diagnosed_for == 29)
+replace cancer_non_haem = . if mi(diagnosed_for)
 label var cancer_non_haem "self-reported non haematological cancer"
 
 /* Haematological malignanies */
 gen haem_malig = 0
-replace haem_malig = 1 if (diagnosed_illness == 28)
-replace haem_malig = . if mi(diagnosed_illness)
+replace haem_malig = 1 if (diagnosed_for == 28)
+replace haem_malig = . if mi(diagnosed_for)
 label var haem_malig "self-reported blood cancer/leukemia"
 
 /* Liver disease */
 gen liver_dz = 0
-replace liver_dz = 1 if diagnosed_illness == 18
-replace liver_dz = . if mi(diagnosed_illness)
+replace liver_dz = 1 if diagnosed_for == 18
+replace liver_dz = . if mi(diagnosed_for)
 label var liver_dz "self-reported chronic liver disease"
 
 /* Stroke */
 gen stroke = 0
-replace stroke = 1 if diagnosed_illness == 5
-replace stroke = . if mi(diagnosed_illness)
+replace stroke = 1 if diagnosed_for == 5
+replace stroke = . if mi(diagnosed_for)
 label var stroke "self-reported stroke cerebro vascular accident"
 
 /* Kidney disease */
 gen kidney_dz = 0
-replace kidney_dz = 1 if (diagnosed_illness == 15 | diagnosed_illness == 16)
-replace kidney_dz = . if mi(diagnosed_illness)
+replace kidney_dz = 1 if (diagnosed_for == 15 | diagnosed_for == 16)
+replace kidney_dz = . if mi(diagnosed_for)
 label var kidney_dz "self-reported renal stones or chronic renal disease"
 
 /* Autoimmune disease */
 gen autoimmune_dz = 0
-replace autoimmune_dz = 1 if (diagnosed_illness == 19 | diagnosed_illness == 20)
-replace autoimmune_dz = . if mi(diagnosed_illness)
+replace autoimmune_dz = 1 if (diagnosed_for == 19 | diagnosed_for == 20)
+replace autoimmune_dz = . if mi(diagnosed_for)
 label var autoimmune_dz "self-reported psoriasis or rheumatoid arthritis"
 
 /* keep only identifying information and comorbidity variables */
-keep pc11_state_id pc11_district_id psu prim_key* htype rcvid  supid tsend tsstart person_index hh* *wt survey rural_urban stratum psu_id ahs_house_unit  house_hold_no date_survey age* male female bmi* height weight_in_kg bp* resp* cardio_symptoms diabetes *haem* *_dz stroke diagnosed_illness
+keep pc11_state_id pc11_district_id psu prim_key* htype rcvid  supid tsend tsstart person_index hh* *wt survey rural_urban stratum psu_id ahs_house_unit  house_hold_no date_survey age* male female bmi* height weight_in_kg bp* resp* cardio_symptoms diabetes *haem* *_dz stroke diagnosed_for
 
 /* save limited dataset with only comorbidity data */
 save $health/dlhs/data/dlhs_covid_comorbidities, replace
