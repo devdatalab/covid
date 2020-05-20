@@ -11,24 +11,9 @@ cap prog drop finalsteps
 prog def finalsteps
 {
     /* rename variables */
-    ren pc11r_td* pc11r_tot*
-    ren pc11_td* pc11u_tot*
-    ren pc11u_tot_area pc11_td_area
+    ren pc11_td* pc11_tot*
+    ren pc11_tot_area pc11_td_area
 
-    /* create health capacity total vars  */
-    foreach i in all_hosp all_hosp_doc_tot all_hosp_pmed_tot disp {
-      egen pc11_tot_`i' = rowtotal(pc11r_tot_`i' pc11u_tot_`i')
-    }
-
-    foreach i in ch_cntr ph_cntr phs_cntr mcw_cntr tb_cln mh_cln fwc_cntr{
-      egen pc11_tot_`i' = rowtotal(pc11r_tot_`i' pc11u_tot_`i')
-    }
-
-    gen pc11_tot_nh = pc11u_tot_nh
-    gen pc11_tot_mh = pc11u_tot_mh
-    
-    drop pc11r_tot* pc11u_tot*
-        
     /* clean health capacity variable */
     la var pc11_tot_all_hosp "Total allopathic hospitals in district"
     la var pc11_tot_all_hosp_doc_tot "Total doctors in allopathic hospitals"
@@ -53,15 +38,13 @@ prog def finalsteps
 
 
     /* gen area variable */
-    egen area_final = rowtotal(area pc11_td_area)
-    drop area
-    ren area_final area
-    la var area "Total area of district (sq km)"
+    egen pc11_area = rowtotal(pc11_vd_area pc11_td_area)
+    la var pc11_area "Total area of district (sq km)"
 
     /* create population density */
-    gen pc11r_pdensity = pc11r_pca_tot_p/area
-    gen pc11u_pdensity = pc11u_pca_tot_p/area
-    gen pc11_pdensity = pc11_pca_tot_p/area
+    gen pc11r_pdensity = pc11r_pca_tot_p/pc11_area
+    gen pc11u_pdensity = pc11u_pca_tot_p/pc11_area
+    gen pc11_pdensity = pc11_pca_tot_p/pc11_area
 
     la var pc11_pdensity "Population density"
     la var pc11u_pdensity "Population density (Urban)"
@@ -121,7 +104,7 @@ prog def finalsteps
     la var pc11u_pca_mainwork_p "Total mainworkers - urban"
     la var pc11_pca_mainwork_p "Total mainworkers"
     la var pc11_td_area "Area (sq km) urban"
-    la var pc11_vd_area "Area (ha) rural"
+    la var pc11_vd_area "Area (sq km) rural"
     la var pc11r_pca_no_hh "No of hh (rural)"
     la var pc11u_pca_no_hh "No of hh (urban)"
     la var pc11_pca_no_hh "No of hh"
@@ -142,207 +125,120 @@ end
 /* End program finalsteps */
 /**************************/
 
-/*****************/
-/* Prep PCA data */
-/*****************/
+/*********************************************/
+/* Create rural lgd-pc11 demographic dataset */
+/*********************************************/
+
+/* Merges */
 
 /* extract lgd state and district ids for pca rural */
 use $pc11/pc11r_pca_clean.dta, clear
 
-/* merge with lgd-pc11 village key */
-merge 1:1 pc11_state_id pc11_village_id using $keys/lgd_pc11_village_key, keepusing(lgd_state_id lgd_state_name lgd_district_id lgd_district_name)
-keep if _merge == 3
-
-drop _merge
-
-/* keep necessary vars */
-keep *pca_tot_p *pca_no_hh *pca_main_cl_p *pca_main_al_p *_mainwork_p pc11_state* pc11_dist* lgd* pc11_village* pc11_subdistrict*
+/* keep pca vars */
+keep *pca_tot_p *pca_no_hh *pca_main_cl_p *pca_main_al_p *_mainwork_p pc11_state* pc11_dist* pc11_village* pc11_subdistrict*
 
 /* rename vars */
 ren pc11_pca* pc11r_pca*
 
-/* save */
-save $tmp/pc11r_pca_lgd, replace
+/* merge with lgd-pc11 village key */
+merge 1:1 pc11_state_id pc11_village_id using $keys/lgd_pc11_village_key, keepusing(lgd_state_id lgd_state_name lgd_district_id lgd_district_name) nogen keep(match master)
 
-/* extract lgd state and district ids for pca urban */
-use $pc11/pc11u_pca_clean.dta, clear
+/* merge to get village area */
+merge 1:1 pc11_state_id pc11_village_id using $pc11/pc11_vd_clean, keep(match master) keepusing(pc11_vd_area)
 
-/* merge with lgd-pc11 town key */
-merge 1:1 pc11_state_id pc11_district_id pc11_subdistrict_id pc11_town_id using $keys/lgd_pc11_town_key, keepusing(lgd_state_id lgd_state_name lgd_district_id lgd_district_name)
+/* merge to get household water access data */
+merge 1:1 pc11_state_id pc11_district_id pc11_subdistrict_id pc11_village_id using $pc11/houselisting_pca/pc11r_hpca_village, nogen keep(match master) keepusing(pc11r_hl_dw_loc*)
 
-/* everything merged */
-drop _merge
-  
-/* keep necessary vars */
-keep *pca_tot_p *pca_no_hh *pca_main_cl_p *pca_main_al_p *_mainwork_p pc11_state* pc11_dist* lgd* pc11_town* pc11_subdistrict*
+/* merge in rural hospital data */
+merge 1:m pc11_state_id pc11_district_id pc11_state_id pc11_village_id using $tmp/precollapse, nogen keep(match master) keepusing(*_cln *cntr *disp *all_hosp *all_hosp_doc_tot *all_hosp_pmed_tot)
 
-/* rename vars */
-ren pc11_pca* pc11u_pca*
-
-/* save */
-save $tmp/pc11u_pca_lgd, replace
-
-/********************************/
-/* Prep households listing data */
-/********************************/
-
-/* rural */
-use $pc11/houselisting_pca/pc11r_hpca_village.dta , clear
-
-/* merge with pca rural data merged with lgd */
-merge 1:1 pc11_state_id pc11_district_id pc11_subdistrict_id pc11_village_id using $tmp/pc11r_pca_lgd, nogen
+/* Cleaning */
 
 /* In the hpca data households with access to water are represented as shares */
 foreach x of var pc11r_hl_dw*{
 
 /* create number of households with access to drinking water */
   gen `x'_no = `x'*pc11r_pca_no_hh
-
 }
 
-/* drop unnecessary vars */
-keep pc11r_hl_dw_loc* lgd* pc11_state* pc11_district* pc11_subd* pc11_village* pc11r_pca*
+/* generate village are variable in hectares */
+replace pc11_vd_area = pc11_vd_area/100
+la var pc11_vd_area "Area (sq. km)"
 
-/* save merged dataset  */
-save $tmp/pc11r_pca_water_lgd, replace
+/* keep necessary vars */
+keep pc11* lgd*
 
-/* urban */
-use $pc11/houselisting_pca/pc11u_hpca_town.dta , clear
+/* rename */
+ren pc11* pc11*
 
-/* merge with pca urban data merged with lgd */
-merge 1:1 pc11_state_id pc11_district_id pc11_subdistrict_id pc11_town_id using $tmp/pc11u_pca_lgd, nogen
+/* save temp dataset */
+save $tmp/pc11r_covid_raw, replace
+
+/*********************************************/
+/* Create urban lgd-pc11 demographic dataset */
+/*********************************************/
+
+/* Merges */
+
+/* extract lgd state and district ids for pca urban */
+use $pc11/pc11u_pca_clean.dta, clear
+
+/* keep pca vars */
+keep *pca_tot_p *pca_no_hh *pca_main_cl_p *pca_main_al_p *_mainwork_p pc11_state* pc11_dist* pc11_town* pc11_subdistrict*
+
+/* rename vars */
+ren pc11_pca* pc11u_pca*
+
+/* merge with lgd-pc11 town key */
+merge 1:1 pc11_state_id pc11_district_id pc11_subdistrict_id pc11_town_id using $keys/lgd_pc11_town_key, keepusing(lgd_state_id lgd_state_name lgd_district_id lgd_district_name) nogen keep(match master)
+
+/* merge to get town area */
+merge 1:1 pc11_state_id pc11_district_id pc11_subdistrict_id pc11_town_id using $pc11/pc11_td_clean, keep(match master) keepusing(pc11_td_area)
+
+/* merge to get household water access data */
+merge 1:1 pc11_state_id pc11_district_id pc11_subdistrict_id pc11_town_id using $pc11/houselisting_pca/pc11u_hpca_town, nogen keep(match master) keepusing(pc11u_hl_dw_loc*)
+
+/* merge in urban hospital data */
+merge 1:m pc11_state_id pc11_district_id pc11_subdistrict_id pc11_town_id using $tmp/precollapse, nogen keep(match master) keepusing(*mh *nh *_cln *cntr *disp *all_hosp *all_hosp_doc_tot *all_hosp_pmed_tot)
+
+/* Cleaning */
 
 /* In the hpca data households with access to water are represented as shares */
 foreach x of var pc11u_hl_dw*{
 
 /* create number of households with access to drinking water */
   gen `x'_no = `x'*pc11u_pca_no_hh
-
 }
 
-/* drop unnecessary vars */
-keep pc11u_hl_dw_loc* lgd* pc11_state* pc11_district* pc11_subd* pc11_town* pc11u_pca*
-
-/* save merged dataset  */
-save $tmp/pc11u_pca_water_lgd, replace
-
-/****************************/
-/* Prep Town directory data */
-/****************************/
-
-use $pc11/pc11_td_clean.dta , clear
-
 /* keep necessary vars */
-keep pc11_state_id pc11_district_id pc11_subdistrict_id pc11_town_id pc11_td_area
+keep pc11* lgd*
 
-/* merge with the merged pca-water-lgd dataset */
-merge 1:1 pc11_state_id pc11_district_id pc11_subdistrict_id pc11_town_id using $tmp/pc11u_pca_water_lgd, nogen
+/* save temp dataset */
+save $tmp/pc11u_covid_raw, replace
 
-/* save data */
-save $tmp/pc11u_pca_water_td_lgd, replace
+/***********************/
+/* Append and collapse */
+/***********************/
 
-/*******************************/
-/* Prep Village directory data */
-/*******************************/
+/* append urban and rural raw datasets */
+use $tmp/pc11r_covid_raw, clear
+append using $tmp/pc11u_covid_raw
 
-use $pc11/pc11_vd_clean.dta , clear
+/* drop pc11 ids and names for collapse to work */
+drop pc11_state_id pc11_district_id pc11_subdistrict_id pc11_village_id pc11_town_id 
+drop pc11_state_name pc11_district_name pc11_subdistrict_name pc11_village_name pc11_town_name 
 
-/* keep necessary vars */
-keep pc11_state_id pc11_district_id pc11_subdistrict_id pc11_village_id pc11_vd_area
+/* drop obs with missing lgd district id */
+drop if lgd_district_id == ""
 
-/* merge with the merged pca-water-lgd dataset */
-merge 1:1 pc11_state_id pc11_district_id pc11_subdistrict_id pc11_village_id using $tmp/pc11r_pca_water_lgd, nogen
+/* collapse at lgd state and district level */
+collapse (sum) pc11*, by(lgd_state_id lgd_state_name lgd_district_id lgd_district_name)
 
-/* generate village are variable in hectares */
-gen area = pc11_vd_area/100
-
-/* save data */
-save $tmp/pc11r_pca_water_vd_lgd, replace
-
-/************************/
-/* Health capacity data */
-/************************/
-
-/* Use cleaned health capacity dataset - check covid/b/prep_pc_hosp.do */
-/* Using this version bc outliers were checked and dropped in this version */
-use $tmp/precollapse, clear
-
-/* create rural health capacity dataset */
-keep if urban == 0
-
-/* keep relevant vars */
-keep *_cln *cntr *disp *all_hosp *all_hosp_doc_tot *all_hosp_pmed_tot pc11_state_id pc11_district_id pc11_subdistrict_id pc11_village_id
-
-/* merge with other rural variables dataset */
-merge 1:1 pc11_state_id pc11_district_id pc11_subdistrict_id pc11_village_id using $tmp/pc11r_pca_water_vd_lgd, nogen
-
-/* save data */
-save $tmp/pc11_all_rural, replace
-
-use $tmp/precollapse, clear
-
-/* create rural health capacity dataset */
-keep if urban == 1
-
-/* keep relevant vars */
-keep *mh *nh *_cln *cntr *disp *all_hosp *all_hosp_doc_tot *all_hosp_pmed_tot pc11_state_id pc11_district_id pc11_subdistrict_id pc11_town_id
-
-/* merge with other rural variables dataset */
-merge 1:1 pc11_state_id pc11_district_id pc11_subdistrict_id pc11_town_id using $tmp/pc11u_pca_water_td_lgd, nogen
-
-/* save data */
-save $tmp/pc11_all_urban, replace
-
-/***********************************************************/
-/* Merge rural and urban datasets and final cleaning steps */
-/***********************************************************/
-
-/* collapse at district level */
-foreach i in rural urban{
-
-  use $tmp/pc11_all_`i', clear
-
-  if "`i'" == "rural" local vars pc11r* *area pc11_td*
-  if "`i'" == "urban" local vars pc11u* pc11_td*
-
-  /* drop obs with no lgd var  */
-  drop if lgd_district_id == ""
-  
-  /* collapse at district level */
-  collapse (sum) `vars', by(lgd_state_id lgd_state_name lgd_district_id lgd_district_name)
-
-  /* save */
-  save $tmp/pc11_all_`i'_district, replace
-
-}
-
-/* import rural district level dataset */
-use $tmp/pc11_all_rural_district, clear
-
-/* rename health capacity vars  */
-ren pc11_td* pc11r_td*
-
-/* merge with urban district level dataset */
-merge 1:1 lgd_state_id lgd_district_id using $tmp/pc11_all_urban_district, nogen
-
-/* final cleaning steps */
+/* final cleaning steps - defined in program on top */
 finalsteps
 
-/* save district level clean dataset */
-save $tmp/pc11_district_capacity, replace
-
-/* save statewise datasets */
-levelsof lgd_state_id, local(levelstate)
-
-foreach s of local levelstate {
-
-/* save statewise file */
-savesome using $tmp/pc11_district_capacity_`s' if lgd_state_id == "`s'", replace
-  
-}
-
-
-/* Aditi - start here */
+/* save final dataset */
+save $tmp/lgd_pc11_demographics_district, replace
 
 
 /***************************************************************************************************/
