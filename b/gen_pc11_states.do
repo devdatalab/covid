@@ -266,6 +266,7 @@ merge 1:1 pc11_state_id pc11_district_id pc11_vd_block_name using $covidpub/biha
 
 /* final cleaning steps */
 finalsteps
+order lgd_block_name pc11_state_id pc11_district_id pc11_vd_block_name, after(lgd_district_name)
 
 /* save dataset */
 save $covidpub/bihar/bihar_block_pc11, replace
