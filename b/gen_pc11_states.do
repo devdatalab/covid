@@ -144,7 +144,7 @@ ren pc11_pca* pc11r_pca*
 merge 1:1 pc11_state_id pc11_village_id using $keys/lgd_pc11_village_key, keepusing(lgd_state_id lgd_state_name lgd_district_id lgd_district_name) nogen keep(match master)
 
 /* merge to get village area */
-merge 1:1 pc11_state_id pc11_village_id using $pc11/pc11_vd_clean, keep(match master) keepusing(pc11_vd_area)
+merge 1:1 pc11_state_id pc11_village_id using $pc11/pc11_vd_clean, keep(match master) keepusing(pc11_vd_area pc11_vd_block_name )
 
 /* merge to get household water access data */
 merge 1:1 pc11_state_id pc11_district_id pc11_subdistrict_id pc11_village_id using $pc11/houselisting_pca/pc11r_hpca_village, nogen keep(match master) keepusing(pc11r_hl_dw_loc*)
@@ -193,7 +193,7 @@ ren pc11_pca* pc11u_pca*
 merge 1:1 pc11_state_id pc11_district_id pc11_subdistrict_id pc11_town_id using $keys/lgd_pc11_town_key, keepusing(lgd_state_id lgd_state_name lgd_district_id lgd_district_name) nogen keep(match master)
 
 /* merge to get town area */
-merge 1:1 pc11_state_id pc11_district_id pc11_subdistrict_id pc11_town_id using $pc11/pc11_td_clean, keep(match master) keepusing(pc11_td_area)
+merge 1:1 pc11_state_id pc11_district_id pc11_subdistrict_id pc11_town_id using $pc11/pc11_td_clean, keep(match master) keepusing(pc11_td_area pc11_td_block_name )
 
 /* merge to get household water access data */
 merge 1:1 pc11_state_id pc11_district_id pc11_subdistrict_id pc11_town_id using $pc11/houselisting_pca/pc11u_hpca_town, nogen keep(match master) keepusing(pc11u_hl_dw_loc*)
@@ -226,7 +226,7 @@ append using $tmp/pc11u_covid_raw
 
 /* drop pc11 ids and names for collapse to work */
 drop pc11_state_id pc11_district_id pc11_subdistrict_id pc11_village_id pc11_town_id 
-drop pc11_state_name pc11_district_name pc11_subdistrict_name pc11_village_name pc11_town_name 
+drop pc11_state_name pc11_district_name pc11_subdistrict_name pc11_village_name pc11_town_name *block_name
 
 /* drop obs with missing lgd district id */
 drop if lgd_district_id == ""
@@ -245,213 +245,27 @@ save $tmp/lgd_pc11_demographics_district, replace
 /* Repeat for blocks - this couldn't be put in a loop because blocks are not a normal location key */
 /***************************************************************************************************/
 
-/****************************/
-/* Prep Town directory data */
-/****************************/
+/* append covid rural and urban datasets */
+use $tmp/pc11r_covid_raw, clear
+append using $tmp/pc11u_covid_raw
 
-use $pc11/pc11_td_clean.dta , clear
-bys pc11_state_id pc11_district_id pc11_town_id : keep if _n == 1
-save $tmp/master, replace
-
-use $pc11/pc11u_pca_clean, clear
-bys pc11_state_id pc11_district_id pc11_town_id : keep if _n == 1
-save $tmp/using, replace
-
-/* merge */
-use $tmp/master, clear
-merge 1:1 pc11_state_id pc11_district_id pc11_town_id using $tmp/using, gen(m)
-drop if m == 2
-/* 23 towns dropped */
-
-/* replace empty pca total population variable with pc11 td total population */
-replace pc11_pca_tot_p = pc11_tot_p if m == 1
-drop m
-
-/* keep obs for bihar */
-keep if pc11_state_id == "10"
-
-/* process block name variable */
-/* town block names are in all caps, vd block names are proper */
-ren pc11_td_block_name pc11_vd_block_name
+/* process block name */
+replace pc11_vd_block_name = pc11_td_block_name if mi(pc11_vd_block_name)
+drop pc11_td_block_name
 replace pc11_vd_block_name = proper(pc11_vd_block_name)
 
-/* collapse to level: land area */
-collapse (sum) pc11_td_tot_p pc11_td_area *pca_tot_p *pca_no_hh *pca_main_al_p *pca_main_cl_p *_mainwork_p, by(pc11_state_id pc11_district_id pc11_vd_block_name)
-label var pc11_td_area "Total geographical area (sq km)"
-
-/* ren vars */
-ren pc11_pca* pc11u_pca*
-
-/* save level data */
-save $tmp/pc11_td_block_bihar, replace
-
-/*******************************/
-/* Prep Village directory data */
-/*******************************/
-
-use $pc11/pc11_vd_clean.dta , clear
-
 /* keep obs for bihar */
-keep if pc11_state_id == "10"
+keep if lgd_state_name == "bihar"
 
-merge 1:1 pc11_state_id pc11_village_id using $pc11/pc11r_pca_clean, gen(m)
-keep if m == 3
-drop m
+/* collapse at the block level */
+drop lgd*
+collapse (sum) pc11u* pc11r* pc11_vd_area pc11_td*, by(pc11_state_id pc11_district_id pc11_vd_block_name)
 
-/* generate area variable */
-gen area = pc11_vd_area/100
-
-/* collapse to level: land area */
-collapse (sum) pc11_vd_area area *pca_tot_p *pca_no_hh *pca_main_al_p *pca_main_cl_p *_mainwork_p, by(pc11_state_id pc11_district_id pc11_vd_block_name)
-label var pc11_vd_area "Total geographical area (ha)"
-
-ren pc11_pca* pc11r_pca*
-
-/* save level data */
-save $tmp/pc11_vd_block_bihar, replace
-
-/********************************/
-/* Prep households listing data */
-/********************************/
-
-/* call rural pre-collapse data */
-use $tmp/pc11r_water_precol_bihar, replace
-
-/* merge with vd data to get block names and ids */
-merge 1:1 pc11_state_id pc11_village_id using $pc11/pc11_vd_clean, keepusing(pc11_vd_block_name)
-keep if _merge == 3
-drop _merge
-
-/* collapse to level: access to water */
-collapse (sum) *_no *no_hh , by(pc11_state_id pc11_district_id pc11_vd_block_name)
-
-/* save level data */
-save $tmp/pc11r_water_block_bihar, replace
-
-/* call rural pre-collapse data */
-use $tmp/pc11u_water_precol_bihar, replace
-
-/* merge with vd data to get block names and ids */
-merge 1:1 pc11_state_id pc11_district_id pc11_town_id using $tmp/master, keepusing(pc11_td_block_name)
-keep if _merge == 3
-drop _merge
-
-/* collapse to level: access to water */
-collapse (sum) *_no *no_hh , by(pc11_state_id pc11_district_id pc11_td_block_name)
-
-/* save level data */
-save $tmp/pc11u_water_block_bihar, replace
-
-ren pc11_td_block_name pc11_vd_block_name
-replace pc11_vd_block_name = proper(pc11_vd_block_name)
-
-/* merge rural and urban households data */
-merge 1:1 pc11_state_id pc11_district_id pc11_vd_block_name using $tmp/pc11r_water_block_bihar, nogen
-
-/* drop unnecessary vars */
-drop *hl_dwelling* *dw_source*
-
-/* save */
-save $tmp/pc11_water_block_bihar, replace
-
-/************************/
-/* Health capacity data */
-/************************/
-
-/* Use pre-collapse health capacity data */
-use $tmp/precollapse, clear
-
-/* keep obs for bihar */
-keep if pc11_state_id == "10"
-
-/* keep relevant vars */
-keep *nh *mh *_cln *cntr *disp *all_hosp *all_hosp_doc_tot *all_hosp_pmed_tot pc11_state_id pc11_district_id pc11_town_id urban pc11_village_id
-
-/* extract block names for rural/urban health capacity data from vd */
-preserve
-
-/* keep rural obs */
-keep if urban == 0
-
-/* get pc11 vd block name */
-merge 1:1 pc11_state_id pc11_village_id using $pc11/pc11_vd_clean, keepusing(pc11_vd_block_name)
-keep if _merge == 3
-drop _merge
-
-/* save */
-save $tmp/healthr_bihar, replace
-
-restore
-
-preserve
-
-/* keep urban obs */
-keep if urban == 1
-
-/* get pc11 vd block name */
-merge 1:m pc11_state_id pc11_district_id pc11_town_id using $pc11/pc11_td_clean, keepusing(pc11_td_block_name)
-keep if _merge == 3
-drop _merge
-
-/* rename block name for merge */
-ren pc11_td_block_name pc11_vd_block_name
-replace pc11_vd_block_name = proper(pc11_vd_block_name)
-
-/* save */
-save $tmp/healthu_bihar, replace
-
-restore
-
-/* append rural and urban health datasets */
-use $tmp/healthr_bihar, clear
-append using $tmp/healthu_bihar
-
-/* collapse at block level */
-collapse (sum) pc11_td*, by(pc11_state_id pc11_district_id pc11_vd_block_name)
-
-/* clean */
-ren pc11_td* pc11_tot*
-la var pc11_tot_all_hosp "Total allopathic hospitals in district"
-la var pc11_tot_all_hosp_doc_tot "Total doctors in allopathic hospitals"
-la var pc11_tot_all_hosp_pmed_tot "Total paramedics in allopathic hospitals"
-la var pc11_tot_disp "Total dispensaries"
-la var pc11_tot_ch_cntr "Total community health centers - rural only"
-la var pc11_tot_ph_cntr "Total public health centers - rural only"
-la var pc11_tot_phs_cntr "Total public health sub centers - rural only"
-la var pc11_tot_mcw_cntr "Total maternal/child welfare centers"
-la var pc11_tot_tb_cln "Total TB clinics"
-la var pc11_tot_mh_cln "Total mobile health clinics"
-la var pc11_tot_fwc_cntr "Total family and welfare centers"
-la var pc11_tot_nh "Total nursing homes - urban only"
-la var pc11_tot_mh "Total maternity homes - urban only"
-
-/* data is already at district level */
-save $tmp/pc11_healthcapacity_block_bihar, replace
-
-/***********************************************/
-/* Merge everything with lgd-pc11 block key */
-/***********************************************/
-
-use $covidpub/bihar/lgd_pc11_block_key_bihar, clear
-
-/* merge pca data */
-merge 1:1 pc11_state_id pc11_district_id pc11_vd_block_name using $tmp/pc11_td_block_bihar, gen(td_merge)
-merge 1:1 pc11_state_id pc11_district_id pc11_vd_block_name using $tmp/pc11_vd_block_bihar, gen(vd_merge)
-merge 1:1 pc11_state_id pc11_district_id pc11_vd_block_name using $tmp/pc11_water_block_bihar, gen(water_merge)
-merge 1:1 pc11_state_id pc11_district_id pc11_vd_block_name using $tmp/pc11_healthcapacity_block_bihar, gen(hosp_merge)
-
-/* drop merge */
-drop *_merge
-
-/* create population total */
-egen pc11_pca_tot_p = rowtotal(pc11r_pca_tot_p pc11u_pca_tot_p)
-egen pc11_pca_mainwork_p = rowtotal(pc11r_pca_mainwork_p pc11u_pca_mainwork_p)
-egen pc11_pca_main_al_p = rowtotal(pc11r_pca_main_al_p pc11u_pca_main_al_p)
-egen pc11_pca_main_cl_p = rowtotal(pc11r_pca_main_cl_p pc11u_pca_main_cl_p)
+/* merge with lgd-pc11 block key for bihar */
+merge 1:1 pc11_state_id pc11_district_id pc11_vd_block_name using $covidpub/bihar/lgd_pc11_block_key_bihar, nogen keep(match) keepusing(lgd_district_name lgd_block_name)
 
 /* final cleaning steps */
 finalsteps
-order *vd_block*, after(pc11_district_name)
 
 /* save dataset */
 save $covidpub/bihar/bihar_block_pc11, replace
