@@ -1,4 +1,5 @@
-/* gen demographic and amenities data for bihar at lgd-pc11 district level */
+/* gen lgd-pc11 demographics data at district level for each state */
+/* additionally creates a block level dataset just for bihar */
 
 /* set context */
 set_context covid
