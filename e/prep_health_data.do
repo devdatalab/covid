@@ -22,21 +22,25 @@ save $tmp/ahs/ahs_wps, emptyok replace
 foreach type in cab comb mort woman wps {
 
   /* cycle through states */
-  foreach state in 05 08 09 10 18 20 21 22 23 {
+  foreach state in 08 10 18 20 22 {
   
     /* read in the data */
     import delimited $health/ahs/raw/`type'/`state'.csv, delimit("|") clear
 
+    /* rename  state and district if needed */
+    cap ren state_code state
+    cap ren district_code district
+
     /* convert state and district codes to standard format */
-    tostring state_code, format("%02.0f") replace
-    tostring district_code, format("%03.0f") replace
+    tostring state, format("%02.0f") replace
+    tostring district, format("%03.0f") replace
 
     /* drop if the state code is not correct (this catches some data entry errors that disrupts appending) */
-    drop if state_code != "`state'"
+    drop if state != "`state'"
 
     /* correct the format of rural_urban indicator */
-    destring rural_urban, replace
-    compress state_code district_code rural_urban
+    cap destring rural_urban, replace
+    compress state district
     
     /* append to full file */
     append using $tmp/ahs/ahs_`type', force
@@ -97,7 +101,7 @@ foreach state in `statelist' {
 /****************************/
 /* 3. Match with PC11 codes */
 /****************************/
-/* 05/19/20 - for now this only deals with the cab data */
+/* 05/19/20 - for now this only deals with the cab data, merging in some hh variables from ahs_comb */
 
 /* open the DLHS data file, clean and save */
 use $tmp/dlhs/dlhs_cab, clear
@@ -116,8 +120,38 @@ merge m:1 pc11_state_name dist using $health/dlhs/dlhs4_district_key, keepusing(
 /* save in permanent dlhs folder */
 save $health/dlhs/dlhs_cab, replace
 
+/* open the ahs household data */
+use $tmp/ahs/ahs_comb, clear
+
+/* drop if not usual resident */
+drop if usual_residance == 2
+
+/* rename variables to match the cab dataset */
+ren stratum_code stratum
+ren house_no ahs_house_unit
+ren member_identity identification_code
+ren hh_serial_no sl_no 
+
+/* drop any entries with missing identifying information */
+drop if mi(state) | mi(district) | mi(stratum) | mi(ahs_house_unit) | mi(house_hold_no) | mi(sl_no) | mi(identification_code) | mi(age) | mi(sex) | mi(year_of_birth)
+
+/* drop all duplicates so data can be merged */
+ddrop state district stratum ahs_house_unit house_hold_no sl_no identification_code sex year_of_birth
+
+/* save as a temporary file for merging */
+save $tmp/ahs_comb_formerge, replace
+
 /* open the AHS data file */
 use $tmp/ahs/ahs_cab, clear
+
+/* drop if not usual resident */
+drop if usual_residance == 2
+
+/* drop all duplicates so data can be merged */
+ddrop state district stratum ahs_house_unit house_hold_no sl_no identification_code sex year_of_birth
+
+/* merge in some variables from the household data */
+merge 1:1 state district stratum ahs_house_unit house_hold_no sl_no identification_code sex year_of_birth using $tmp/ahs_comb_formerge, keepusing(illness_type illness_type diagnosed_for)
 
 /* clean missing values in the AHS */
 foreach var in weight_in_kg length_height_cm age haemoglobin_level bp_systolic bp_systolic_2_reading bp_diastolic bp_diastolic_2reading pulse_rate pulse_rate_2_reading fasting_blood_glucose_mg_dl first_breast_feeding is_cur_breast_feeding illness_type treatment_type illness_duration{
@@ -130,8 +164,9 @@ ren bp_diastolic bp_diastolic_1_reading
 ren bp_diastolic_2reading bp_diastolic_2_reading
 
 /* convert state and dist codes to byte to match key */
-destring state_code, gen(state)
-destring dist, gen(dist)
+destring state, replace
+ren district dist
+destring dist, replace
 
 /* merge in pc11 id from key */
 merge m:1 state dist using $health/dlhs/dlhs4_district_key, keepusing(pc11_state_id pc11_district_id) keep(match master) nogen
