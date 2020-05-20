@@ -328,10 +328,14 @@ merge 1:1 lgd_state_id lgd_district_id using $tmp/pc11_all_urban_district, nogen
 /* final cleaning steps */
 finalsteps
 
+/* label data to remove PC11 TD label */
+label data "LGD district-level PC11 covid-relevant variables"
+
 /* save district level clean dataset */
-save $tmp/pc11_district_capacity, replace
+save $covidpub/lgd_pc11_district_capacity, replace
 
 /* save statewise datasets */
+use $covidpub/lgd_pc11_district_capacity, clear
 levelsof lgd_state_id, local(levelstate)
 
 foreach s of local levelstate {
