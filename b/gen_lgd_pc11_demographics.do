@@ -1,8 +1,173 @@
-/* gen lgd-pc11 demographics data at district level for each state */
-/* additionally creates a block level dataset just for bihar */
+/***** TABLE OF CONTENTS *****/
+/* Generate demographic data at district and subdistrict levels */
+/* Prep Datasets at Geographic Levels */
+  /* town directory */
+  /* village directory */
+  /* PCA */
+  /* slums */
+  /* Merge Together Data for Posting */
+/* Generate state-wise demographic, health capacity, and water access data at the district level */
+/* Define program for final cleaning steps after merging all data */
+/* Create rural lgd-pc11 demographic dataset */
+/* Create urban lgd-pc11 demographic dataset */
+/* Append and collapse */
+/* Save statewise datasets */
 
-/* set context */
+/****************************************************************/
+/* Generate demographic data at district and subdistrict levels */
+/****************************************************************/
+
+/* settings */
 set_context covid
+cap mkdir $tmp/covid
+cap mkdir $covidpub/demography
+cap mkdir $covidpub/demography/csv
+
+/**************************************/
+/* Prep Datasets at Geographic Levels */
+/**************************************/
+
+/* collapse this to both districts and subdistricts */
+foreach level in district subdistrict {
+
+  /* set location identifiers for this collapse level */
+  if "`level'" == "district" local ids pc11_state_id pc11_district_id 
+  if "`level'" == "subdistrict" local ids pc11_state_id pc11_district_id pc11_subdistrict_id 
+  
+  /******************/
+  /* town directory */
+  /******************/
+  
+  use $pc11/pc11_td_clean.dta , clear
+
+  /* collapse to level: land area */
+  collapse (sum) pc11_td_area , by(`ids')
+  label var pc11_td_area "Total geographical area (sq km)"
+
+  /* save level data */
+  save $tmp/covid/pc11_td_`level', replace
+
+  /*********************/
+  /* village directory */
+  /*********************/
+  
+  use $pc11/pc11_vd_clean.dta , clear
+
+  /* collapse to level: land area */
+  collapse (sum) pc11_vd_area , by(`ids')
+
+  /* convert area from hectares to sq km as in town directory */
+  replace pc11_vd_area = pc11_vd_area / 100
+  label var pc11_vd_area "Total geographical area (sq km)"
+
+  /* save level data*/
+  save $tmp/covid/pc11_vd_`level', replace
+
+  /*******/
+  /* PCA */
+  /*******/
+  
+  /* merge collapsed urban/rural pca level data together */
+  foreach i in r u {
+  use $pc11/pc11`i'_pca_clean.dta, clear
+  ren pc11_pca* pc11`i'_pca*
+
+  /* drop unnecessary vars */  
+  cap drop pc11*tru pc11*level
+  drop pc11*name
+
+  /* collapse to level */
+  collapse (sum) pc11`i'_pca*, by(`ids')
+  save $tmp/covid/pc11`i'_pca_`level', replace
+  }
+
+  /* merge urban and rural pca data */
+  use $tmp/covid/pc11r_pca_`level', clear
+  merge 1:1 `ids' using $tmp/covid/pc11u_pca_`level', gen(_m_pc11)
+  drop _m*
+
+  /* save */
+  save $tmp/covid/pc11_pca_`level', replace
+
+  /*********/
+  /* slums */
+  /*********/
+  
+  /* note: slum data is at the town level so needs to be allocated to districts/subdistricts */
+
+  /* use slum data */
+  use $pc11/slums/pc11u_slums, clear
+
+  /* merge in pc11 population data */
+  merge 1:m pc11_state_id pc11_town_id using $pc11/pc11u_pca_clean, nogen keep(master match) keepusing(`ids' pc11_pca_tot_p)
+
+  /* allocate slum population over level, allocating proportional to proportion of town population in each level */
+  
+  /* generate town population share in each subdistrict */
+  bys pc11_state_id pc11_town_id: egen town_pop_total = total(pc11_pca_tot_p)
+  gen town_pop_`level'_share = pc11_pca_tot_p / town_pop_total
+
+  /* allocate slum population to each subdistrict */
+  gen pc11_slum_pop = pc11_slum_tot_p * town_pop_`level'_share
+
+  /* collapse to level */
+  collapse (sum) pc11_slum_pop, by(`ids')
+  label var pc11_slum_pop "Total population living in slums (PC11)"
+
+  /* save level slum file */
+  save $tmp/covid/pc11_slum_`level', replace
+
+
+  /***********************************/
+  /* Merge Together Data for Posting */
+  /***********************************/
+
+  /* merge data */
+  use $tmp/covid/pc11_pca_`level', clear
+  merge 1:1 `ids' using $tmp/covid/pc11_vd_`level', gen(_m_vd)
+  merge 1:1 `ids' using $tmp/covid/pc11_td_`level', gen(_m_td)
+  merge 1:1 `ids' using $tmp/covid/pc11_slum_`level', gen(_m_slum)
+  drop _m*
+  
+  /* make sure missing values are zero when they should be */
+  foreach v in pc11_td_area pc11_vd_area pc11_slum_pop {
+    replace `v' = 0 if mi(`v')
+  }
+
+  /* generate variables of interest */
+  
+  /* total population */
+  egen pc11_pca_tot_p = rowtotal(pc11r_pca_tot_p pc11u_pca_tot_p)
+  label var pc11_pca_tot_p "Total population (Urban and Rural)"
+
+  /* total area */
+  gen pc11_tot_area =  pc11_td_area + pc11_vd_area
+  label var pc11_tot_area "Total area (sq km, PC11)"
+
+  /* population density */
+  gen pc11_pop_dens = pc11_pca_tot_p / (pc11_tot_area)
+  label var pc11_pop_dens "Population per sq km (PC11)"
+
+  /* urbanization */
+  gen pc11_urb_share = pc11u_pca_tot_p / pc11_pca_tot_p
+  label var pc11_urb_share "Urban population share"
+  
+  /* keep only needed variables */
+  keep `ids' pc11_urb_share pc11_slum_pop pc11*area pc11_pop_dens pc11*pca_tot_p  pc11*pca_tot_m pc11*pca_tot_f pc11*pca_p_lit pc11*pca_m_lit pc11*pca_f_lit  pc11*pca_p_sc pc11*pca_m_sc pc11*pca_f_sc   pc11*pca_p_st pc11*pca_m_st pc11*pca_f_st 
+  
+  /* order */
+  order `ids' pc11_urb_share pc11_slum_pop pc11*area pc11_pop_dens  pc11*pca_tot_p  pc11*pca_tot_m pc11*pca_tot_f pc11*pca_p_lit pc11*pca_m_lit pc11*pca_f_lit  pc11*pca_p_sc pc11*pca_m_sc pc11*pca_f_sc   pc11*pca_p_st pc11*pca_m_st pc11*pca_f_st 
+
+  /* save */
+  compress
+  save $covidpub/demography/pc11_demographics_`level', replace
+  export delimited $covidpub/demography/csv/pc11_demographics_`level'.csv, replace
+
+}
+
+/*************************************************************************************************/
+/* Generate state-wise demographic, health capacity, and water access data at the district level */
+/*************************************************************************************************/
 
 /******************************************************************/
 /* Define program for final cleaning steps after merging all data */
@@ -122,9 +287,6 @@ prog def finalsteps
 
 end
 
-/**************************/
-/* End program finalsteps */
-/**************************/
 
 /*********************************************/
 /* Create rural lgd-pc11 demographic dataset */
@@ -207,7 +369,7 @@ merge 1:m pc11_state_id pc11_district_id pc11_subdistrict_id pc11_town_id using 
 /* In the hpca data households with access to water are represented as shares */
 foreach x of var pc11u_hl_dw*{
 
-/* create number of households with access to drinking water */
+  /* create number of households with access to drinking water */
   gen `x'_no = `x'*pc11u_pca_no_hh
 }
 
@@ -238,54 +400,32 @@ collapse (sum) pc11*, by(lgd_state_id lgd_state_name lgd_district_id lgd_distric
 /* final cleaning steps - defined in program on top */
 finalsteps
 
-<<<<<<< HEAD
-/* label data to remove PC11 TD label */
-label data "LGD district-level PC11 covid-relevant variables"
-
-/* save district level clean dataset */
-save $covidpub/lgd_pc11_district_capacity, replace
-
-/* save statewise datasets */
-use $covidpub/lgd_pc11_district_capacity, clear
-=======
 /* save final dataset */
 save $tmp/lgd_pc11_demographics_district, replace
 
-/* create state id locals */
->>>>>>> 0cc8b8a3aa9d8604299f517feaa34479d45d8b48
-levelsof lgd_state_id, local(levelstate)
+/***************************/
+/* Save statewise datasets */
+/***************************/
 
-/* save separate dataset for each state */
+/* create shortened version of lgd state name to label files */
+gen statelabel = substr(lgd_state_name, 1, 8)
+replace statelabel = subinstr(statelabel, " ", "", .)
+label var statelabel "Shortened state name"
+
+/* create state id locals */
+levelsof statelabel, local(levelstate)
+
+/* save separate datasets for each state */
 foreach s of local levelstate{
-  savesome using $tmp/lgd_pc11_dem_district_`s' if lgd_state_id == "`s'", replace
+
+  /* demographics data - population, ag share, pop density */
+  savesome lgd* *pca* *pdensity *ag* *area using $tmp/lgd_pc11_dem_district_`s' if statelabel == "`s'", replace
+
+  /* health capacity data */
+  savesome lgd* pc11_tot* using $tmp/lgd_pc11_health_district_`s' if statelabel == "`s'", replace
+
+  /* household access to water data */
+  savesome lgd* *dw* using $tmp/lgd_pc11_water_district_`s' if statelabel == "`s'", replace
+
 }
 
-/****************************************************************************************************************/
-/* Repeat for blocks - this couldn't be put in a loop because we only have a complete block key for bihar so far*/
-/****************************************************************************************************************/
-
-/* append covid rural and urban datasets */
-use $tmp/pc11r_covid_raw, clear
-append using $tmp/pc11u_covid_raw
-
-/* process block name */
-replace pc11_vd_block_name = pc11_td_block_name if mi(pc11_vd_block_name)
-drop pc11_td_block_name
-replace pc11_vd_block_name = proper(pc11_vd_block_name)
-
-/* keep obs for bihar */
-keep if lgd_state_name == "bihar"
-
-/* collapse at the block level */
-drop lgd*
-collapse (sum) pc11u* pc11r* pc11_vd_area pc11_td*, by(pc11_state_id pc11_district_id pc11_vd_block_name)
-
-/* merge with lgd-pc11 block key for bihar */
-merge 1:1 pc11_state_id pc11_district_id pc11_vd_block_name using $covidpub/bihar/lgd_pc11_block_key_bihar, nogen keep(match) keepusing(lgd_district_name lgd_block_name)
-
-/* final cleaning steps */
-finalsteps
-order lgd_block_name pc11_state_id pc11_district_id pc11_vd_block_name, after(lgd_district_name)
-
-/* save dataset */
-save $covidpub/bihar/bihar_block_pc11, replace
