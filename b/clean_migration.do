@@ -2,7 +2,7 @@
 
 
 /* read in raw CSV data (source: Clement Imbert */
-import delimited using $covidpub/migration/clement_migration_pc11.csv, clear varn(1)
+import delimited using $covidpub/migration/raw/district_migration_pc11.csv, clear varn(1)
 
 /* reformat census identifiers to string */
 ren statecodecensus2011 pc11_state_id
