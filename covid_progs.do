@@ -226,14 +226,50 @@ end
 
 
 /****************************************************************************************************/
-/* Program covidsave: Convert easily back and forth between LGD and PC11 identifiers, and write out */
+/* Program convert_pc11_lgd_dists: Convert easily back and forth between LGD and PC11 identifiers, and write out */
 /****************************************************************************************************/
 
-cap prog drop covidsave
-prog def covidsave
+//TEST:
+//use pc11_state_id pc11_district_id using $keys/lgd_pc11_district_key_weights.dta, clear
+////keep if inlist(lgd_district_id, "175", "640", "185")
+///* 179 and 158 compound match to lgd_district_id 175, 185, and 640 */
+//keep if inlist(pc11_district_id, "179", "158")
+//duplicates drop
+//gen meanvar = 1 if pc11_district_id == "179"
+//replace meanvar = 2 if pc11_district_id == "158"
+//gen sumvar = mean
+//global meanvar_aggmethod mean
+//global sumvar_aggmethod sum
+///* as of may 2020, weights for these obs are as follows: */
+//+-----------------------------------------------------------------+
+//| lgd_st~d   lgd_di~d   pc11_s~d   pc11_d~d   pc11_l~p   lgd_pc~p |
+//|-----------------------------------------------------------------|
+//|       09        175         09        158   .8742403          1 |
+//|       09        185         09        179   .6276585          1 |
+//|       09        640         09        158   .1257596   .2242026 |
+//|       09        640         09        179   .3723415   .7757974 |
+//+-----------------------------------------------------------------+
+///* so means going from pc11 to lgd, lgd 175 should equal 2, lgd 185 should equal 1, and lgd 640 should be a weighted average */
+///* this average would be: 2 * (.1257596 / (.1257596 + .3723415)) + 1 * (.3723415 / (.1257596 + .3723415)) = 1.25247806118 */
+///* for sums, we should get: 175 = .8742403 * 2; 185 = .6276585 * 1; 640 = .1257596 * 2 + .3723415 * 1 */
+//convert_pc11_lgd_dists, native(pc11)
+//assert inrange(sumvar, 1.747, 1.749) if lgd_district_id == "175"
+//assert inrange(sumvar, .626, .628) if lgd_district_id == "185"
+//assert inrange(sumvar, .622, .624) if lgd_district_id == "640"
+//assert meanvar == 2 if lgd_district_id == "175"
+//assert meanvar == 1 if lgd_district_id == "185"
+//assert inrange(meanvar, 1.251, 1.253) if lgd_district_id == "640"
+/* should be reversible */
+//convert_pc11_lgd_dists, native(lgd)
+//assert meanvar == sumvar == 1 if pc11_district_id == "179"
+//assert meanvar == sumvar == 2 if pc11_district_id == "158"
+// THIS IS BROKEN. lgd_pc11_pop_wt seems wrong? should be ~ .3 and .7, not .22 and .77.
+
+cap prog drop convert_pc11_lgd_dists
+prog def convert_pc11_lgd_dists
   {
     /* NOTE: this program requires globals for each var e.g. $`varname'_aggmethod */
-    syntax, Native(string) [VARiables(varlist) Level(string) OUTfile(string) Globals_from_csv(string) METAdata_urls(string)]
+    syntax, Native(string) [VARiables(varlist) Level(string) Globals_from_csv(string) METAdata_urls(string)]
 
     /* set default level to district if option is missing (can't set this in the syntax line in Stata) */
     if mi("`level'") local level "district"
@@ -242,12 +278,12 @@ prog def covidsave
     if !mi("`metadata_urls'") {
       foreach url in `metadata_urls' {
         shell wget --no-check-certificate --output-document=$tmp/metadata_scrape.csv '`metadata_urls''
-        covidsave_globals_from_csv $tmp/metadata_scrape.csv
+        qui aggmethod_globals_from_csv $tmp/metadata_scrape.csv
       }
     }
     
     /* load globals, if specified */
-    if !mi("`globals_from_csv'") covidsave_globals_from_csv `globals_from_csv'
+    if !mi("`globals_from_csv'") qui aggmethod_globals_from_csv `globals_from_csv'
     
     /* set identifiers for FROM and TO */
     if "`native'" == "pc11" {
@@ -273,10 +309,10 @@ prog def covidsave
     disp_nice "Globals in the form of \$[varname]_aggmethod must be set for all collapse (non-id) vars"
     foreach var in `variables' {
       if mi("${`var'_aggmethod}") {
-        disp "`var' will be ignored and dropped from this transformation" _n
+        disp "Missing global: `var' will be ignored and dropped from this transformation" _n
         local variables : list variables - var
       }
-      else disp _n "`var' aggregation type set to: ${`var'_aggmethod}"
+      else disp "`var' aggregation type set to: ${`var'_aggmethod}"
     }
 
     /* save mean values for each variable into locals for validation */
@@ -300,45 +336,66 @@ prog def covidsave
     /* initialize a collapse string for instances where pc11 dists are aggregated to LGD (or vice versa) */
     local collapse_string
     
+    /* initialize a list of mean variables that will need postprocessing */
+    local mean_vars
+    
     /* conduct the weighting for all variables, using externally-defined globals. loop over calculated vars */
     foreach var in `variables' {
     
-      /* aggregation type can be [min, max, mean, count, sum]; sum and
-      count are easily area-weighted (same in each direction, split
-      and merge) */
-      if inlist(lower("${`var'_aggmethod}"), "count", "sum") {
+      /* extract aggregation method into its own local */
+      local clean_method = lower("${`var'_aggmethod}")
 
-        /* if so, we need to apply weights. weight variable for instances where pc11 dists are split to multiple LGDs */
-        qui replace `var' = `var' * pc11_lgd_wt_pop
+      /* aggregation type can be [min, max, mean, count, sum]. sums get iweights. */
+      if inlist("`clean_method'", "sum") {
 
-        /* execute the weights for instances where pc11 dists are merged */
-        qui replace `var' = `var' * lgd_pc11_wt_pop
-
-        /* add to collapse string */
-        local clean_method = lower("${`var'_aggmethod}")
+        /* add to collapse string - these will be weighted */
         local collapse_string `collapse_string' (`clean_method') `var'
       }
-      /* means are a bit different. we can population-weight merges, but not splits */
-      else if inlist(lower("${`var'_aggmethod}"), "mean") {
+
+      /* counts just get a binary yes/no indicating a nonmissing value; these should be 1/0 */
+      else if inlist("`clean_method'", "count") {
+        cap assert inlist(`var', 0, 1)
+        if _rc {
+          di "Error: `var' is specified as a count var - these should be only zero or one. If you wish to sum a numeric var, change the aggregation method to 'sum'"
+          error 345
+        }
+        local collapse_string `collapse_string' (first) `var'        
+      }
+
+      /* means are a bit different. we can population-weight merges, but not splits. */
+      else if inlist("`clean_method'", "mean") {
+        
+        /* take first value for 1:1s and splits */
+        local collapse_string `collapse_string' (first) `var'
+
+        /* create temp var for merges. identify the merges by finding duplicate "to" IDs */
+        qui dtag `to_ids'
+        qui gen _`var' = `var' if dup > 0
+        local mean_vars `mean_vars' `var'
+        drop dup
         
         /* weight merges only (not splits), and add to collapse call string */
-        qui replace `var' = `var' * `native'_`not_native'_wt_pop
-        local clean_method = lower("${`var'_aggmethod}")
-        local collapse_string `collapse_string' (`clean_method') `var'
+        local collapse_string `collapse_string' (mean) _`var'
       }
+
+      /* for others e.g. min/max, take first value */
       else {
-        /* we can't infer how to weight mean, max, min values
-        (means/shares may not have a pop denominator), so we assume
-        split dists have the same values as their parents.  */
         local collapse_string `collapse_string' (first) `var'
       }    
     }    
-
-    /* collapse to LGD (or pc11) */
+    
+    /* collapse to LGD (or pc11). use iweights; aweights normalize
+    group weights to sum to Ni, which we don't want */
     collapse_save_labels
-    collapse `collapse_string', by(`to_ids')
+    collapse `collapse_string' [iw = `native'_`not_native'_wt_pop], by(`to_ids')
     collapse_apply_labels
             
+    /* execute replacements for merged means */
+    foreach var in `mean_vars' {
+      qui replace `var' = _`var' if !mi(_`var')
+      drop _`var'
+    }
+    
     /* check old and new values */
     foreach var in `variables' {    
       qui sum `var'
@@ -348,26 +405,20 @@ prog def covidsave
     
     /* add dataset note */
     note: Data programmatically transformed from '`from_ids'' to '`to_ids''
-
-    /* save outfile if specified */
-    if !mi("`outfile'") {
-      qui compress
-      save `outfile', replace
-    }
   }
 end
-/* *********** END program covidsave ***************************************** */
+/* *********** END program convert_pc11_lgd_dists ***************************************** */
 
 
 
-/***************************************************************************************************/
-/* Program covidsave_globals_from_csv: pull variable collapse type globals necessary for covidsave */
-/***************************************************************************************************/
+/****************************************************************************************************************/
+/* Program aggmethod_globals_from_csv: pull variable collapse type globals necessary for convert_pc11_lgd_dists */
+/****************************************************************************************************************/
 
 /* could rework this to use frames to avoid preserve/restore, but
 dont' want stata16 dependency */
-cap prog drop covidsave_globals_from_csv
-prog def covidsave_globals_from_csv
+cap prog drop aggmethod_globals_from_csv
+prog def aggmethod_globals_from_csv
   {
     /* infile is the only argument */
     syntax anything
@@ -383,12 +434,13 @@ prog def covidsave_globals_from_csv
     
     /* read in the file */
     disp "Reading variable definitions from `infile'" _n
-    import delimited using `infile', clear
+    qui import delimited using `infile', clear
 
     /* target variable name and aggregation method for adding to globals */
     keep variablename aggregationmethod
     forval i = 1/`=_N' {
       local var = variablename[`i']
+      local var = strtrim("`var'")
       local aggmethod = aggregationmethod[`i']
       if !mi("`aggmethod'") global `var'_aggmethod `aggmethod'
       disp "global set: \$`var'_aggmethod = `aggmethod'"
@@ -396,5 +448,31 @@ prog def covidsave_globals_from_csv
     restore
   }
 end
-/* *********** END program covidsave_globals_from_csv ***************************************** */
+/* *********** END program aggmethod_globals_from_csv ***************************************** */
+
+
+/******************************************************/
+/* Program covidsave: wrapper for lgd:pc11 conversion */
+/******************************************************/
+
+cap prog drop covidsave
+prog def covidsave
+  {
+    /* NOTE: this program requires globals for each var e.g. $`varname'_aggmethod */
+    syntax anything, [Native(string) metadata_urls(string) replace emptyok]
+
+    /* allow for pulling aggregation method type from metadata */
+    if !mi("`metadata_urls") {
+      convert_pc11_lgd, native(`native') metadata_urls("`metadata_urls'")
+    }
+    else {
+      convert_pc11_lgd, native(`native') metadata_urls("`metadata_urls'")
+    }
+      
+    /* save to specified location */
+    qui compress
+    save `anything', `replace' `emptyok'
+  }
+end
+/* *********** END program covidsave ***************************************** */
 

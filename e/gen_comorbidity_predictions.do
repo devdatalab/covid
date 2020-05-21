@@ -141,49 +141,46 @@ label var diagnosed_for "self-reported diagnosis in the last 1 year"
 
 gen bp_hypertension = 0
 replace bp_hypertension = 1 if diagnosed_for == 2
-replace bp_hypertension = . if mi(diagnosed_for)
 label var bp_hypertension "self-reported diagnosis of hypertension"
 
 /* self-reported hypertension + BP high stage 2 */
 gen bp_high = 0
 replace bp_high = 1 if (bp_high_stage2 == 1 | bp_hypertension == 1)
-replace bp_high = . if mi(bp_high_stage2) & mi(bp_hypertension)
 label var bp_high "self-reported hypertension and/or measured BP high stage 2"
+
+/* create the inverse of bp_high */
+gen bp_not_high = 1 if bp_high == 0
+replace bp_not_high = 0 if bp_high == 1
+label var bp_high "normal blood pressure as defined as not bp_high"
 
 /* Respiratory Disease */
 gen resp_illness = 0
 replace resp_illness = 1 if diagnosed_for == 7
-replace resp_illness = . if mi(diagnosed_for)
 label var resp_illness "self-reported asthma or chronic respiratory failure"
 
 /* get respiratory symptoms */
 gen resp_symptoms = 0
 replace resp_symptoms = 1 if symptoms_pertaining_illness == 1
-replace resp_symptoms = . if mi(symptoms_pertaining_illness)
 label var resp_symptoms "self-reported symptoms of respiratory illness"
 
 /* get acute respiratory symptoms */
 gen resp_acute = 0
 replace resp_acute = 1 if illness_type == 3
-replace resp_acute = . if mi(illness_type)
 label var resp_acute "self-reported respiratory symptoms in the past 15 days"
 
 /* get ANY respiratory issue */
 gen resp_chronic = 0
 replace resp_chronic = 1 if resp_illness == 1 | resp_symptoms == 1 
-replace resp_chronic = . if (mi(resp_illness) & mi(resp_illness))
 label var resp_chronic "self-reported diagnosis or symptoms of respiratory illness"
 
 /* Chronic heart disease */
 gen chronic_heart_dz = 0
 replace chronic_heart_dz = 1 if diagnosed_for == 3
-replace chronic_heart_dz = . if mi(diagnosed_for)
 label var chronic_heart_dz "self-reported chronic heart disease"
 
 /* get cardiovascular system symptoms */
 gen cardio_symptoms = 0
 replace cardio_symptoms = 1 if symptoms_pertaining_illness == 2
-replace cardio_symptoms = . if mi(symptoms_pertaining_illness)
 
 /* Diabetes */
 gen diabetes = 0
@@ -197,41 +194,191 @@ label var diabetes "blood sugar >126mg/dL if fasting, >200mg/dL if not"
 gen cancer_non_haem = 0
 /* respiratory system, gastrointestinal system, genitourinary system, breast, tumor (any type), skin cancer */
 replace cancer_non_haem = 1 if (diagnosed_for == 11 | diagnosed_for == 12 | diagnosed_for == 13 | diagnosed_for == 14 | diagnosed_for == 27 | diagnosed_for == 29)
-replace cancer_non_haem = . if mi(diagnosed_for)
 label var cancer_non_haem "self-reported non haematological cancer"
 
 /* Haematological malignanies */
 gen haem_malig = 0
 replace haem_malig = 1 if (diagnosed_for == 28)
-replace haem_malig = . if mi(diagnosed_for)
 label var haem_malig "self-reported blood cancer/leukemia"
 
 /* Liver disease */
 gen liver_dz = 0
 replace liver_dz = 1 if diagnosed_for == 18
-replace liver_dz = . if mi(diagnosed_for)
 label var liver_dz "self-reported chronic liver disease"
 
 /* Stroke */
 gen stroke = 0
 replace stroke = 1 if diagnosed_for == 5
-replace stroke = . if mi(diagnosed_for)
 label var stroke "self-reported stroke cerebro vascular accident"
 
 /* Kidney disease */
 gen kidney_dz = 0
 replace kidney_dz = 1 if (diagnosed_for == 15 | diagnosed_for == 16)
-replace kidney_dz = . if mi(diagnosed_for)
 label var kidney_dz "self-reported renal stones or chronic renal disease"
 
 /* Autoimmune disease */
 gen autoimmune_dz = 0
 replace autoimmune_dz = 1 if (diagnosed_for == 19 | diagnosed_for == 20)
-replace autoimmune_dz = . if mi(diagnosed_for)
 label var autoimmune_dz "self-reported psoriasis or rheumatoid arthritis"
 
 /* keep only identifying information and comorbidity variables */
-keep pc11_state_id pc11_district_id psu prim_key* htype rcvid  supid tsend tsstart person_index hh* *wt survey rural_urban stratum psu_id ahs_house_unit  house_hold_no date_survey age* male female bmi* height weight_in_kg bp* resp* cardio_symptoms diabetes *haem* *_dz stroke diagnosed_for
+keep pc11* psu prim_key* htype rcvid supid tsend tsstart person_index hh* *wt survey rural_urban stratum psu_id ahs_house_unit  house_hold_no date_survey age* male female bmi* height weight_in_kg bp* resp* cardio_symptoms diabetes *haem* *_dz stroke diagnosed_for survey ahs_merge
+
+/* drop if missing key values from CAB survey */
+drop if mi(bp_systolic) | mi(bp_diastolic) | mi(age) | (mi(female) & mi(male)) | mi(diabetes) | mi(bmi)
 
 /* save limited dataset with only comorbidity data */
-save $health/dlhs/data/dlhs_covid_comorbidities, replace
+save $health/dlhs/data/dlhs_ahs_covid_comorbidities, replace
+
+/***************************/
+/* Apply the UK Weightings */
+/***************************/
+
+/* define program to apply HR values */
+cap prog drop apply_hr_to_comorbidities
+prog def apply_hr_to_comorbidities
+{
+  syntax, hr_var(string)
+
+  /* define the matches we want - these are the subjective ones.
+     use NHS name for the local name and point to the AHS/DLHS var */
+  local chronic_resp_dz resp_chronic
+  local diabetes_uncontr diabetes
+  local cancer_non_haem_1 cancer_non_haem
+  local haem_malig_1 haem_malig
+  local stroke_dementia stroke
+
+  /* prep the uk HR data */
+  import delimited $covidpub/covid/csv/uk_nhs_hazard_ratios.csv, clear
+
+  /* label variables */
+  lab var hr_age_sex "hazard ratio age-sex adjusted"
+  lab var hr_age_sex_low "hazard ratio age-sex adjusted lower CI"
+  lab var hr_age_sex_up "hazard ratio age-sex adjusted upper CI"
+  lab var hr_fully_adj "hazard ratio fully adjusted"
+  lab var hr_fully_adj_low "hazard ratio fully adjusted lower CI"
+  lab var hr_fully_adj_up "hazard ratio fully adjusted upper CI"
+  lab var hr_fully_adj_ec "hazard ratio fully adjusted early censoring"
+  lab var hr_fully_adj_low_ec "hazard ratio fully adjusted early censoring lower CI"
+  lab var hr_fully_adj_up_ec "hazard ratio fully adjusted early censoring upper CI"
+
+
+  /* define the list of vars to merge */
+  local comorbid_vars age18_40 age40_50 age50_60 age60_70 age70_80 age80_ female male bmi_not_obese bmi_obeseI ///
+                      bmi_obeseII bmi_obeseIII bp_not_high bp_high chronic_heart_dz stroke_dementia liver_dz kidney_dz autoimmune_dz ///
+                      cancer_non_haem_1 haem_malig_1 chronic_resp_dz diabetes_uncontr 
+
+  /* keep only the variables we need */
+  gen ok = 0
+
+  /* mark each variable we want to keep */
+  foreach var in `comorbid_vars' {
+    replace ok = 1 if variable == "`var'"
+  }
+  keep if ok == 1
+  drop ok
+
+  /* save as dta file */
+  save $tmp/uk_nhs_hazard_ratios, replace
+
+  /* call a short python funciton to flatten our selected HR value into an array */
+  cd $ddl/covid
+  shell python -c "from e.flatten_hr_data import flatten_hr_data; flatten_hr_data('`hr_var'', '$tmp/uk_nhs_hazard_ratios.dta', '$tmp/uk_nhs_hazard_ratios_flat.csv')"
+
+  /* read in the csv and save as a stata file */
+  import delimited $tmp/uk_nhs_hazard_ratios_flat.csv, clear
+
+  /* get list of all variables */
+  qui lookfor bmi_obesei
+  local bmi_vars = "`r(varlist)'"
+
+  /* correct any misimported variables that have true names as values */
+  foreach v in `bmi_vars'  {
+    local x : variable label `v'
+    ren `v' `x'
+  }
+
+  /* save as dta */
+  save $tmp/uk_nhs_hazard_ratios_flat, replace
+
+  /* open the india data */
+  use $health/dlhs/data/dlhs_ahs_covid_comorbidities, clear
+
+  /* rename variables according to how we want to match to the NHS HR */
+  ren `chronic_resp_dz' chronic_resp_dz
+  ren `diabetes_uncontr' diabetes_uncontr
+  ren `cancer_non_haem_1' cancer_non_haem_1
+  ren `haem_malig_1' haem_malig_1
+  ren `stroke_dementia' stroke_dementia
+
+  /* create a dummy index to merge in the HR values */
+  gen v1 = 0
+
+  /* merge in the HR values */
+  merge m:1 v1 using $tmp/uk_nhs_hazard_ratios_flat,
+  drop _merge v1
+
+  /* for each comorbidity, cycle through and multiply the variable by the HR */
+  foreach var in `comorbid_vars' {
+    replace `var' = `var' * `var'_`hr_var'
+    drop `var'_`hr_var'
+  }
+
+  /* mark all of these variables by this particular HR */
+  gen hr = "`hr_var'"
+}
+end
+
+/* call the function for fully adjusted HR */
+apply_hr_to_comorbidities, hr_var(hr_fully_adj)
+save $tmp/tmp_hr_data, replace
+
+/* call te function for only age and sex adjusted HR */
+apply_hr_to_comorbidities, hr_var(hr_age_sex)
+
+/* append the data */
+append using $tmp/tmp_hr_data
+
+/* generate age bins */
+gen age_bin = ""
+foreach i in age18_40 age40_50 age50_60 age60_70 age70_80 age80_ {
+  replace age_bin = "`i'" if `i' != 0 
+}
+
+/* calculate indiviudal's risk for all comorbidities */
+egen risk_total = rowtotal(`comorbid_vars')
+
+/* calculate individual's total risk for age and sex only */
+egen risk_age_sex = rowtotal(age18_40 age18_40 age50_60 age60_70 age70_80 age80_ male female)
+
+/* save full dat set */
+save $tmp/tmp_hr_data, replace
+
+/* create sample size counter */
+gen N = 1
+
+/* Collapse to age/state groups */
+collapse (sum) N (mean) risk_total risk_age_sex, by(pc11_state_id pc11_state_name age_bin hr)
+
+/* get the risk for all comorbidities with the fully adjusted HR */
+gen risk_comorbid_full = risk_total if hr == "hr_fully_adj"
+replace risk_comorbid_full = 0 if mi(risk_comorbid_full)
+
+/* get the risk for age and sex with the fully adjusted HR */
+gen risk_age_sex_full = risk_age_sex if hr =="hr_fully_adj"
+replace risk_age_sex_full = 0 if mi(risk_age_sex_full)
+
+/* get the risk for age and sex with just age and sex adjusted HR */
+gen risk_age_sex_notfull = risk_age_sex if hr == "hr_age_sex"
+replace risk_age_sex_notfull = 0 if mi(risk_age_sex_notfull)
+
+/* collpse across HR values */
+collapse (sum) risk_comorbid_full risk_age_sex_full risk_age_sex_notfull, by(pc11_state_name pc11_state_id age_bin N)
+
+/* label variables */
+label var risk_comorbid_full "risk for all comorbidities with fully adjusted HR"
+label var risk_age_sex_full "risk for age and sex with fully adjusted HR"
+label var risk_age_sex_notfull "risk for age and sex with only age-sex adjusted HR"
+
+/* save data set */
+save $health/dlhs/data/comorbid_risk_estimates, replace

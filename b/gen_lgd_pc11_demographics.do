@@ -1,4 +1,5 @@
 /***** TABLE OF CONTENTS *****/
+/* Define program for final cleaning steps used in the last setcion of the do file */
 /* Generate demographic data at district and subdistrict levels */
 /* Prep Datasets at Geographic Levels */
   /* town directory */
@@ -7,11 +8,127 @@
   /* slums */
   /* Merge Together Data for Posting */
 /* Generate state-wise demographic, health capacity, and water access data at the district level */
-/* Define program for final cleaning steps after merging all data */
 /* Create rural lgd-pc11 demographic dataset */
 /* Create urban lgd-pc11 demographic dataset */
 /* Append and collapse */
-/* Save statewise datasets */
+
+/***********************************************************************************/
+/* Define program for final cleaning steps used in the last setcion of the do file */
+/***********************************************************************************/
+
+cap prog drop finalsteps
+prog def finalsteps
+{
+    /* rename variables */
+    ren pc11_td* pc11_tot*
+    ren pc11_tot_area pc11_td_area
+
+    /* clean health capacity variable */
+    la var pc11_tot_all_hosp "Total allopathic hospitals in district"
+    la var pc11_tot_all_hosp_doc_tot "Total doctors in allopathic hospitals"
+    la var pc11_tot_all_hosp_pmed_tot "Total paramedics in allopathic hospitals"
+    la var pc11_tot_disp "Total dispensaries"
+    la var pc11_tot_ch_cntr "Total community health centers - rural only"
+    la var pc11_tot_ph_cntr "Total public health centers - rural only"
+    la var pc11_tot_phs_cntr "Total public health sub centers - rural only"
+    la var pc11_tot_mcw_cntr "Total maternal/child welfare centers"
+    la var pc11_tot_tb_cln "Total TB clinics"
+    la var pc11_tot_mh_cln "Total mobile health clinics"
+    la var pc11_tot_fwc_cntr "Total family and welfare centers"
+    la var pc11_tot_nh "Total nursing homes - urban only"
+    la var pc11_tot_mh "Total maternity homes - urban only"
+
+    /* create total vars */
+    egen pc11_pca_tot_p = rowtotal(pc11r_pca_tot_p pc11u_pca_tot_p)
+    egen pc11_pca_no_hh = rowtotal(pc11r_pca_no_hh pc11u_pca_no_hh)
+    egen pc11_pca_main_al_p = rowtotal(pc11r_pca_main_al_p pc11u_pca_main_al_p)
+    egen pc11_pca_main_cl_p = rowtotal(pc11r_pca_main_cl_p pc11u_pca_main_cl_p)
+    egen pc11_pca_mainwork_p = rowtotal(pc11r_pca_mainwork_p pc11u_pca_mainwork_p)
+
+
+    /* gen area variable */
+    egen pc11_area = rowtotal(pc11_vd_area pc11_td_area)
+    la var pc11_area "Total area of district (sq km)"
+
+    /* create population density */
+    gen pc11r_pdensity = pc11r_pca_tot_p/pc11_area
+    gen pc11u_pdensity = pc11u_pca_tot_p/pc11_area
+    gen pc11_pdensity = pc11_pca_tot_p/pc11_area
+
+    la var pc11_pdensity "Population density"
+    la var pc11u_pdensity "Population density (Urban)"
+    la var pc11r_pdensity "Population density (Rural)"
+
+    /* create agri workers shares */
+    foreach i in r u "" {
+      gen pc11`i'_ag_main_share = (pc11`i'_pca_main_al_p + pc11`i'_pca_main_cl_p)/pc11_pca_mainwork_p
+    }
+
+    la var pc11r_ag_main_share "Share of main workers in agri (Rural)"
+    la var pc11u_ag_main_share "Share of main workers in agri (Urban)"
+    la var pc11_ag_main_share "Share of main workers in agriculture"
+
+    la var pc11r_pca_main_al_p "No. of main workers - agri (Rural)"
+    la var pc11u_pca_main_al_p "No. of main workers - agri (Urban)"
+    la var pc11_pca_main_al_p "No. of main workers - agriculture"
+    la var pc11r_pca_main_cl_p "No. of main workers - cultivation (Rural)"
+    la var pc11u_pca_main_cl_p "No. of main workers - cultivation (Urban)"
+    la var pc11_pca_main_cl_p "No. of main workers - cultivation"
+
+    /* create no. of households with clean water */
+    foreach x of var pc11r_hl_dw_loc*{
+      gen `x'sh = `x'/pc11r_pca_no_hh
+    }
+
+    foreach x of var pc11u_hl_dw_loc*{
+      gen `x'sh = `x'/pc11u_pca_no_hh
+    }
+
+    drop *premsh *farsh
+    drop *prem *far
+    ren *nosh *sh
+
+    la var pc11r_hl_dw_loc_inprem_no "No. of hh with access to drinking water in premise (Rural)"
+    la var pc11r_hl_dw_loc_nearprem_no "No. of hh with access to drinking water near premise (Rural)"
+    la var pc11r_hl_dw_loc_far_no "No. of hh with access to drinking water far from premise (Rural)"
+
+    la var pc11r_hl_dw_loc_inprem_sh "Share of hh with access to drinking water in premise (Rural)"
+    la var pc11r_hl_dw_loc_nearprem_sh "Share of hh with access to drinking water near premise (Rural)"
+    la var pc11r_hl_dw_loc_far_sh "Share of hh with access to drinking water far from premise (Rural)"
+
+    la var pc11u_hl_dw_loc_inprem_no "No. of hh with access to drinking water in premise (Urban)"
+    la var pc11u_hl_dw_loc_nearprem_no "No. of hh with access to drinking water near premise (Urban)"
+    la var pc11u_hl_dw_loc_far_no "No. of hh with access to drinking water far from premise (Urban)"
+
+    la var pc11u_hl_dw_loc_inprem_sh "Share of hh with access to drinking water in premise (Urban)"
+    la var pc11u_hl_dw_loc_nearprem_sh "Share of hh with access to drinking water near premise (Urban)"
+    la var pc11u_hl_dw_loc_far_sh "Share of hh with access to drinking water far from premise (Urban)"
+
+    /* clean dataset */
+    cap drop *version pc01* 
+    la var pc11r_pca_tot_p "Rural population - total"
+    la var pc11u_pca_tot_p "Urban population - total"
+    la var pc11_pca_tot_p "Total population"
+    la var pc11r_pca_mainwork_p "Total mainworkers - rural"
+    la var pc11u_pca_mainwork_p "Total mainworkers - urban"
+    la var pc11_pca_mainwork_p "Total mainworkers"
+    la var pc11_td_area "Area (sq km) urban"
+    la var pc11_vd_area "Area (sq km) rural"
+    la var pc11r_pca_no_hh "No of hh (rural)"
+    la var pc11u_pca_no_hh "No of hh (urban)"
+    la var pc11_pca_no_hh "No of hh"
+
+    /* order dataset */
+    order lgd*
+    order *pca_tot_p, after(lgd_district_name)
+    order *ag_main_share *al_p, after(pc11_pca_tot_p)
+    order *pdensity, after(pc11_pca_main_al_p)
+    order *dw_loc*, after(pc11_pdensity)
+    order pc11_tot*, after(pc11u_hl_dw_loc_far_no)
+    order *no_hh *area *_mainwork_p, last
+}
+
+end
 
 /****************************************************************/
 /* Generate demographic data at district and subdistrict levels */
@@ -169,125 +286,6 @@ foreach level in district subdistrict {
 /* Generate state-wise demographic, health capacity, and water access data at the district level */
 /*************************************************************************************************/
 
-/******************************************************************/
-/* Define program for final cleaning steps after merging all data */
-/******************************************************************/
-
-cap prog drop finalsteps
-prog def finalsteps
-{
-    /* rename variables */
-    ren pc11_td* pc11_tot*
-    ren pc11_tot_area pc11_td_area
-
-    /* clean health capacity variable */
-    la var pc11_tot_all_hosp "Total allopathic hospitals in district"
-    la var pc11_tot_all_hosp_doc_tot "Total doctors in allopathic hospitals"
-    la var pc11_tot_all_hosp_pmed_tot "Total paramedics in allopathic hospitals"
-    la var pc11_tot_disp "Total dispensaries"
-    la var pc11_tot_ch_cntr "Total community health centers - rural only"
-    la var pc11_tot_ph_cntr "Total public health centers - rural only"
-    la var pc11_tot_phs_cntr "Total public health sub centers - rural only"
-    la var pc11_tot_mcw_cntr "Total maternal/child welfare centers"
-    la var pc11_tot_tb_cln "Total TB clinics"
-    la var pc11_tot_mh_cln "Total mobile health clinics"
-    la var pc11_tot_fwc_cntr "Total family and welfare centers"
-    la var pc11_tot_nh "Total nursing homes - urban only"
-    la var pc11_tot_mh "Total maternity homes - urban only"
-
-    /* create total vars */
-    egen pc11_pca_tot_p = rowtotal(pc11r_pca_tot_p pc11u_pca_tot_p)
-    egen pc11_pca_no_hh = rowtotal(pc11r_pca_no_hh pc11u_pca_no_hh)
-    egen pc11_pca_main_al_p = rowtotal(pc11r_pca_main_al_p pc11u_pca_main_al_p)
-    egen pc11_pca_main_cl_p = rowtotal(pc11r_pca_main_cl_p pc11u_pca_main_cl_p)
-    egen pc11_pca_mainwork_p = rowtotal(pc11r_pca_mainwork_p pc11u_pca_mainwork_p)
-
-
-    /* gen area variable */
-    egen pc11_area = rowtotal(pc11_vd_area pc11_td_area)
-    la var pc11_area "Total area of district (sq km)"
-
-    /* create population density */
-    gen pc11r_pdensity = pc11r_pca_tot_p/pc11_area
-    gen pc11u_pdensity = pc11u_pca_tot_p/pc11_area
-    gen pc11_pdensity = pc11_pca_tot_p/pc11_area
-
-    la var pc11_pdensity "Population density"
-    la var pc11u_pdensity "Population density (Urban)"
-    la var pc11r_pdensity "Population density (Rural)"
-
-    /* create agri workers shares */
-    foreach i in r u "" {
-      gen pc11`i'_ag_main_share = (pc11`i'_pca_main_al_p + pc11`i'_pca_main_cl_p)/pc11_pca_mainwork_p
-    }
-
-    la var pc11r_ag_main_share "Share of main workers in agri (Rural)"
-    la var pc11u_ag_main_share "Share of main workers in agri (Urban)"
-    la var pc11_ag_main_share "Share of main workers in agriculture"
-
-    la var pc11r_pca_main_al_p "No. of main workers - agri (Rural)"
-    la var pc11u_pca_main_al_p "No. of main workers - agri (Urban)"
-    la var pc11_pca_main_al_p "No. of main workers - agriculture"
-    la var pc11r_pca_main_cl_p "No. of main workers - cultivation (Rural)"
-    la var pc11u_pca_main_cl_p "No. of main workers - cultivation (Urban)"
-    la var pc11_pca_main_cl_p "No. of main workers - cultivation"
-
-    /* create no. of households with clean water */
-    foreach x of var pc11r_hl_dw_loc*{
-      gen `x'sh = `x'/pc11r_pca_no_hh
-    }
-
-    foreach x of var pc11u_hl_dw_loc*{
-      gen `x'sh = `x'/pc11u_pca_no_hh
-    }
-
-    drop *premsh *farsh
-    drop *prem *far
-    ren *nosh *sh
-
-    la var pc11r_hl_dw_loc_inprem_no "No. of hh with access to drinking water in premise (Rural)"
-    la var pc11r_hl_dw_loc_nearprem_no "No. of hh with access to drinking water near premise (Rural)"
-    la var pc11r_hl_dw_loc_far_no "No. of hh with access to drinking water far from premise (Rural)"
-
-    la var pc11r_hl_dw_loc_inprem_sh "Share of hh with access to drinking water in premise (Rural)"
-    la var pc11r_hl_dw_loc_nearprem_sh "Share of hh with access to drinking water near premise (Rural)"
-    la var pc11r_hl_dw_loc_far_sh "Share of hh with access to drinking water far from premise (Rural)"
-
-    la var pc11u_hl_dw_loc_inprem_no "No. of hh with access to drinking water in premise (Urban)"
-    la var pc11u_hl_dw_loc_nearprem_no "No. of hh with access to drinking water near premise (Urban)"
-    la var pc11u_hl_dw_loc_far_no "No. of hh with access to drinking water far from premise (Urban)"
-
-    la var pc11u_hl_dw_loc_inprem_sh "Share of hh with access to drinking water in premise (Urban)"
-    la var pc11u_hl_dw_loc_nearprem_sh "Share of hh with access to drinking water near premise (Urban)"
-    la var pc11u_hl_dw_loc_far_sh "Share of hh with access to drinking water far from premise (Urban)"
-
-    /* clean dataset */
-    cap drop *version pc01* 
-    la var pc11r_pca_tot_p "Rural population - total"
-    la var pc11u_pca_tot_p "Urban population - total"
-    la var pc11_pca_tot_p "Total population"
-    la var pc11r_pca_mainwork_p "Total mainworkers - rural"
-    la var pc11u_pca_mainwork_p "Total mainworkers - urban"
-    la var pc11_pca_mainwork_p "Total mainworkers"
-    la var pc11_td_area "Area (sq km) urban"
-    la var pc11_vd_area "Area (sq km) rural"
-    la var pc11r_pca_no_hh "No of hh (rural)"
-    la var pc11u_pca_no_hh "No of hh (urban)"
-    la var pc11_pca_no_hh "No of hh"
-
-    /* order dataset */
-    order lgd*
-    order *pca_tot_p, after(lgd_district_name)
-    order *ag_main_share *al_p, after(pc11_pca_tot_p)
-    order *pdensity, after(pc11_pca_main_al_p)
-    order *dw_loc*, after(pc11_pdensity)
-    order pc11_tot*, after(pc11u_hl_dw_loc_far_no)
-    order *no_hh *area *_mainwork_p, last
-}
-
-end
-
-
 /*********************************************/
 /* Create rural lgd-pc11 demographic dataset */
 /*********************************************/
@@ -400,9 +398,19 @@ collapse (sum) pc11*, by(lgd_state_id lgd_state_name lgd_district_id lgd_distric
 /* final cleaning steps - defined in program on top */
 finalsteps
 
-/* save final dataset */
+/* save final datasets */
 save $tmp/lgd_pc11_demographics_district, replace
 
+/* demographics data - population, ag share, pop density */
+savesome lgd* *pca* *pdensity *ag* *area using $covidpub/lgd_pc11_dem_district, replace
+
+/* health capacity data */
+savesome lgd* pc11_tot* using $covidpub/lgd_pc11_health_district, replace
+
+/* household access to water data */
+savesome lgd* *dw* using $covidpub/lgd_pc11_water_district, replace
+
+/*
 /***************************/
 /* Save statewise datasets */
 /***************************/
@@ -428,4 +436,4 @@ foreach s of local levelstate{
   savesome lgd* *dw* using $tmp/lgd_pc11_water_district_`s' if statelabel == "`s'", replace
 
 }
-
+*/
