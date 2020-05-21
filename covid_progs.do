@@ -454,7 +454,6 @@ end
 /******************************************************/
 /* Program covidsave: wrapper for lgd:pc11 conversion */
 /******************************************************/
-
 cap prog drop covidsave
 prog def covidsave
   {
@@ -463,10 +462,10 @@ prog def covidsave
 
     /* allow for pulling aggregation method type from metadata */
     if !mi("`metadata_urls") {
-      convert_pc11_lgd, native(`native') metadata_urls("`metadata_urls'")
+      convert_pc11_lgd_dists, native(`native') metadata_urls("`metadata_urls'")
     }
     else {
-      convert_pc11_lgd, native(`native') metadata_urls("`metadata_urls'")
+      convert_pc11_lgd_dists, native(`native') metadata_urls("`metadata_urls'")
     }
       
     /* save to specified location */

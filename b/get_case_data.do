@@ -158,10 +158,13 @@ by dgroup: gen cum_infected = sum(infected)
 
 /* only save the cumulative counts */
 drop death infected dgroup _fillin day_number
-ren cum_deaths deaths
-ren cum_infected infected
+ren cum_deaths total_deaths
+ren cum_infected total_cases
 
 /* order and save */
-order lgd_state_id lgd_district_id date covid_state_name covid_district_name deaths infected
+order lgd_state_id lgd_district_id date covid_state_name covid_district_name
 compress
 save $covidpub/covid/covid_infected_deaths, replace
+
+/* try to do this with covidsave */
+//covidsave $covidpub/covid/covid_infected_deaths, native(lgd) replace metadata_urls("https://docs.google.com/spreadsheets/d/e/2PACX-1vTKTuciRsUd6pk5kWhlMyhF85Iv5x04b0njSrWzCkaN5IeEZpBwwvmSdw-mUJOp215jBgv2NPMeTHXK/pub?gid=0&single=true&output=csv") 
