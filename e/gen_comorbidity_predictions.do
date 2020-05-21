@@ -141,13 +141,11 @@ label var diagnosed_for "self-reported diagnosis in the last 1 year"
 
 gen bp_hypertension = 0
 replace bp_hypertension = 1 if diagnosed_for == 2
-replace bp_hypertension = . if mi(diagnosed_for)
 label var bp_hypertension "self-reported diagnosis of hypertension"
 
 /* self-reported hypertension + BP high stage 2 */
 gen bp_high = 0
 replace bp_high = 1 if (bp_high_stage2 == 1 | bp_hypertension == 1)
-replace bp_high = . if mi(bp_high_stage2) & mi(bp_hypertension)
 label var bp_high "self-reported hypertension and/or measured BP high stage 2"
 
 /* create the inverse of bp_high */
@@ -158,37 +156,31 @@ label var bp_high "normal blood pressure as defined as not bp_high"
 /* Respiratory Disease */
 gen resp_illness = 0
 replace resp_illness = 1 if diagnosed_for == 7
-replace resp_illness = . if mi(diagnosed_for)
 label var resp_illness "self-reported asthma or chronic respiratory failure"
 
 /* get respiratory symptoms */
 gen resp_symptoms = 0
 replace resp_symptoms = 1 if symptoms_pertaining_illness == 1
-replace resp_symptoms = . if mi(symptoms_pertaining_illness)
 label var resp_symptoms "self-reported symptoms of respiratory illness"
 
 /* get acute respiratory symptoms */
 gen resp_acute = 0
 replace resp_acute = 1 if illness_type == 3
-replace resp_acute = . if mi(illness_type)
 label var resp_acute "self-reported respiratory symptoms in the past 15 days"
 
 /* get ANY respiratory issue */
 gen resp_chronic = 0
 replace resp_chronic = 1 if resp_illness == 1 | resp_symptoms == 1 
-replace resp_chronic = . if (mi(resp_illness) & mi(resp_illness))
 label var resp_chronic "self-reported diagnosis or symptoms of respiratory illness"
 
 /* Chronic heart disease */
 gen chronic_heart_dz = 0
 replace chronic_heart_dz = 1 if diagnosed_for == 3
-replace chronic_heart_dz = . if mi(diagnosed_for)
 label var chronic_heart_dz "self-reported chronic heart disease"
 
 /* get cardiovascular system symptoms */
 gen cardio_symptoms = 0
 replace cardio_symptoms = 1 if symptoms_pertaining_illness == 2
-replace cardio_symptoms = . if mi(symptoms_pertaining_illness)
 
 /* Diabetes */
 gen diabetes = 0
@@ -202,41 +194,38 @@ label var diabetes "blood sugar >126mg/dL if fasting, >200mg/dL if not"
 gen cancer_non_haem = 0
 /* respiratory system, gastrointestinal system, genitourinary system, breast, tumor (any type), skin cancer */
 replace cancer_non_haem = 1 if (diagnosed_for == 11 | diagnosed_for == 12 | diagnosed_for == 13 | diagnosed_for == 14 | diagnosed_for == 27 | diagnosed_for == 29)
-replace cancer_non_haem = . if mi(diagnosed_for)
 label var cancer_non_haem "self-reported non haematological cancer"
 
 /* Haematological malignanies */
 gen haem_malig = 0
 replace haem_malig = 1 if (diagnosed_for == 28)
-replace haem_malig = . if mi(diagnosed_for)
 label var haem_malig "self-reported blood cancer/leukemia"
 
 /* Liver disease */
 gen liver_dz = 0
 replace liver_dz = 1 if diagnosed_for == 18
-replace liver_dz = . if mi(diagnosed_for)
 label var liver_dz "self-reported chronic liver disease"
 
 /* Stroke */
 gen stroke = 0
 replace stroke = 1 if diagnosed_for == 5
-replace stroke = . if mi(diagnosed_for)
 label var stroke "self-reported stroke cerebro vascular accident"
 
 /* Kidney disease */
 gen kidney_dz = 0
 replace kidney_dz = 1 if (diagnosed_for == 15 | diagnosed_for == 16)
-replace kidney_dz = . if mi(diagnosed_for)
 label var kidney_dz "self-reported renal stones or chronic renal disease"
 
 /* Autoimmune disease */
 gen autoimmune_dz = 0
 replace autoimmune_dz = 1 if (diagnosed_for == 19 | diagnosed_for == 20)
-replace autoimmune_dz = . if mi(diagnosed_for)
 label var autoimmune_dz "self-reported psoriasis or rheumatoid arthritis"
 
 /* keep only identifying information and comorbidity variables */
 keep pc11* psu prim_key* htype rcvid supid tsend tsstart person_index hh* *wt survey rural_urban stratum psu_id ahs_house_unit  house_hold_no date_survey age* male female bmi* height weight_in_kg bp* resp* cardio_symptoms diabetes *haem* *_dz stroke diagnosed_for survey ahs_merge
+
+/* drop if missing key values from CAB survey */
+drop if mi(bp_systolic) | mi(bp_diastolic) | mi(age) | (mi(female) & mi(male)) | mi(diabetes) | mi(bmi)
 
 /* save limited dataset with only comorbidity data */
 save $health/dlhs/data/dlhs_ahs_covid_comorbidities, replace
@@ -356,16 +345,21 @@ foreach i in age18_40 age40_50 age50_60 age60_70 age70_80 age80_ {
   replace age_bin = "`i'" if `i' != 0 
 }
 
-/* calculate indiviudal's total risk */
+/* calculate indiviudal's total risk for fully adjusted HR*/
 egen risk_total = rowtotal(`comorbid_vars')
+
+/* calculate individual's total risk for age and sex only */
 egen risk_age_sex = rowtotal(age18_40 age18_40 age50_60 age60_70 age70_80 age80_ male female)
+
+/* save full dat set */
 save $tmp/tmp_hr_data, replace
 
 /* Collapse to age/state groups */
 collapse (mean) risk_total risk_age_sex, by(pc11_state_id pc11_state_name age_bin hr)
 
-/* select the proper isk value based on teh HR used */
+/* select the proper risk value based on teh HR used */
 gen risk = risk_total if hr == "hr_fully_adj"
 replace risk = risk_age_sex if hr == "hr_age_sex"
 
 drop risk_total risk_age_sex
+save $health/dlhs/comorbid_risk_estimates, replace

@@ -218,7 +218,7 @@ ren district dist
 destring dist, replace
 
 /* merge in pc11 id from key */
-merge m:1 state dist using $health/dlhs/dlhs4_district_key, keepusing(pc11_state_id pc11_district_id) keep(match master) nogen
+merge m:1 state dist using $health/dlhs/dlhs4_district_key, keepusing(pc11_state_id pc11_district_id pc11_state_name) keep(match master) nogen
 
 /* save in permanent ahs folder */
 save $health/ahs/ahs_cab, replace
