@@ -169,10 +169,11 @@ destring identification_code, replace
 drop if mi(state) | mi(district) | mi(stratum) | mi(ahs_house_unit) | mi(house_hold_no) | mi(sl_no) | mi(identification_code) | mi(sex)
 
 /* drop all duplicates so data can be merged */
-ddrop state district stratum ahs_house_unit house_hold_no sl_no identification_code sex
+ddrop state district stratum ahs_house_unit house_hold_no sl_no identification_code
 
-ren age age_comb
+/* rename hh variables to check the merge */
 ren year_of_birth year_of_birth_comb
+ren sex sex_comb
 
 /* save as a temporary file for merging */
 save $tmp/ahs_comb_formerge, replace
@@ -190,11 +191,16 @@ drop if usual_residance == 2
 ddrop state district stratum ahs_house_unit house_hold_no sl_no identification_code 
 
 /* merge in some variables from the household data */
-merge 1:1 state district stratum ahs_house_unit house_hold_no sl_no identification_code using $tmp/ahs_comb_formerge, keepusing(illness_type illness_type diagnosed_for age_comb year_of_birth_comb)
+merge 1:1 state district stratum ahs_house_unit house_hold_no sl_no identification_code using $tmp/ahs_comb_formerge, keepusing(illness_type illness_type diagnosed_for sex_comb year_of_birth_comb wt)
 
 /* keep the master (cab-only) and matched (cab + hh) data */
 drop if _merge == 2
-drop _merge
+ren _merge ahs_merge
+cap label define ahs_merge 1 "cab only" 3 "household and cab"
+label values ahs_merge ahs_merge
+
+/* drop any that misalign on sex and year of birth */
+drop if sex != sex_comb & ahs_merge == 3 & year_of_birth != year_of_birth_comb
 
 /* clean missing values in the AHS */
 foreach var in weight_in_kg length_height_cm age haemoglobin_level bp_systolic bp_systolic_2_reading bp_diastolic bp_diastolic_2reading pulse_rate pulse_rate_2_reading fasting_blood_glucose_mg_dl first_breast_feeding is_cur_breast_feeding illness_type treatment_type illness_duration{
