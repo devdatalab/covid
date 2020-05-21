@@ -12,7 +12,6 @@ dirs="covid demography estimates hospitals keys migration"
 
 # send public data from these folders to Dropbox via rclone (rclone must be configured)
 for dir in $dirs; do
-  echo ~/iec/covid/$dir
-  rclone copy --progress ~/iec/covid/$dir my_remote:SamPaul/covid_data/
+  rclone copy --progress ~/iec/covid/$dir my_remote:SamPaul/covid_data/$dir/
 done
 
