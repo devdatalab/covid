@@ -134,30 +134,34 @@ save $covidpub/covid/raw/covindia_raw, replace
 /* create a square dataset with each district and year */
 use $covidpub/covid/raw/covindia_raw, clear
 
+/* clarify when district names are missing */
+replace covid_district_name = "not reported" if mi(covid_district_name)
+
 /* collapse to one report per district / date */
 collapse (firstnm) lgd_state_id lgd_district_id (sum) death infected, by(covid_state_name covid_district_name date)
 
 /* make it square */
-replace covid_district_name = "not reported" if mi(covid_district_name)
 egen dgroup = group(covid_state_name covid_district_name)
-
 fillin date dgroup 
 
+/* set as time series with dgroup */
 sort dgroup date
 by dgroup: egen day_number = seq()
 
-xtset dgroup day_number
+/* fill in state, district, lgd names within dgroup */
+xfill covid_state_name covid_district_name lgd_state_id lgd_district_id, i(dgroup)
 
 /* create cumulative sums of deaths and infections */
 sort dgroup day_number
 by dgroup: gen cum_deaths = sum(death)
 by dgroup: gen cum_infected = sum(infected)
 
+/* only save the cumulative counts */
 drop death infected dgroup _fillin day_number
-
 ren cum_deaths deaths
 ren cum_infected infected
-order lgd_state_id lgd_district_id date covid_state_name covid_district_name deaths infected
 
+/* order and save */
+order lgd_state_id lgd_district_id date covid_state_name covid_district_name deaths infected
 compress
 save $covidpub/covid/covid_infected_deaths, replace
