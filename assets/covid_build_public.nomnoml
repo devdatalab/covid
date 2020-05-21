@@ -18,7 +18,7 @@
 
 [COVID Case Data |
 [<web> https://covindia.com/]->[<prog>get_case_data.do]
-]o->[<finaldata>covindia_raw_data.dta]
+]o->[<finaldata>raw/covindia_raw.dta;<finaldata>covid_infected_deaths.dta]
 
 [Population Census |
 [<data>pc11r_hosp.dta | pc11u_hosp.dta]->[<prog>prep_pc_hosp.do]
