@@ -345,7 +345,7 @@ foreach i in age18_40 age40_50 age50_60 age60_70 age70_80 age80_ {
   replace age_bin = "`i'" if `i' != 0 
 }
 
-/* calculate indiviudal's total risk for fully adjusted HR*/
+/* calculate indiviudal's risk for all comorbidities */
 egen risk_total = rowtotal(`comorbid_vars')
 
 /* calculate individual's total risk for age and sex only */
@@ -354,12 +354,31 @@ egen risk_age_sex = rowtotal(age18_40 age18_40 age50_60 age60_70 age70_80 age80_
 /* save full dat set */
 save $tmp/tmp_hr_data, replace
 
+/* create sample size counter */
+gen N = 1
+
 /* Collapse to age/state groups */
-collapse (mean) risk_total risk_age_sex, by(pc11_state_id pc11_state_name age_bin hr)
+collapse (sum) N (mean) risk_total risk_age_sex, by(pc11_state_id pc11_state_name age_bin hr)
 
-/* select the proper risk value based on teh HR used */
-gen risk = risk_total if hr == "hr_fully_adj"
-replace risk = risk_age_sex if hr == "hr_age_sex"
+/* get the risk for all comorbidities with the fully adjusted HR */
+gen risk_comorbid_full = risk_total if hr == "hr_fully_adj"
+replace risk_comorbid_full = 0 if mi(risk_comorbid_full)
 
-drop risk_total risk_age_sex
-save $health/dlhs/comorbid_risk_estimates, replace
+/* get the risk for age and sex with the fully adjusted HR */
+gen risk_age_sex_full = risk_age_sex if hr =="hr_fully_adj"
+replace risk_age_sex_full = 0 if mi(risk_age_sex_full)
+
+/* get the risk for age and sex with just age and sex adjusted HR */
+gen risk_age_sex_notfull = risk_age_sex if hr == "hr_age_sex"
+replace risk_age_sex_notfull = 0 if mi(risk_age_sex_notfull)
+
+/* collpse across HR values */
+collapse (sum) risk_comorbid_full risk_age_sex_full risk_age_sex_notfull, by(pc11_state_name pc11_state_id age_bin N)
+
+/* label variables */
+label var risk_comorbid_full "risk for all comorbidities with fully adjusted HR"
+label var risk_age_sex_full "risk for age and sex with fully adjusted HR"
+label var risk_age_sex_notfull "risk for age and sex with only age-sex adjusted HR"
+
+/* save data set */
+save $health/dlhs/data/comorbid_risk_estimates, replace
