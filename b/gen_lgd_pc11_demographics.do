@@ -402,13 +402,13 @@ finalsteps
 save $tmp/lgd_pc11_demographics_district, replace
 
 /* demographics data - population, ag share, pop density */
-savesome lgd* *pca* *pdensity *ag* *area using $covidpub/lgd_pc11_dem_district, replace
+savesome lgd* *pca*p *pdensity *ag* *area using $covidpub/lgd_pc11_dem_district, replace
 
 /* health capacity data */
 savesome lgd* pc11_tot* using $covidpub/lgd_pc11_health_district, replace
 
 /* household access to water data */
-savesome lgd* *dw* using $covidpub/lgd_pc11_water_district, replace
+savesome lgd* *dw* *no_hh using $covidpub/lgd_pc11_water_district, replace
 
 /*
 /***************************/
