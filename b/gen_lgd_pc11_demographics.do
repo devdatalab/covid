@@ -51,8 +51,8 @@ prog def finalsteps
     la var pc11_area "Total area of district (sq km)"
 
     /* create population density */
-    gen pc11r_pdensity = pc11r_pca_tot_p/pc11_area
-    gen pc11u_pdensity = pc11u_pca_tot_p/pc11_area
+    gen pc11r_pdensity = pc11r_pca_tot_p/pc11_vd_area
+    gen pc11u_pdensity = pc11u_pca_tot_p/pc11_td_area
     gen pc11_pdensity = pc11_pca_tot_p/pc11_area
 
     la var pc11_pdensity "Population density"
