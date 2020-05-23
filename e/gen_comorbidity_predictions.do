@@ -35,6 +35,9 @@ label values survey dlhs_ahs
 /* COMORBIDITY MEASURES */
 /************************/
 
+/* drop if not a usual resident */
+keep if usual_residance == 1
+
 /* drop missing age and those under 18 */
 drop if mi(age)
 drop if age < 18
@@ -329,6 +332,11 @@ prog def apply_hr_to_comorbidities
 }
 end
 
+/* define the list of vars to merge */
+local comorbid_vars age18_40 age40_50 age50_60 age60_70 age70_80 age80_ female male bmi_not_obese bmi_obeseI ///
+                    bmi_obeseII bmi_obeseIII bp_not_high bp_high chronic_heart_dz stroke_dementia liver_dz kidney_dz autoimmune_dz ///
+                    cancer_non_haem_1 haem_malig_1 chronic_resp_dz diabetes_uncontr 
+
 /* call the function for fully adjusted HR */
 apply_hr_to_comorbidities, hr_var(hr_fully_adj)
 save $tmp/tmp_hr_data, replace
@@ -361,24 +369,24 @@ gen N = 1
 collapse (sum) N (mean) risk_total risk_age_sex, by(pc11_state_id pc11_state_name age_bin hr)
 
 /* get the risk for all comorbidities with the fully adjusted HR */
-gen risk_comorbid_full = risk_total if hr == "hr_fully_adj"
-replace risk_comorbid_full = 0 if mi(risk_comorbid_full)
+gen r_comorbid_adj = risk_total if hr == "hr_fully_adj"
+replace r_comorbid_adj = 0 if mi(r_comorbid_adj)
 
 /* get the risk for age and sex with the fully adjusted HR */
-gen risk_age_sex_full = risk_age_sex if hr =="hr_fully_adj"
-replace risk_age_sex_full = 0 if mi(risk_age_sex_full)
+gen r_age_sex_adj = risk_age_sex if hr =="hr_fully_adj"
+replace r_age_sex_adj= 0 if mi(r_age_sex_adj)
 
 /* get the risk for age and sex with just age and sex adjusted HR */
-gen risk_age_sex_notfull = risk_age_sex if hr == "hr_age_sex"
-replace risk_age_sex_notfull = 0 if mi(risk_age_sex_notfull)
+gen r_age_sex_unadj = risk_age_sex if hr == "hr_age_sex"
+replace r_age_sex_unadj = 0 if mi(r_age_sex_unadj)
 
 /* collpse across HR values */
-collapse (sum) risk_comorbid_full risk_age_sex_full risk_age_sex_notfull, by(pc11_state_name pc11_state_id age_bin N)
+collapse (sum) r_comorbid_adj r_age_sex_adj r_age_sex_unadj, by(pc11_state_name pc11_state_id age_bin N)
 
 /* label variables */
-label var risk_comorbid_full "risk for all comorbidities with fully adjusted HR"
-label var risk_age_sex_full "risk for age and sex with fully adjusted HR"
-label var risk_age_sex_notfull "risk for age and sex with only age-sex adjusted HR"
+label var r_comorbid_adj "risk for all comorbidities with fully adjusted HR"
+label var r_age_sex_adj "risk for age and sex with fully adjusted HR"
+label var r_age_sex_unadj "risk for age and sex with only age-sex adjusted HR"
 
 /* save data set */
 save $health/dlhs/data/comorbid_risk_estimates, replace
