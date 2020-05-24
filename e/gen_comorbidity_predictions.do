@@ -243,6 +243,12 @@ replace dhhwt = 1 if mi(dhhwt)
 capdrop wt
 gen wt = dhhwt
 
+/* create a single age bin variable from the many binary variables */
+gen age_bin = ""
+foreach i in age18_40 age40_50 age50_60 age60_70 age70_80 age80_ {
+  replace age_bin = "`i'" if `i' != 0 
+}
+
 /* save limited dataset with only comorbidity data */
 save $health/dlhs/data/dlhs_ahs_covid_comorbidities, replace
 
@@ -359,12 +365,6 @@ append using $tmp/tmp_hr_full
 save $tmp/combined, replace
 use $tmp/combined, clear
 
-/* create a single age bin variable from the many binary variables */
-gen age_bin = ""
-foreach i in age18_40 age40_50 age50_60 age60_70 age70_80 age80_ {
-  replace age_bin = "`i'" if `i' != 0 
-}
-
 /* for each person, calculate relative mortality risk by combining HRs from all conditions */
 
 /* note that each person appears twice in the data, with identical conditions but different risk adjustments.
@@ -377,7 +377,7 @@ foreach condition in $comorbid_vars {
 }
 
 /* repeat the process but for the age-sex adjustment only */
-foreach condition in age18_40 age18_40 age50_60 age60_70 age70_80 age80_ male female {
+foreach condition in age18_40 age40_50 age50_60 age60_70 age70_80 age80_ male female {
   replace risk_ratio = risk_ratio * `condition' if hr == "hr_age_sex"
 }
 
