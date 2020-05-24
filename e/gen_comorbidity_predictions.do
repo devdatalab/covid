@@ -244,7 +244,6 @@ save $health/dlhs/data/dlhs_ahs_covid_comorbidities, replace
 /* define program to apply HR values */
 cap prog drop apply_hr_to_comorbidities
 prog def apply_hr_to_comorbidities
-{
   syntax, hr_var(string)
 
   /* define the matches we want - these are the subjective ones.
@@ -328,9 +327,13 @@ prog def apply_hr_to_comorbidities
     drop `var'_`hr_var'
   }
 
+  /* recode all zeroes as ones so we can multiply these through */
+  foreach var in $comorbid_vars {
+    recode `var' 0=1
+  }
+    
   /* mark all of these variables by this particular HR */
   gen hr = "`hr_var'"
-}
 end
 
 /* call the function for fully adjusted HR */
@@ -358,12 +361,6 @@ foreach i in age18_40 age40_50 age50_60 age60_70 age70_80 age80_ {
 /* note that each person appears twice in the data, with identical conditions but different risk adjustments.
  which is why e.g. diabetes can take on 3 different values instead of 2. */
 gen risk_ratio = 1
-
-/* replace the absence of each condition with a risk ratio of 1 [PN: should probably do this in the apply() function]
-so that we can just multiply all the risk ratios through */
-foreach condition in $comorbid_vars {
-  recode `condition' 0=1
-}
 
 /* multiply all of each individual's risk factors, for the fully adjusted model group */
 foreach condition in $comorbid_vars {
