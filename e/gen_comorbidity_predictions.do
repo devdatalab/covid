@@ -234,6 +234,15 @@ keep pc11* psu prim_key* htype rcvid supid tsend tsstart person_index hh* *wt su
 /* drop if missing key values from CAB survey */
 drop if mi(bp_systolic) | mi(bp_diastolic) | mi(age) | (mi(female) & mi(male)) | mi(diabetes) | mi(bmi)
 
+/* create a combined weight variable */
+/* - assume all AHS weights are 1 (since it's self-weighting) */
+/* - use state weights, not district weights, since we care about national representativeness */
+/* FIX: need to scale dhhwt by district pop / national pop to make nationally representative
+         (https://devdatalab.slack.com/archives/C012P55U163/p1590344336022400?thread_ts=1590343170.011200&cid=C012P55U163)*/
+replace dhhwt = 1 if mi(dhhwt)
+capdrop wt
+gen wt = dhhwt
+
 /* save limited dataset with only comorbidity data */
 save $health/dlhs/data/dlhs_ahs_covid_comorbidities, replace
 
@@ -371,13 +380,6 @@ foreach condition in $comorbid_vars {
 foreach condition in age18_40 age18_40 age50_60 age60_70 age70_80 age80_ male female {
   replace risk_ratio = risk_ratio * `condition' if hr == "hr_age_sex"
 }
-
-/* create a combined weight variable */
-/* - assume all AHS weights are 1 (since it's self-weighting) */
-/* - use state weights, not district weights, since we care about national representativeness */
-capdrop wt
-gen wt = shhwt
-replace wt = 1 if mi(wt)
 
 /* save full dat set */
 save $tmp/tmp_hr_data, replace
