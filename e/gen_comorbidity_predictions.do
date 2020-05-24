@@ -1,3 +1,7 @@
+global comorbid_vars age18_40 age40_50 age50_60 age60_70 age70_80 age80_ female male bmi_not_obese bmi_obeseI ///
+                      bmi_obeseII bmi_obeseIII bp_not_high bp_high chronic_heart_dz stroke_dementia liver_dz kidney_dz autoimmune_dz ///
+                      cancer_non_haem_1 haem_malig_1 chronic_resp_dz diabetes_uncontr 
+
 /***************************/
 /* Merge DLHS and AHS Data */
 /***************************/
@@ -265,17 +269,11 @@ prog def apply_hr_to_comorbidities
   lab var hr_fully_adj_low_ec "hazard ratio fully adjusted early censoring lower CI"
   lab var hr_fully_adj_up_ec "hazard ratio fully adjusted early censoring upper CI"
 
-
-  /* define the list of vars to merge */
-  local comorbid_vars age18_40 age40_50 age50_60 age60_70 age70_80 age80_ female male bmi_not_obese bmi_obeseI ///
-                      bmi_obeseII bmi_obeseIII bp_not_high bp_high chronic_heart_dz stroke_dementia liver_dz kidney_dz autoimmune_dz ///
-                      cancer_non_haem_1 haem_malig_1 chronic_resp_dz diabetes_uncontr 
-
   /* keep only the variables we need */
   gen ok = 0
 
   /* mark each variable we want to keep */
-  foreach var in `comorbid_vars' {
+  foreach var in $comorbid_vars {
     replace ok = 1 if variable == "`var'"
   }
   keep if ok == 1
@@ -318,11 +316,14 @@ prog def apply_hr_to_comorbidities
   gen v1 = 0
 
   /* merge in the HR values */
-  merge m:1 v1 using $tmp/uk_nhs_hazard_ratios_flat,
+  merge m:1 v1 using $tmp/uk_nhs_hazard_ratios_flat
   drop _merge v1
 
+  /* save a temporary file with the combined India conditions and the UK HRs */
+  save $tmp/conditions_`hr_var', replace
+    
   /* for each comorbidity, cycle through and multiply the variable by the HR */
-  foreach var in `comorbid_vars' {
+  foreach var in $comorbid_vars {
     replace `var' = `var' * `var'_`hr_var'
     drop `var'_`hr_var'
   }
@@ -332,35 +333,61 @@ prog def apply_hr_to_comorbidities
 }
 end
 
-/* define the list of vars to merge */
-local comorbid_vars age18_40 age40_50 age50_60 age60_70 age70_80 age80_ female male bmi_not_obese bmi_obeseI ///
-                    bmi_obeseII bmi_obeseIII bp_not_high bp_high chronic_heart_dz stroke_dementia liver_dz kidney_dz autoimmune_dz ///
-                    cancer_non_haem_1 haem_malig_1 chronic_resp_dz diabetes_uncontr 
-
 /* call the function for fully adjusted HR */
 apply_hr_to_comorbidities, hr_var(hr_fully_adj)
-save $tmp/tmp_hr_data, replace
+save $tmp/tmp_hr_full, replace
 
 /* call te function for only age and sex adjusted HR */
 apply_hr_to_comorbidities, hr_var(hr_age_sex)
+save $tmp/tmp_hr_agesex, replace
 
-/* append the data */
-append using $tmp/tmp_hr_data
+/* append the fully adjusted data to the age sex adjusted */
+append using $tmp/tmp_hr_full
 
-/* generate age bins */
+save $tmp/combined, replace
+use $tmp/combined, clear
+
+/* create a single age bin variable from the many binary variables */
 gen age_bin = ""
 foreach i in age18_40 age40_50 age50_60 age60_70 age70_80 age80_ {
   replace age_bin = "`i'" if `i' != 0 
 }
 
-/* calculate indiviudal's risk for all comorbidities */
-egen risk_total = rowtotal(`comorbid_vars')
+/* for each person, calculate relative mortality risk by combining HRs from all conditions */
 
-/* calculate individual's total risk for age and sex only */
-egen risk_age_sex = rowtotal(age18_40 age18_40 age50_60 age60_70 age70_80 age80_ male female)
+/* note that each person appears twice in the data, with identical conditions but different risk adjustments.
+ which is why e.g. diabetes can take on 3 different values instead of 2. */
+gen risk_ratio = 1
+
+/* replace the absence of each condition with a risk ratio of 1 [PN: should probably do this in the apply() function]
+so that we can just multiply all the risk ratios through */
+foreach condition in $comorbid_vars {
+  recode `condition' 0=1
+}
+
+/* multiply all of each individual's risk factors, for the fully adjusted model group */
+foreach condition in $comorbid_vars {
+  replace risk_ratio = risk_ratio * `condition' if hr == "hr_fully_adj"
+}
+
+/* repeat the process but for the age-sex adjustment only */
+foreach condition in age18_40 age18_40 age50_60 age60_70 age70_80 age80_ male female {
+  replace risk_ratio = risk_ratio * `condition' if hr == "hr_age_sex"
+}
+
+/* create a combined weight variable */
+/* - assume all AHS weights are 1 (since it's self-weighting) */
+/* - use state weights, not district weights, since we care about national representativeness */
+capdrop wt
+gen wt = shhwt
+replace wt = 1 if mi(wt)
 
 /* save full dat set */
 save $tmp/tmp_hr_data, replace
+
+/* paul stopped here -- the rest needs to be updated with the risk ratios */
+exit
+
 
 /* create sample size counter */
 gen N = 1
