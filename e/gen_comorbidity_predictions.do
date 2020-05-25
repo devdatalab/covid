@@ -298,10 +298,10 @@ prog def apply_hr_to_comorbidities
 
   /* call a short python funciton to flatten our selected HR value into an array */
   cd $ddl/covid
-  shell python -c "from e.flatten_hr_data import flatten_hr_data; flatten_hr_data('`hr_var'', '$tmp/uk_nhs_hazard_ratios.dta', '$tmp/uk_nhs_hazard_ratios_flat.csv')"
+  shell python -c "from e.flatten_hr_data import flatten_hr_data; flatten_hr_data('`hr_var'', '$tmp/uk_nhs_hazard_ratios.dta', '$tmp/uk_nhs_hazard_ratios_flat_`hr_var'.csv')"
 
   /* read in the csv and save as a stata file */
-  import delimited $tmp/uk_nhs_hazard_ratios_flat.csv, clear
+  import delimited $tmp/uk_nhs_hazard_ratios_flat_`hr_var'.csv, clear
 
   /* get list of all variables */
   qui lookfor bmi_obesei
@@ -314,7 +314,7 @@ prog def apply_hr_to_comorbidities
   }
 
   /* save as dta */
-  save $tmp/uk_nhs_hazard_ratios_flat, replace
+  save $tmp/uk_nhs_hazard_ratios_flat_`hr_var', replace
 
   /* open the india data */
   use $health/dlhs/data/dlhs_ahs_covid_comorbidities, clear
@@ -330,7 +330,7 @@ prog def apply_hr_to_comorbidities
   gen v1 = 0
 
   /* merge in the HR values */
-  merge m:1 v1 using $tmp/uk_nhs_hazard_ratios_flat
+  merge m:1 v1 using $tmp/uk_nhs_hazard_ratios_flat_`hr_var'
   drop _merge v1
 
   /* save a temporary file with the combined India conditions and the UK HRs */
