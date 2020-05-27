@@ -1,13 +1,14 @@
-/* This file preps AHS and DLHS data
+/* Structure and clean the AHS CAB and COMB (household) data
+1. Structure the CAB and COMB data
+2. Clean the COMB (household) data
+3. Clean the CAB (health) data
+4. Merge the CAB and COMB data
+ */
 
-1. structure AHS data, combine by state
-2. structure DLHS data, combine by state
-4. merge with PC11 state and district codes
-*/
-
-/*************************/
-/* 1. Structure AHS data */
-/************************/
+/**********************************/
+/* 1. Structure CAB and COMB Data */
+/**********************************/
+/* Note that due to the time it takes to read in the excel files, this section may take 1-2 hours */
 
 /* initiate empty files for each */
 cap mkdir $tmp/ahs
@@ -46,7 +47,7 @@ foreach state in 05 08 09 10 18 20 21 22 23 {
   save $tmp/ahs/ahs_cab, replace    
 }
 
-/* HOUSEHOLD DATA */
+/* COMB DATA */
 foreach state in 05 08 09 10 18 20 21 22 23 {
   
   /* read in the data */
@@ -78,83 +79,18 @@ foreach state in 05 08 09 10 18 20 21 22 23 {
   save $tmp/ahs/ahs_comb, replace    
 }
 
-
 /**************************/
-/* 2. Structure DLHS data */
+/* 2. Clean the COMB data */
 /**************************/
-
-/* initiate empty files for each */
-cap mkdir $tmp/dlhs
-clear
-save $tmp/dlhs/dlhs_BIRTH, emptyok replace
-save $tmp/dlhs/dlhs_cab, emptyok replace
-save $tmp/dlhs/dlhs_HOUSEHOLD, emptyok replace
-save $tmp/dlhs/dlhs_IMMU, emptyok replace
-save $tmp/dlhs/dlhs_marriage, emptyok replace
-save $tmp/dlhs/dlhs_person, emptyok replace
-save $tmp/dlhs/dlhs_village, emptyok replace
-save $tmp/dlhs/dlhs_WOMAN, emptyok replace
-
-/* combine state data for each file type */
-local statelist Andaman_Nicobar AndhraPradesh ArunachalPradesh Chandigarh GOA Haryana HimachalPradesh Karnataka Kerala Maharashtra Manipur Meghalaya Mizoram Nagaland Puducherry Punjab Sikkim TamilNadu Telangana Tripura WestBengal
-
-/* cycle through all states with dlhs data */
-foreach state in `statelist' {
-
-  /* get the list of files in the state folder */
-  local filelist: dir "$health/dlhs/raw/`state'" files "*.dta"
-
-  /* cycle through the data files for this state */
-  foreach file in `filelist' {
-
-    /* extract the name of this file */
-    tokenize "`file'" , parse("_")
-    local var = "`3'"
-    
-    /* open the file */
-    use $health/dlhs/raw/`state'/`file', clear
-
-    /* save the state name */
-    gen state_name = "`state'"
-    replace state_name = lower(state_name)
-
-    /* append to the full file */
-    append using $tmp/dlhs/dlhs_`var'
-
-    /* resave full file */
-    save $tmp/dlhs/dlhs_`var', replace
-  }
-}
-
-
-/****************************/
-/* 3. Match with PC11 codes */
-/****************************/
-/* 05/19/20 - for now this only deals with the cab data, merging in some hh variables from ahs_comb */
-
-/* open the DLHS data file, clean and save */
-use $tmp/dlhs/dlhs_cab, clear
-
-/* clean state names to match pc11_state_name */
-gen pc11_state_name = state_name
-replace pc11_state_name = subinstr(pc11_state_name, "pradesh", " pradesh", .)
-replace pc11_state_name = "andaman nicobar islands" if pc11_state_name == "andaman_nicobar"
-replace pc11_state_name = "tamil nadu" if pc11_state_name == "tamilnadu"
-replace pc11_state_name = "andhra pradesh" if pc11_state_name == "telangana"
-replace pc11_state_name = "west bengal" if pc11_state_name == "westbengal"
-
-/* merge in pc11 id from key */
-merge m:1 pc11_state_name dist using $health/dlhs/dlhs4_district_key, keepusing(pc11_state_id pc11_district_id) keep(match master) nogen
-
-/* save in permanent dlhs folder */
-save $health/dlhs/dlhs_cab, replace
 
 /* open the ahs household data */
 use $tmp/ahs/ahs_comb, clear
 
 /* keep only if there is data from the correct round on diagnoses */
 keep if year == 3 
-drop if mi(diagnosed_for) & mi(symptoms_pertaining_illness)
+
+/* drop if missing fid as these entries have no data */
+drop if mi(fid)
 
 /* rename variables to match the cab dataset */
 ren stratum_code stratum
@@ -165,8 +101,8 @@ ren hh_serial_no sl_no
 /* convert identification code to numeric */
 destring identification_code, replace
 
-/* drop any entries with missing identifying information */
-drop if mi(state) | mi(district) | mi(stratum) | mi(ahs_house_unit) | mi(house_hold_no) | mi(sl_no) | mi(identification_code) | mi(sex)
+/* drop any entries with missing identifying information - this is done in Jung et al. as well */
+drop if mi(state) | mi(district) | mi(stratum) | mi(ahs_house_unit) | mi(house_hold_no) | mi(sl_no) | mi(identification_code) 
 
 /* drop all duplicates so data can be merged */
 ddrop state district stratum ahs_house_unit house_hold_no sl_no identification_code
@@ -174,43 +110,72 @@ ddrop state district stratum ahs_house_unit house_hold_no sl_no identification_c
 /* rename hh variables to check the merge */
 ren year_of_birth year_of_birth_comb
 ren sex sex_comb
+ren age age_comb
 
 /* save as a temporary file for merging */
 save $tmp/ahs_comb_formerge, replace
 
-/* open the AHS data file */
+/*************************/
+/* 3. Clean the CAB data */
+/*************************/
+/* open the AHS cab file */
 use $tmp/ahs/ahs_cab, clear
 
-/* drop if house_hold_no > 99, as these are data entry errors */
-drop if house_hold_no > 99
+/* convert age to be given as years */
+replace age = 0 if age_code == "M" | age_code == "m" | age_code == "D" | age_code == "d"
 
-/* drop if not usual resident */
-drop if usual_residance == 2
+/* clean the survey date string */
+replace date_survey = subinstr(date_survey, "/1914", "/2014", .)
+replace date_survey = subinstr(date_survey, "/2003", "/2013", .)
+
+/* create date object for the survey date */
+gen sdate = date(date_survey, "DMY")
+
+/* clean the date and month of birth- assume 0 is 1 */
+replace month_of_birth = 1 if month_of_birth == 0
+replace date_of_birth = 1 if date_of_birth == 0
+
+/* for nonexistant dates, (i.e. nov 31), replace the date with the last date in the month */
+replace date_of_birth = 30 if (date_of_birth > 30) & (month_of_birth == 4 | month_of_birth == 6 | month_of_birth == 9 | month_of_birth == 11)
+replace date_of_birth = 28 if (date_of_birth > 28) & (month_of_birth == 2)
+
+/* create a date object for the date of birth */
+gen bdate = mdy(month_of_birth, date_of_birth, year_of_birth)
+
+/* calculate the age as a difference between the survey and birth date */
+gen int age_calc = (sdate - bdate) / 365
+
+/* mark if indiviudal is pregnant */
+gen pregnant = 1 if gauna_perfor_not_perfor == 1
+replace pregnant = 0 if sex == 1 | inlist(gauna_perfor_not_perfor, 2, 3)
+
+/* drop any entries with missing identifying information */
+drop if mi(state) | mi(district) | mi(stratum) | mi(ahs_house_unit) | mi(house_hold_no) | mi(sl_no) | mi(identification_code)
 
 /* drop all duplicates so data can be merged */
 ddrop state district stratum ahs_house_unit house_hold_no sl_no identification_code 
 
+/******************************/
+/* 4. Merge CAB and COMB data */
+/******************************/
+
 /* merge in some variables from the household data */
-merge 1:1 state district stratum ahs_house_unit house_hold_no sl_no identification_code using $tmp/ahs_comb_formerge, keepusing(illness_type illness_type diagnosed_for sex_comb year_of_birth_comb wt)
+merge 1:1 state district stratum ahs_house_unit house_hold_no sl_no identification_code using $tmp/ahs_comb_formerge, keepusing(illness_type illness_type diagnosed_for sex_comb year_of_birth_comb age_comb)
 
 /* keep the master (cab-only) and matched (cab + hh) data */
-drop if _merge == 2
 ren _merge ahs_merge
-cap label define ahs_merge 1 "cab only" 3 "household and cab"
+cap label define ahs_merge 1 "cab only" 2 "comb only" 3 "cab + comb"
 label values ahs_merge ahs_merge
-
-/* drop any that misalign on sex and year of birth */
-drop if sex != sex_comb & ahs_merge == 3 & year_of_birth != year_of_birth_comb
-
-/* clean missing values in the AHS */
-foreach var in weight_in_kg length_height_cm age haemoglobin_level bp_systolic bp_systolic_2_reading bp_diastolic bp_diastolic_2reading pulse_rate pulse_rate_2_reading fasting_blood_glucose_mg_dl first_breast_feeding is_cur_breast_feeding illness_type treatment_type illness_duration{
-  replace `var' = . if `var' == -1
-}
 
 /* rename bp variables */
 ren bp_systolic bp_systolic_1_reading
 ren bp_diastolic bp_diastolic_1_reading
 ren bp_diastolic_2reading bp_diastolic_2_reading
+
+/* clean missing values in the AHS */
+foreach var in weight_in_kg length_height_cm age haemoglobin_level bp_systolic_1_reading bp_systolic_2_reading bp_diastolic_1_reading bp_diastolic_2_reading pulse_rate pulse_rate_2_reading fasting_blood_glucose_mg_dl first_breast_feeding is_cur_breast_feeding illness_type treatment_type illness_duration{
+  replace `var' = . if `var' == -1
+}
 
 /* convert state and dist codes to byte to match key */
 destring state, replace
@@ -219,6 +184,15 @@ destring dist, replace
 
 /* merge in pc11 id from key */
 merge m:1 state dist using $health/dlhs/dlhs4_district_key, keepusing(pc11_state_id pc11_district_id pc11_state_name) keep(match master) nogen
+
+/* convert identifying information into standard string lengths */
+tostring identification_code, format("%05.0f") replace
+tostring house_hold_no, format("%03.0f") replace
+tostring ahs_house_unit, format("%04.0f") replace
+tostring sl_no, format("%05.0f") replace
+
+/* create a unique identifying index for the ahs data */
+egen index = concat(state dist stratum ahs_house_unit house_hold_no sl_no identification_code), 
 
 /* save in permanent ahs folder */
 save $health/ahs/ahs_cab, replace
