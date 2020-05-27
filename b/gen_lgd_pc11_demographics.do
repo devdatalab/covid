@@ -51,8 +51,8 @@ prog def finalsteps
     la var pc11_area "Total area of district (sq km)"
 
     /* create population density */
-    gen pc11r_pdensity = pc11r_pca_tot_p/pc11_area
-    gen pc11u_pdensity = pc11u_pca_tot_p/pc11_area
+    gen pc11r_pdensity = pc11r_pca_tot_p/pc11_vd_area
+    gen pc11u_pdensity = pc11u_pca_tot_p/pc11_td_area
     gen pc11_pdensity = pc11_pca_tot_p/pc11_area
 
     la var pc11_pdensity "Population density"
@@ -402,13 +402,13 @@ finalsteps
 save $tmp/lgd_pc11_demographics_district, replace
 
 /* demographics data - population, ag share, pop density */
-savesome lgd* *pca* *pdensity *ag* *area using $covidpub/lgd_pc11_dem_district, replace
+savesome lgd* *pca*p *pdensity *ag* *area using $covidpub/lgd_pc11_dem_district, replace
 
 /* health capacity data */
 savesome lgd* pc11_tot* using $covidpub/lgd_pc11_health_district, replace
 
 /* household access to water data */
-savesome lgd* *dw* using $covidpub/lgd_pc11_water_district, replace
+savesome lgd* *dw* *no_hh using $covidpub/lgd_pc11_water_district, replace
 
 /*
 /***************************/

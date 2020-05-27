@@ -1,3 +1,7 @@
+global comorbid_vars age18_40 age40_50 age50_60 age60_70 age70_80 age80_ female male bmi_not_obese bmi_obeseI ///
+                      bmi_obeseII bmi_obeseIII bp_not_high bp_high chronic_heart_dz stroke_dementia liver_dz kidney_dz autoimmune_dz ///
+                      cancer_non_haem_1 haem_malig_1 chronic_resp_dz diabetes_uncontr 
+
 /***************************/
 /* Merge DLHS and AHS Data */
 /***************************/
@@ -34,6 +38,9 @@ label values survey dlhs_ahs
 /************************/
 /* COMORBIDITY MEASURES */
 /************************/
+
+/* drop if not a usual resident */
+keep if usual_residance == 1
 
 /* drop missing age and those under 18 */
 drop if mi(age)
@@ -227,7 +234,27 @@ keep pc11* psu prim_key* htype rcvid supid tsend tsstart person_index hh* *wt su
 /* drop if missing key values from CAB survey */
 drop if mi(bp_systolic) | mi(bp_diastolic) | mi(age) | (mi(female) & mi(male)) | mi(diabetes) | mi(bmi)
 
+/* create a combined weight variable */
+/* - assume all AHS weights are 1 (since it's self-weighting) */
+/* - use state weights, not district weights, since we care about national representativeness */
+/* FIX: need to scale dhhwt by district pop / national pop to make nationally representative
+         (https://devdatalab.slack.com/archives/C012P55U163/p1590344336022400?thread_ts=1590343170.011200&cid=C012P55U163)*/
+replace dhhwt = 1 if mi(dhhwt)
+capdrop wt
+gen wt = dhhwt
+
+/* create a single age bin variable from the many binary variables */
+gen age_bin = ""
+foreach i in age18_40 age40_50 age50_60 age60_70 age70_80 age80_ {
+  replace age_bin = "`i'" if `i' != 0 
+}
+
+/* drop duplicates and create a unique identifier */
+duplicates drop
+gen uid = _n
+
 /* save limited dataset with only comorbidity data */
+compress
 save $health/dlhs/data/dlhs_ahs_covid_comorbidities, replace
 
 /***************************/
@@ -237,8 +264,7 @@ save $health/dlhs/data/dlhs_ahs_covid_comorbidities, replace
 /* define program to apply HR values */
 cap prog drop apply_hr_to_comorbidities
 prog def apply_hr_to_comorbidities
-{
-  syntax, hr_var(string)
+  syntax, hr(string)
 
   /* define the matches we want - these are the subjective ones.
      use NHS name for the local name and point to the AHS/DLHS var */
@@ -255,24 +281,18 @@ prog def apply_hr_to_comorbidities
   lab var hr_age_sex "hazard ratio age-sex adjusted"
   lab var hr_age_sex_low "hazard ratio age-sex adjusted lower CI"
   lab var hr_age_sex_up "hazard ratio age-sex adjusted upper CI"
-  lab var hr_fully_adj "hazard ratio fully adjusted"
-  lab var hr_fully_adj_low "hazard ratio fully adjusted lower CI"
-  lab var hr_fully_adj_up "hazard ratio fully adjusted upper CI"
-  lab var hr_fully_adj_ec "hazard ratio fully adjusted early censoring"
-  lab var hr_fully_adj_low_ec "hazard ratio fully adjusted early censoring lower CI"
-  lab var hr_fully_adj_up_ec "hazard ratio fully adjusted early censoring upper CI"
-
-
-  /* define the list of vars to merge */
-  local comorbid_vars age18_40 age40_50 age50_60 age60_70 age70_80 age80_ female male bmi_not_obese bmi_obeseI ///
-                      bmi_obeseII bmi_obeseIII bp_not_high bp_high chronic_heart_dz stroke_dementia liver_dz kidney_dz autoimmune_dz ///
-                      cancer_non_haem_1 haem_malig_1 chronic_resp_dz diabetes_uncontr 
+  lab var hr_full "hazard ratio fully adjusted"
+  lab var hr_full_low "hazard ratio fully adjusted lower CI"
+  lab var hr_full_up "hazard ratio fully adjusted upper CI"
+  lab var hr_full_ec "hazard ratio fully adjusted early censoring"
+  lab var hr_full_low_ec "hazard ratio fully adjusted early censoring lower CI"
+  lab var hr_full_up_ec "hazard ratio fully adjusted early censoring upper CI"
 
   /* keep only the variables we need */
   gen ok = 0
 
   /* mark each variable we want to keep */
-  foreach var in `comorbid_vars' {
+  foreach var in $comorbid_vars {
     replace ok = 1 if variable == "`var'"
   }
   keep if ok == 1
@@ -283,10 +303,10 @@ prog def apply_hr_to_comorbidities
 
   /* call a short python funciton to flatten our selected HR value into an array */
   cd $ddl/covid
-  shell python -c "from e.flatten_hr_data import flatten_hr_data; flatten_hr_data('`hr_var'', '$tmp/uk_nhs_hazard_ratios.dta', '$tmp/uk_nhs_hazard_ratios_flat.csv')"
+  shell python -c "from e.flatten_hr_data import flatten_hr_data; flatten_hr_data('`hr'', '$tmp/uk_nhs_hazard_ratios.dta', '$tmp/uk_nhs_hazard_ratios_flat_`hr'.csv')"
 
   /* read in the csv and save as a stata file */
-  import delimited $tmp/uk_nhs_hazard_ratios_flat.csv, clear
+  import delimited $tmp/uk_nhs_hazard_ratios_flat_`hr'.csv, clear
 
   /* get list of all variables */
   qui lookfor bmi_obesei
@@ -299,7 +319,7 @@ prog def apply_hr_to_comorbidities
   }
 
   /* save as dta */
-  save $tmp/uk_nhs_hazard_ratios_flat, replace
+  save $tmp/uk_nhs_hazard_ratios_flat_`hr', replace
 
   /* open the india data */
   use $health/dlhs/data/dlhs_ahs_covid_comorbidities, clear
@@ -315,44 +335,106 @@ prog def apply_hr_to_comorbidities
   gen v1 = 0
 
   /* merge in the HR values */
-  merge m:1 v1 using $tmp/uk_nhs_hazard_ratios_flat,
+  merge m:1 v1 using $tmp/uk_nhs_hazard_ratios_flat_`hr'
   drop _merge v1
 
-  /* for each comorbidity, cycle through and multiply the variable by the HR */
-  foreach var in `comorbid_vars' {
-    replace `var' = `var' * `var'_`hr_var'
-    drop `var'_`hr_var'
+  /* save a temporary file with the combined India conditions and the UK HRs */
+  save $tmp/conditions_`hr', replace
+    
+  /* for each condition, store the risk adjustment factor according to whether
+     the condition is present. */
+  /* slightly confusing nomenclature:
+     - diabetes_hr_full is the hazard ratio from the literature
+     - this loop creates hr_full_diabetes, which is the individual-specific multiplier,
+       which will be 1 if the individual does not have the condition, or the HR if they
+       do have it.
+  */
+  foreach condition in $comorbid_vars {
+    gen `hr'_`condition' = `condition'_`hr' if `condition' == 1
+    replace `hr'_`condition' = 1 if `condition' == 0
+    drop `condition'_`hr'
   }
 
-  /* mark all of these variables by this particular HR */
-  gen hr = "`hr_var'"
-}
+  /* can we save only the risk factors and the individual identifier?
+     Is there an individual identifier? */
+  keep uid `hr'_*
+  save $tmp/individual_risk_factors_`hr', replace
 end
 
 /* call the function for fully adjusted HR */
-apply_hr_to_comorbidities, hr_var(hr_fully_adj)
-save $tmp/tmp_hr_data, replace
+apply_hr_to_comorbidities, hr(hr_full)
 
-/* call te function for only age and sex adjusted HR */
-apply_hr_to_comorbidities, hr_var(hr_age_sex)
+/* call the function for only age and sex adjusted HR */
+apply_hr_to_comorbidities, hr(hr_age_sex)
 
-/* append the data */
-append using $tmp/tmp_hr_data
+/* convert continuous age HRs to stata */
+import delimited $covidpub/covid/csv/uk_age_predicted_or.csv, clear
+ren or_simple hr_age_cts_simple
+ren or_full hr_age_cts_full
+replace hr_age_cts_simple = exp(hr_age_cts_simple)
+replace hr_age_cts_full = exp(hr_age_cts_full)
+save $tmp/uk_age_predicted_or, replace
 
-/* generate age bins */
-gen age_bin = ""
-foreach i in age18_40 age40_50 age50_60 age60_70 age70_80 age80_ {
-  replace age_bin = "`i'" if `i' != 0 
+/* combine the risk factors with the DLHS/AHS */
+use $health/dlhs/data/dlhs_ahs_covid_comorbidities, clear
+
+/* shrink by dropping string vars */
+drop prim_key tsend tsstart pc11_state_name date_survey
+
+merge 1:1 uid using $tmp/individual_risk_factors_hr_full, gen(_m_full)
+assert _m_full == 3
+drop _m_full
+merge 1:1 uid using $tmp/individual_risk_factors_hr_age_sex, gen(_m_agesex)
+assert _m_agesex == 3
+drop _m_agesex
+
+/* bring in continuous age factors */
+winsorize age 18 100, replace
+merge m:1 age using $tmp/uk_age_predicted_or, gen(_m_cts_age) keep(match master)
+assert _m_cts_age == 3
+
+gen x = uniform()
+sort x
+drop x
+list age hr_*_age40_50 age40_50 hr_age_cts_full hr_age_cts_simple in 1/20
+list age hr_*_age60_70 age60_70 hr_age_cts_full hr_age_cts_simple in 1/200
+
+save $tmp/combined, replace
+use $tmp/combined, clear
+
+/* for each person, calculate relative mortality risk by combining HRs from all conditions */
+
+/* note that each person appears twice in the data, with identical
+conditions but different risk adjustments.  which is why e.g. diabetes
+can take on 3 different values instead of 2. */
+
+/* risk_factor is the heightened probability of mortality relative to the reference group
+  for this individual. Note that this is a probability multiplier, *not* a multiplier of
+  relative risk, odds ratio, or hazard ratio.
+
+  FIX: However, it is calculated by treating the HR as an OR-- this is inconsequential but
+       we should do the conversion above anyway just to be precise. */
+
+/* create separate risk factors for each different assumption set */
+foreach v in simple full simple_cts full_cts {
+  gen risk_factor_`v' = 1
 }
 
-/* calculate indiviudal's risk for all comorbidities */
-egen risk_total = rowtotal(`comorbid_vars')
+/* multiply all of each individual's risk factors, for the fully adjusted model group */
+foreach condition in $comorbid_vars {
+  replace risk_factor = risk_factor * `condition' if hr == "hr_full"
+}
 
-/* calculate individual's total risk for age and sex only */
-egen risk_age_sex = rowtotal(age18_40 age18_40 age50_60 age60_70 age70_80 age80_ male female)
+/* repeat the process but for the age-sex adjustment only */
+foreach condition in age18_40 age40_50 age50_60 age60_70 age70_80 age80_ male female {
+  replace risk_factor = risk_factor * `condition' if hr == "hr_age_sex"
+}
 
 /* save full dat set */
 save $tmp/tmp_hr_data, replace
+
+/* paul stopped here -- the rest needs to be updated with the risk ratios */
+exit
 
 /* create sample size counter */
 gen N = 1
@@ -361,24 +443,24 @@ gen N = 1
 collapse (sum) N (mean) risk_total risk_age_sex, by(pc11_state_id pc11_state_name age_bin hr)
 
 /* get the risk for all comorbidities with the fully adjusted HR */
-gen risk_comorbid_full = risk_total if hr == "hr_fully_adj"
-replace risk_comorbid_full = 0 if mi(risk_comorbid_full)
+gen r_comorbid_adj = risk_total if hr == "hr_full"
+replace r_comorbid_adj = 0 if mi(r_comorbid_adj)
 
 /* get the risk for age and sex with the fully adjusted HR */
-gen risk_age_sex_full = risk_age_sex if hr =="hr_fully_adj"
-replace risk_age_sex_full = 0 if mi(risk_age_sex_full)
+gen r_age_sex_adj = risk_age_sex if hr =="hr_full"
+replace r_age_sex_adj= 0 if mi(r_age_sex_adj)
 
 /* get the risk for age and sex with just age and sex adjusted HR */
-gen risk_age_sex_notfull = risk_age_sex if hr == "hr_age_sex"
-replace risk_age_sex_notfull = 0 if mi(risk_age_sex_notfull)
+gen r_age_sex_unadj = risk_age_sex if hr == "hr_age_sex"
+replace r_age_sex_unadj = 0 if mi(r_age_sex_unadj)
 
 /* collpse across HR values */
-collapse (sum) risk_comorbid_full risk_age_sex_full risk_age_sex_notfull, by(pc11_state_name pc11_state_id age_bin N)
+collapse (sum) r_comorbid_adj r_age_sex_adj r_age_sex_unadj, by(pc11_state_name pc11_state_id age_bin N)
 
 /* label variables */
-label var risk_comorbid_full "risk for all comorbidities with fully adjusted HR"
-label var risk_age_sex_full "risk for age and sex with fully adjusted HR"
-label var risk_age_sex_notfull "risk for age and sex with only age-sex adjusted HR"
+label var r_comorbid_adj "risk for all comorbidities with fully adjusted HR"
+label var r_age_sex_adj "risk for age and sex with fully adjusted HR"
+label var r_age_sex_unadj "risk for age and sex with only age-sex adjusted HR"
 
 /* save data set */
 save $health/dlhs/data/comorbid_risk_estimates, replace
