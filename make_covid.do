@@ -59,6 +59,9 @@ do $ccode/b/prep_ec_hosp.do
 /* clean migration data and transform to LGD */
 do $ccode/b/clean_migration.do
 
+/* clean agmark mandi price data */
+do $ccode/b/clean_agmark.do
+
 /* prepare SECC district-level poverty data [unfinished] */
 // do $ccode/b/prep_secc.do
 
