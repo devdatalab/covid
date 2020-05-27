@@ -87,5 +87,11 @@ ren primekeynew index
 gen pregnant = 1 if !mi(hv81) & (hv81 == 1 | hv81 == 2)
 replace pregnant = 0 if mi(pregnant)
 
+/* define dlhs_merge variable to describe which observations are from cab, comb, or both */
+gen dlhs_merge = 3
+replace dlhs_merge = 2 if mi(q77_intro) | q77_intro == 2
+cap label define dlhs_merge 1 "cab only" 2 "comb only" 3 "cab & comb"
+label values dlhs_merge dlhs_merge
+
 /* save in permanent dlhs folder */
 save $health/dlhs/dlhs_cab, replace
