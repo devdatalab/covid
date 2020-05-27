@@ -254,6 +254,7 @@ duplicates drop
 gen uid = _n
 
 /* save limited dataset with only comorbidity data */
+compress
 save $health/dlhs/data/dlhs_ahs_covid_comorbidities, replace
 
 /***************************/
@@ -356,19 +357,47 @@ prog def apply_hr_to_comorbidities
 
   /* can we save only the risk factors and the individual identifier?
      Is there an individual identifier? */
-  
+  keep uid `hr'_*
+  save $tmp/individual_risk_factors_`hr', replace
 end
 
 /* call the function for fully adjusted HR */
 apply_hr_to_comorbidities, hr(hr_full)
-save $tmp/tmp_hr_full, replace
 
-/* call te function for only age and sex adjusted HR */
+/* call the function for only age and sex adjusted HR */
 apply_hr_to_comorbidities, hr(hr_age_sex)
-save $tmp/tmp_hr_agesex, replace
 
-/* append the fully adjusted data to the age sex adjusted */
-append using $tmp/tmp_hr_full
+/* convert continuous age HRs to stata */
+import delimited $covidpub/covid/csv/uk_age_predicted_or.csv, clear
+ren or_simple hr_age_cts_simple
+ren or_full hr_age_cts_full
+replace hr_age_cts_simple = exp(hr_age_cts_simple)
+replace hr_age_cts_full = exp(hr_age_cts_full)
+save $tmp/uk_age_predicted_or, replace
+
+/* combine the risk factors with the DLHS/AHS */
+use $health/dlhs/data/dlhs_ahs_covid_comorbidities, clear
+
+/* shrink by dropping string vars */
+drop prim_key tsend tsstart pc11_state_name date_survey
+
+merge 1:1 uid using $tmp/individual_risk_factors_hr_full, gen(_m_full)
+assert _m_full == 3
+drop _m_full
+merge 1:1 uid using $tmp/individual_risk_factors_hr_age_sex, gen(_m_agesex)
+assert _m_agesex == 3
+drop _m_agesex
+
+/* bring in continuous age factors */
+winsorize age 18 100, replace
+merge m:1 age using $tmp/uk_age_predicted_or, gen(_m_cts_age) keep(match master)
+assert _m_cts_age == 3
+
+gen x = uniform()
+sort x
+drop x
+list age hr_*_age40_50 age40_50 hr_age_cts_full hr_age_cts_simple in 1/20
+list age hr_*_age60_70 age60_70 hr_age_cts_full hr_age_cts_simple in 1/200
 
 save $tmp/combined, replace
 use $tmp/combined, clear
