@@ -37,6 +37,6 @@ predicted_or_full = fit_full(age);
 writematrix([age predicted_or_simple predicted_or_full],'/scratch/pn/uk_age_fits.csv')
 
 %% prepend a header to the file
-system('echo "age,or_simple,or_full" >~/iec/covid/covid/csv/uk_age_predicted_or.csv');
+system('echo "age,ln_or_simple,ln_or_full" >~/iec/covid/covid/csv/uk_age_predicted_or.csv');
 system('cat /scratch/pn/uk_age_fits.csv >>~/iec/covid/covid/csv/uk_age_predicted_or.csv');
 fprintf("Writing uk_age_predicted_or.csv\n");
