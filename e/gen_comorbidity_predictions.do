@@ -367,18 +367,28 @@ use $tmp/combined, clear
 
 /* for each person, calculate relative mortality risk by combining HRs from all conditions */
 
-/* note that each person appears twice in the data, with identical conditions but different risk adjustments.
- which is why e.g. diabetes can take on 3 different values instead of 2. */
-gen risk_ratio = 1
+/* note that each person appears twice in the data, with identical
+conditions but different risk adjustments.  which is why e.g. diabetes
+can take on 3 different values instead of 2. */
+
+/* risk_factor is the heightened probability of mortality relative to the reference group
+  for this individual. Note that this is a probability multiplier, *not* a multiplier of
+  relative risk, odds ratio, or hazard ratio.
+
+  FIX: However, it is calculated by treating the HR as an OR-- this is inconsequential but
+       we should do the conversion above anyway just to be precise. */
+
+/* create separate risk factors... */
+gen risk_factor = 1
 
 /* multiply all of each individual's risk factors, for the fully adjusted model group */
 foreach condition in $comorbid_vars {
-  replace risk_ratio = risk_ratio * `condition' if hr == "hr_fully_adj"
+  replace risk_factor = risk_factor * `condition' if hr == "hr_fully_adj"
 }
 
 /* repeat the process but for the age-sex adjustment only */
 foreach condition in age18_40 age40_50 age50_60 age60_70 age70_80 age80_ male female {
-  replace risk_ratio = risk_ratio * `condition' if hr == "hr_age_sex"
+  replace risk_factor = risk_factor * `condition' if hr == "hr_age_sex"
 }
 
 /* save full dat set */
@@ -386,7 +396,6 @@ save $tmp/tmp_hr_data, replace
 
 /* paul stopped here -- the rest needs to be updated with the risk ratios */
 exit
-
 
 /* create sample size counter */
 gen N = 1

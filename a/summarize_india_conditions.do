@@ -5,6 +5,22 @@ use $tmp/combined, clear
 keep if uniform() < .1
 save $tmp/combined_short, replace
 
+/*****************************************/
+/* transform NHS incidence data into dta */
+/*****************************************/
+import delimited using $covidpub/covid/csv/uk_nhs_incidence.csv, clear varnames(1)
+replace prevalence = prevalence / 100
+
+/* reshape it to wide */
+gen x = 1
+ren prevalence uk_prev_
+reshape wide uk_prev_, i(x) j(condition) string
+drop x
+
+/* save NHS prevalence */
+gen v1 = 0
+save $tmp/uk_nhs_incidence, replace
+
 /*******************************************************************/
 /* graph relative mortality risk under different adjustment models */
 /*******************************************************************/
@@ -28,6 +44,20 @@ twoway ///
     , legend(lab(1 "Age-Sex Adjusted") lab(2 "Fully adjusted")) 
 
 graphout death_risk
+
+/* add UK data */
+append using $tmp/uk_sim
+sort age
+
+save $tmp/uk_india_combined, replace
+
+twoway ///
+    (line ln_risk_ratio age if hr == "hr_fully_adj", ylabel(-6(2)6) lwidth(medthick)) ///
+    (line ln_uk_risk    age                        , ylabel(-6(2)6) lwidth(medthick)) ///
+    , ytitle("Log relative risk") legend(lab(1 "India Fully adjusted") lab(2 "UK aggregates")) 
+
+graphout death_risk_india_uk
+
 
 /***************************************************************************************************/
 /* How much do comorbidities matter at all vs. age? Compare risk ratios if we ignore comorbidities */
@@ -80,3 +110,22 @@ twoway ///
 graphout hr2
 
 
+/*********************************************/
+/* compare india conditions to UK conditions */
+/*********************************************/
+use $tmp/tmp_hr_data, clear
+
+gen x = 1
+collapse (mean) $comorbid_vars [pw=wt], by(x)
+
+save $tmp/india_averages, replace
+
+/* merge to UK */
+gen v1 = 0
+merge 1:1 v1 using $tmp/uk_nhs_incidence
+
+/* list india numbers */
+list age-diab
+
+/* list uk numbers */
+list uk_prev
