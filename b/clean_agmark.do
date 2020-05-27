@@ -164,6 +164,7 @@ label var qty_dist "Aggregate Quantity in a District per day (Only those express
 label var qty_state "Aggregate Quantity in a State per day (Only those expressed in Tonnes)"
 label var qty_group "Aggregate Quantity for a product group per day (Only those expressed in Tonnes)"
 label var price_avg "Average All India Price for the Item in a day "
+compress
 save $covidpub/agmark/agmark_clean.dta, replace
 
 * If you are generating only 2020 data comment above line and uncomment following line,
