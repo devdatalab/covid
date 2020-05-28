@@ -129,3 +129,68 @@ list age-diab
 
 /* list uk numbers */
 list uk_prev
+
+/*****************************************************************/
+/* explore state-by-state correlation in hazard factors in india */
+/*****************************************************************/
+use $tmp/tmp_hr_data, clear
+
+collapse (mean) hr_age_cts_full hr_full_*, by(pc11_state_id pc11_district_id)
+
+/* combine age hazards */
+gen hr_age_discrete = hr_full_age18_40 * hr_full_age40_50 * hr_full_age50_60 * hr_full_age60_70 * hr_full_age70_80 * hr_full_age80_
+drop hr_full_age18_40 hr_full_age40_50 hr_full_age50_60 hr_full_age60_70 hr_full_age70_80 hr_full_age80_
+
+/* drop the reference groups */
+drop hr_full_female hr_full_bmi_not_obese hr_full_bp_not_high 
+
+/* see which hazards are correlated with age and which go in the other direction */
+rename hr_full_* hrf_*
+
+group pc11_state_id 
+foreach v of varlist hrf_* {
+  quireg `v' hr_age_discrete, title(`v') cluster(sgroup)
+}
+foreach v of varlist hrf_* {
+  quireg `v' hr_age_cts_full, title(`v') cluster(sgroup)
+}
+
+
+/**********************************/
+/* explore risk factors over time */
+/**********************************/
+
+/* collapse to age-specific data for plotting */
+use $tmp/tmp_hr_data, clear
+
+/* note: collapsing odds ratios here-- i'm still a bit unclear on what is correct. */
+collapse (mean) risk_factor_* [aw=wt], by(age)
+
+keep if age < 85
+sort age
+save $tmp/foo, replace
+
+/* 1. compare continuous age distributions to discrete to confirm they are ok */
+twoway (line risk_factor_simple_cts age) (line risk_factor_simple age), yscale(log) ylabel(0.1 0.5 1 2 5 10 50)
+graphout simple_comp
+
+twoway (line risk_factor_full_cts age) (line risk_factor_full age), yscale(log) ylabel(0.1 0.5 1 2 5 10 50) 
+graphout full_comp
+
+/* 2. compare fully adjusted, age-sex, comorbid conditions only  */
+twoway (line risk_factor_full_cts age, lwidth(medthick)) (line risk_factor_simple_cts age, lwidth(medthick)) , yscale(log) ylabel(0.1 0.5 1 2 5 10 50)
+graphout risk_factors
+
+/* 3. compare the discrete graphs */
+twoway (line risk_factor_full age, lwidth(medthick)) (line risk_factor_simple age, lwidth(medthick)) , yscale(log) ylabel(0.1 0.5 1 2 5 10 50)
+graphout risk_factors_discrete
+
+twoway (line risk_factor_age_weird age, lwidth(medthick)) (line risk_factor_full_cts age, lwidth(medthick)) (line risk_factor_full age, lwidth(medthick)) , yscale(log) ylabel(0.1 0.5 1 2 5 10 50)
+graphout risk_factors_full_agesex_part_only
+
+/* review some results */
+sum risk_factor* if age == 20, d
+sum risk_factor* if age == 65, d
+sum risk_factor* if age == 20 & male == 1, d
+sum risk_factor* if age == 65 & male == 1, d
+sum risk_factor* if age == 65 & male == 0, d

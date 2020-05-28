@@ -37,8 +37,9 @@ if "$fast" != "1" {
 }
 
 /* Process and generate HMIS data*/
-// Need to keep checking if 2020/21 data has been updated. It's been taken down from the website.
-do $ccode/b/process_nrhm_hmis.do
+do $ccode/b/create_hmis_yearly.do
+do $ccode/b/create_hmis_clean.do
+do $ccode/b/create_hmis_keys.do
 
 /* download latest district-level case data (runs in py3 conda env) */
  do $ccode/b/get_case_data

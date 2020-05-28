@@ -29,7 +29,8 @@ lgd_state_match nss_state_name
 /* arunachal pradesh and mizoram missing in nss key */
 
 /* generate nss state id from the lgd state id variable*/
-gen nss_state_id = lgd_state_id
+gen nss_state_id = real(lgd_state_id)
+
 
 /* district match to lgd key */
 lgd_dist_match nss_district_name
