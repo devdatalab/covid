@@ -256,12 +256,12 @@ gen docs_hosp_u = pc11_td_all_hosp_doc_pos if urban == 1
 gen docs_hosp_r = pc11_td_all_hosp_doc_pos if urban == 0
 
 /* this gets used by gen_lgd_pc11_demographics.do */
-save $covidpub/intermediate/precollapse, replace
+save $covidpub/intermediate/pc_hosp_precollapse, replace
 
 /*******************************************/
 /* district and subdistrict level collapse */
 /*******************************************/
-use $covidpub/intermediate/precollapse, clear
+use $covidpub/intermediate/pc_hosp_precollapse, clear
 
 /* collapse to sub district level */
 collapse (sum) hosp* pmed_* docs_* clinics_* clinic_beds_u  pc11_pca_tot_p, by(pc11_state_id pc11_district_id pc11_subdistrict_id)
@@ -275,7 +275,7 @@ cap mkdir $covidpub/hospitals/csv
 export delimited $covidpub/hospitals/csv/pc_hospitals_subdist.csv, replace
 
 /* REPEAT COLLAPSE AT DISTRICT LEVEL */
-use $covidpub/intermediate/precollapse, clear
+use $covidpub/intermediate/pc_hosp_precollapse, clear
 collapse (sum) hosp* pmed_* docs_* clinics_* clinic_beds_u  pc11_pca_tot_p, by(pc11_state_id pc11_district_id )
 clean_collapsed_data
 save $covidpub/hospitals/pc_hospitals_dist, replace
