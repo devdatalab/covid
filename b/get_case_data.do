@@ -62,25 +62,6 @@ drop if mi(district)
 sort state district
 save $covidpub/covid/covindia_state_district_list, replace
 
-/* get the list of states and districts used by covindia - 
-  UPDATE 05/16/20: these do not match the list coming in from the data */
-// shell python -c "from b.retrieve_case_data import retrieve_covindia_state_district_list; retrieve_covindia_state_district_list('$tmp')"
-
-/* import the csv output from the python function */
-// import delimited $tmp/covindia_state_district_list.csv, clear varn(1)
-
-/* sort values */
-// sort state district
-
-/* remove underscores */
-// replace district = subinstr(district, "_", " ", .)
-
-/* correct spellings needed to match the actual data */
-// replace state = "Maharashtra" if state == "Maharastra"
-
-/* save dta file */
-// save $covidpub/covid/covindia_state_district_list, replace
-
 /****************************************************/
 /* matching covindia state district key to lgd-pc11 */
 /****************************************************/
@@ -147,5 +128,43 @@ label var date "case date"
 label var _m_lgd_districts "merge from raw case data to LGD districts"
 compress
 
-/* resave the data */
-save $covidpub/covid/covindia_raw_data, replace
+/* resave the raw data */
+save $covidpub/covid/raw/covindia_raw, replace
+
+/* create a square dataset with each district and year */
+use $covidpub/covid/raw/covindia_raw, clear
+
+/* clarify when district names are missing */
+replace covid_district_name = "not reported" if mi(covid_district_name)
+
+/* collapse to one report per district / date */
+collapse (firstnm) lgd_state_id lgd_district_id (sum) death infected, by(covid_state_name covid_district_name date)
+
+/* make it square */
+egen dgroup = group(covid_state_name covid_district_name)
+fillin date dgroup 
+
+/* set as time series with dgroup */
+sort dgroup date
+by dgroup: egen day_number = seq()
+
+/* fill in state, district, lgd names within dgroup */
+xfill covid_state_name covid_district_name lgd_state_id lgd_district_id, i(dgroup)
+
+/* create cumulative sums of deaths and infections */
+sort dgroup day_number
+by dgroup: gen cum_deaths = sum(death)
+by dgroup: gen cum_infected = sum(infected)
+
+/* only save the cumulative counts */
+drop death infected dgroup _fillin day_number
+ren cum_deaths total_deaths
+ren cum_infected total_cases
+
+/* order and save */
+order lgd_state_id lgd_district_id date covid_state_name covid_district_name
+compress
+save $covidpub/covid/covid_infected_deaths, replace
+
+/* try to do this with covidsave */
+//covidsave $covidpub/covid/covid_infected_deaths, native(lgd) replace metadata_urls("https://docs.google.com/spreadsheets/d/e/2PACX-1vTKTuciRsUd6pk5kWhlMyhF85Iv5x04b0njSrWzCkaN5IeEZpBwwvmSdw-mUJOp215jBgv2NPMeTHXK/pub?gid=0&single=true&output=csv") 

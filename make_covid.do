@@ -25,7 +25,7 @@ do $ccode/b/prep_dlhs4_district
 do $ccode/b/prep_hosp_pca_vd
 
 /* generate demographic data and save in public repo */
-do $ccode/b/gen_demographics
+do $ccode/b/gen_lgd_pc11_demographics
 
 /* prepare EC microdata on hospitals */
 /* in: raw economic census 2013.  out: $covidpub/ec_hosp_microdata */
@@ -40,9 +40,8 @@ if "$fast" != "1" {
 // Need to keep checking if 2020/21 data has been updated. It's been taken down from the website.
 do $ccode/b/process_nrhm_hmis.do
 
-/* download latest district-level case data */
-// need to fix conda setup to make this universal
-// do $ccode/b/get_case_data
+/* download latest district-level case data (runs in py3 conda env) */
+ do $ccode/b/get_case_data
 
 /***********************************************/
 /* PART 2 -- RUNS FROM DATA LINKED IN GIT REPO */
@@ -56,6 +55,12 @@ do $ccode/b/prep_pc_hosp.do
 
 /* prepare economic census (2013) hospital data */
 do $ccode/b/prep_ec_hosp.do
+
+/* clean migration data and transform to LGD */
+do $ccode/b/clean_migration.do
+
+/* clean agmark mandi price data */
+do $ccode/b/clean_agmark.do
 
 /* prepare SECC district-level poverty data [unfinished] */
 // do $ccode/b/prep_secc.do

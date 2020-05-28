@@ -223,5 +223,3 @@ prog def lgd_dist_match
 end    
 /* *********** END program lgd_dist_match ***************************************** */
 
-
-
