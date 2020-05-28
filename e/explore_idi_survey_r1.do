@@ -5,6 +5,7 @@ svyset psu [pw=weight_hh], strata(strata_id) singleunit(scaled)
 
 /* install commands used frequently in do file */
 ssc install fre
+ssc install ietoolkit
 
 /*******************/
 /* Validity checks */
@@ -61,6 +62,41 @@ tab agr_crop_grown_oth
 fre rel_check_balance if rel_transfer_rec == 1
 
 
-/************/
-/* Analysis */
-/************/
+/*************/
+/* Exploring */
+/*************/
+
+/* migrants still stuck */
+gen mig_stuck = mig_noreturn_ratio/mig_total_ratio
+tab geo_state if mig_stuck != 0 & !mi(mig_stuck)
+
+/* association between consumption and migration in agri/non agri hh */
+binscatter mig_wage_change_mean con_weekchange_mean if demo_ag_hh == 0
+graphout migwage_effect_non_agri
+
+binscatter mig_wage_change_mean con_weekchange_mean if demo_ag_hh == 1
+graphout migwage_effect_agri
+
+/* characteristics of households reporting consumption decline */
+gen condecline = con_weekchange_mean < 0 & !mi(con_weekchange_mean)
+iebaltab demo_ag_hh mig_return_size mig_noreturn_ratio mig_most_inc mig_avg_wage mig_zeroinc_prop mig_wage_change_mean mig_size con_feb demo_hh_size lab_wagechange_mean lab_workdayschange_mean rel_transfer_rec, grpvar(condecline) save($tmp/balance.xlsx) replace
+
+
+/* WIP */
+
+/* labor surplus - those reporting not working because wages were too low? */
+fre lab_nowork_wages_prop
+
+/* labor scarce */
+fre agr_selldiff_labor
+fre agr_nosell_labor
+
+svy: tabulate lab_march_occu lab_curr_occu
+
+graphout currentlyunemployed
+
+fre lab_march_occu if lab_curr_occu == 0
+fre lab_curr_occu if lab_march_occu == 1
+fre lab_curr_occu if lab_march_occu == 2
+fre lab_curr_occu if lab_march_occu == 3
+fre lab_curr_occu if lab_march_occu == 4
