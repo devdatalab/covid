@@ -17,4 +17,5 @@ compress
 save $covidpub/migration/pc11/district_migration_pc11, replace
 
 /* use covidsave to push to LGD */
-covidsave $covidpub/migration/district_migration, native(pc11) metadata_urls("https://docs.google.com/spreadsheets/d/e/2PACX-1vTu79uiVKSFv8c1oZvx7WARrWXSfbwfLakiukoezDaH0spMM_MQalkm5fr4bnkBQVNRs2aiU7x41oi3/pub?gid=0&single=true&output=csv") replace
+convert_ids, from_ids(pc11_state_id pc11_district_id) to_ids(lgd_state_id lgd_district_id) key($keys/lgd_pc11_district_key_weights.dta) weight_var(pc11_lgd_wt_pop) metadata_urls("https://docs.google.com/spreadsheets/d/e/2PACX-1vTu79uiVKSFv8c1oZvx7WARrWXSfbwfLakiukoezDaH0spMM_MQalkm5fr4bnkBQVNRs2aiU7x41oi3/pub?gid=0&single=true&output=csv") labels
+save $covidpub/migration/district_migration, replace

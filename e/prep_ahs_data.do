@@ -111,6 +111,7 @@ ddrop state district stratum ahs_house_unit house_hold_no sl_no identification_c
 ren year_of_birth year_of_birth_comb
 ren sex sex_comb
 ren age age_comb
+ren usual_residance usual_residance_comb
 
 /* save as a temporary file for merging */
 save $tmp/ahs_comb_formerge, replace
@@ -160,7 +161,7 @@ ddrop state district stratum ahs_house_unit house_hold_no sl_no identification_c
 /******************************/
 
 /* merge in some variables from the household data */
-merge 1:1 state district stratum ahs_house_unit house_hold_no sl_no identification_code using $tmp/ahs_comb_formerge, keepusing(illness_type illness_type diagnosed_for sex_comb year_of_birth_comb age_comb)
+merge 1:1 state district stratum ahs_house_unit house_hold_no sl_no identification_code using $tmp/ahs_comb_formerge, keepusing(illness_type illness_type diagnosed_for sex_comb year_of_birth_comb age_comb usual_residance_comb)
 
 /* keep the master (cab-only) and matched (cab + hh) data */
 ren _merge ahs_merge
