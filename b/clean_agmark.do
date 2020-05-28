@@ -3,7 +3,7 @@
 
 /* Generating a seedfile for appending */
 clear
-save $covidpub/agmark/agmark_new.dta, replace emptyok
+save $tmp/agmark/agmark_new.dta, replace emptyok
 
 /* Loop over all the csv files. Change the loop in a way to loop over all the files */
 forval i = 1/13 {
@@ -112,8 +112,8 @@ forval i = 1/13 {
 	format date %td
 	drop date1
 	
- append using $covidpub/agmark/agmark_new.dta
- save $covidpub/agmark/agmark_new.dta, replace
+ append using $tmp/agmark/agmark_new.dta
+ save $tmp/agmark/agmark_new.dta, replace
 }
 
 *Cleaning up the data
@@ -124,9 +124,9 @@ replace mandi = lower(mandi)
 
 *Merging in the LSG district codes. We have mapped all Mandis in Agmark database.
 *Download and add the market lsg coded file to the path before proceeding
-merge m:1 state mandi using $covidpub/agmark/raw/marketcoded, keepusing(lgd_district_name lgd_state_id lgd_district_id)
+merge m:1 state mandi using $covidpub/agmark/raw/marketcoded, keepusing(district lgd_state_id lgd_district_id)
 keep if _merge == 3
-drop _merge pc*
+drop _merge
 
 label var qty "Arrival Quantity"
 label var unit "Unit of Measurement (Qty)"
@@ -142,15 +142,13 @@ label var date "Date of reporting"
 label var mandi "Name of Mandi"
 label var state "State as recorded in Agmark"
 label var district "District as recorded in Agmark"
-label var lgd_district_name "District Name"
-label var lgd_state_name "State Name"
 
 /* For Creating aggregators/ Prototype for only 2020 uncomment the following block
-save $covidpub/agmark/agmark_new.dta, replace
 keep if date>td(31dec2019)
 */
 
 *Generate aggregative quantity for items (expressed in Tonnes alone)
+destring qty, force replace
 bysort date lgd_district_id: egen qty_dist=sum(qty) if unit=="Tonnes"
 bysort date lgd_state_id: egen qty_state=sum(qty) if unit=="Tonnes"
 bysort date group: egen qty_group=sum(qty) if unit=="Tonnes"
@@ -163,24 +161,20 @@ label var qty_group "Aggregate Quantity for a product group per day (Only those 
 label var price_avg "Average All India Price for the Item in a day "
 
 /* reduce filesize as much as possible */
-destring qty, force replace 
 replace minprice = "" if minprice == "NR"
 destring minprice, force replace
 replace maxprice = "" if maxprice == "NR"
 destring maxprice, force replace 
 foreach v in state mandi district item unit source spec priceunit group {
-  encode `v', gen(new`v')
-  local label : variable label `v'
-  drop `v'
-  rename new`v' `v'
-  label var `v' "`label'"
+  ren `v' old`v'
+  encode old`v', gen(`v')
+  drop old`v'
 }
 
-
 /* write out master dataset */
-order date state mandi district item
+order date state mandi district item unit priceunit source spec group, first
 compress
 save $covidpub/agmark/agmark_clean.dta, replace
 
 * If you are generating only 2020 data comment above line and uncomment following line,
-*save $covidpub/agmark/agmark__2020lsgcoded.dta, replace 
+*save $covidpub/agmark/agmark_2020lsgcoded.dta, replace 
