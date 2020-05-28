@@ -6,50 +6,16 @@ global comorbid_vars_no_age_sex bmi_not_obese bmi_obeseI ///
                       bmi_obeseII bmi_obeseIII bp_not_high bp_high chronic_heart_dz stroke_dementia liver_dz kidney_dz autoimmune_dz ///
                       cancer_non_haem_1 haem_malig_1 chronic_resp_dz diabetes_uncontr 
 
-
-/***************************/
-/* Merge DLHS and AHS Data */
-/***************************/
-/* open the dlhs data */
-use $health/dlhs/dlhs_cab, clear
-
-/* rename variables to align with ahs */
-ren hv05 sex
-ren hv06 usual_residance
-ren age_test age
-ren hv82 weight_in_kg
-ren hv85 length_height_cm
-ren hv93a bp_systolic_1_reading
-ren hv93b bp_systolic_2_reading
-ren hv94a bp_diastolic_1_reading
-ren hv94b bp_diastolic_2_reading
-ren hv19 illness_type
-ren hv21 symptoms_pertaining_illness
-ren hv23 diagnosed_for
-
-/* mark as dlhs */
-gen survey = 1
-
-/* append the ahs data */
-append using $health/ahs/ahs_cab
-
-/* mark as ahs */
-replace survey = 2 if mi(survey)
-
-/* label the survey indicator */
-cap label define dlhs_ahs 1 "dlhs" 2 "ahs"
-label values survey dlhs_ahs
+/* open the full dataset */
+use $health/dlhs/data/dlhs_ahs_merged, clear
 
 /************************/
 /* COMORBIDITY MEASURES */
 /************************/
 
-/* drop if not a usual resident */
-keep if usual_residance == 1
-
-/* drop missing age and those under 18 */
-drop if mi(age)
-drop if age < 18
+/* label the diagnosed_for and symptoms variables */
+label var diagnosed_for "self-reported diagnosis in the last 1 year"
+label var symptoms_pertaining_illness "self-reported symptoms of chronic illness in last 1 year"
 
 /* generate age bins */
 gen age18_40 = 0
@@ -86,6 +52,9 @@ label var height "height in meters"
 
 /* calculate bmi */
 gen bmi = weight_in_kg / (height^2)
+
+/* replace with missing for pregnant women- we can't interpret BMI for them */
+replace bmi = . if pregnant == 1
 label var bmi "Body Mass Index kg/m^2"
 
 /* replace extreme outliers with missing values: q. should we do this based on physical values or stats? */
@@ -123,41 +92,46 @@ gen bp_diastolic = (bp_diastolic_1_reading + bp_diastolic_2_reading) / 2
 label var bp_diastolic "Diastolic BP taken as average of two measures"
 
 /* define high blood pressure categories based on NHS paper */
-
 /* normal */
 gen bp_normal = 0
 replace bp_normal = 1 if bp_systolic < 120 & bp_diastolic < 80
 replace bp_normal = . if mi(bp_systolic) | mi(bp_diastolic)
+replace bp_normal = . if pregnant == 1
 label var bp_normal "systolic BP <120 mm Hg and diastolic BP < 80 mm Hg"
 
 /* elevated */
 gen bp_elevated = 0
 replace bp_elevated = 1 if (bp_systolic >= 120 & bp_systolic <= 129) & (bp_diastolic < 80)
 replace bp_elevated = . if mi(bp_systolic) | mi(bp_diastolic)
+replace bp_elevated = . if pregnant == 1
 label var bp_elevated "systolic BP 120-129 and BP diastolic < 80"
 
 /* high stage 1 */
 gen bp_high_stage1 = 0
 replace bp_high_stage1 = 1 if (bp_systolic >= 130 & bp_systolic <= 139) & (bp_diastolic >= 80 & bp_diastolic <=89)
 replace bp_high_stage1 = . if mi(bp_systolic) | mi(bp_diastolic)
+replace bp_high_stage1 = . if pregnant == 1
 label var bp_high_stage1 "systolic BP 130-139 mm Hg and diastolic BP 80-89"
 
 /* high stage 2 */
 gen bp_high_stage2 = 0
 replace bp_high_stage2 = 1 if (bp_systolic >= 140) | (bp_diastolic >= 90)
 replace bp_high_stage2 = . if mi(bp_systolic) | mi(bp_diastolic)
+replace bp_high_stage2 = . if pregnant == 1
 label var bp_high_stage2 "systolic BP >= 140 mm Hg or diastolic BP >= 90 mm Hg"
 
 /* self-reported hypertension */
-label var diagnosed_for "self-reported diagnosis in the last 1 year"
-
-gen bp_hypertension = 0
+/* if data is from AHS CAB-only sample, keep as missing because there was no HH module asked */
+gen bp_hypertension = 0 if sample != 1
 replace bp_hypertension = 1 if diagnosed_for == 2
 label var bp_hypertension "self-reported diagnosis of hypertension"
 
 /* self-reported hypertension + BP high stage 2 */
 gen bp_high = 0
 replace bp_high = 1 if (bp_high_stage2 == 1 | bp_hypertension == 1)
+
+/* only include people who have non-missing BP measurements as we can't trust the accuracy of self-reporting across the full population  */
+replace bp_high = . if mi(bp_systolic) | mi(bp_diastolic) 
 label var bp_high "self-reported hypertension and/or measured BP high stage 2"
 
 /* create the inverse of bp_high */
@@ -166,78 +140,96 @@ replace bp_not_high = 0 if bp_high == 1
 label var bp_high "normal blood pressure as defined as not bp_high"
 
 /* Respiratory Disease */
-gen resp_illness = 0
+gen resp_illness = 0 if sample != 1
 replace resp_illness = 1 if diagnosed_for == 7
 label var resp_illness "self-reported asthma or chronic respiratory failure"
 
 /* get respiratory symptoms */
-gen resp_symptoms = 0
+gen resp_symptoms = 0 if sample != 1
 replace resp_symptoms = 1 if symptoms_pertaining_illness == 1
 label var resp_symptoms "self-reported symptoms of respiratory illness"
 
 /* get acute respiratory symptoms */
-gen resp_acute = 0
+gen resp_acute = 0 if sample != 1
 replace resp_acute = 1 if illness_type == 3
 label var resp_acute "self-reported respiratory symptoms in the past 15 days"
 
-/* get ANY respiratory issue */
-gen resp_chronic = 0
-replace resp_chronic = 1 if resp_illness == 1 | resp_symptoms == 1 
+/* ALL reports of chronic respiratory illness */
+gen resp_chronic = 0 if sample != 1
+replace resp_chronic = 1 if resp_illness == 1 | resp_symptoms == 1
 label var resp_chronic "self-reported diagnosis or symptoms of respiratory illness"
 
 /* Chronic heart disease */
-gen chronic_heart_dz = 0
-replace chronic_heart_dz = 1 if diagnosed_for == 3
-label var chronic_heart_dz "self-reported chronic heart disease"
+gen cardio_illness = 0 if sample != 1
+replace cardio_illness = 1 if diagnosed_for == 3
+label var cardio_illness "self-reported diagnosis of chronic heart disease"
 
 /* get cardiovascular system symptoms */
-gen cardio_symptoms = 0
+gen cardio_symptoms = 0 if sample != 1
 replace cardio_symptoms = 1 if symptoms_pertaining_illness == 2
+label var cardio_symptoms "self-reported symptoms of cardiovascular disease"
+
+/* ALL reports of chronic heart disease */
+gen chronic_heart_dz = 0 if sample != 1
+replace chronic_heart_dz = 1 if (cardio_illness == 1 | cardio_symptoms == 1)
+label var chronic_heart_dz "self-reported diagnosis or symptoms of heart disease"
 
 /* Diabetes */
 gen diabetes = 0
 
 /* standard WHO definition of diabetes is >=126mg/dL if fasting and >=200 if not */
-replace diabetes = 1 if (hv91a >= 126 & hv91 == 1) | (hv91a >= 200 & hv91 == 2 & !mi(hv91a)) | (fasting_blood_glucose_mg_dl > 126 & !mi(fasting_blood_glucose_mg_dl))
-replace diabetes = . if (mi(hv91a) | mi(hv91)) & mi(fasting_blood_glucose_mg_dl)
-label var diabetes "blood sugar >126mg/dL if fasting, >200mg/dL if not"
+// replace diabetes = 1 if (hv91a >= 126 & hv91 == 1) | (hv91a >= 200 & hv91 == 2 & !mi(hv91a)) | (fasting_blood_glucose_mg_dl > 126 & !mi(fasting_blood_glucose_mg_dl)) 
+// replace diabetes = . if (mi(hv91a) | mi(hv91)) & mi(fasting_blood_glucose_mg_dl)
+// label var diabetes "blood sugar >126mg/dL if fasting, >200mg/dL if not"
+
+/* we make the assumption that everyone is fasting and use that cutoff */
+replace diabetes = 1 if fasting_blood_glucose_mg_dl >= 126
+replace diabetes = . if mi(fasting_blood_glucose_mg_dl)
+replace diabetes = . if pregnant == 1
+label var diabetes "blood sugar >126mg/dL"
 
 /* Cancer - non-haematological */
-gen cancer_non_haem = 0
+gen cancer_non_haem = 0 if sample != 1
 /* respiratory system, gastrointestinal system, genitourinary system, breast, tumor (any type), skin cancer */
 replace cancer_non_haem = 1 if (diagnosed_for == 11 | diagnosed_for == 12 | diagnosed_for == 13 | diagnosed_for == 14 | diagnosed_for == 27 | diagnosed_for == 29)
 label var cancer_non_haem "self-reported non haematological cancer"
 
 /* Haematological malignanies */
-gen haem_malig = 0
+gen haem_malig = 0 if sample != 1 
 replace haem_malig = 1 if (diagnosed_for == 28)
 label var haem_malig "self-reported blood cancer/leukemia"
 
 /* Liver disease */
-gen liver_dz = 0
+gen liver_dz = 0 if sample != 1
 replace liver_dz = 1 if diagnosed_for == 18
 label var liver_dz "self-reported chronic liver disease"
 
 /* Stroke */
-gen stroke = 0
+gen stroke = 0 if sample != 1
 replace stroke = 1 if diagnosed_for == 5
 label var stroke "self-reported stroke cerebro vascular accident"
 
 /* Kidney disease */
-gen kidney_dz = 0
+gen kidney_dz = 0 if sample != 1
 replace kidney_dz = 1 if (diagnosed_for == 15 | diagnosed_for == 16)
 label var kidney_dz "self-reported renal stones or chronic renal disease"
 
 /* Autoimmune disease */
-gen autoimmune_dz = 0
+gen autoimmune_dz = 0 if sample != 1
 replace autoimmune_dz = 1 if (diagnosed_for == 19 | diagnosed_for == 20)
 label var autoimmune_dz "self-reported psoriasis or rheumatoid arthritis"
 
 /* keep only identifying information and comorbidity variables */
-keep pc11* psu prim_key* htype rcvid supid tsend tsstart person_index hh* *wt survey rural_urban stratum psu_id ahs_house_unit  house_hold_no date_survey age* male female bmi* height weight_in_kg bp* resp* cardio_symptoms diabetes *haem* *_dz stroke diagnosed_for survey ahs_merge
+keep uid pc11* psu htype rcvid supid tsend tsstart person_index hh* *wt survey rural_urban stratum psu_id ahs_house_unit house_hold_no date_survey age* male female bmi* height weight_in_kg bp* resp* cardio_symptoms diabetes *haem* *_dz stroke diagnosed_for survey sample
 
-/* drop if missing key values from CAB survey */
-drop if mi(bp_systolic) | mi(bp_diastolic) | mi(age) | (mi(female) & mi(male)) | mi(diabetes) | mi(bmi)
+/* save the full sample to get our best estimates at population prevelance */
+save $health/dlhs/data/dlhs_ahs_covid_comorbidities_full, replace
+
+/* drop if missing key values from CAB survey - we want to only use observations that have these measureable values */
+drop if mi(bp_high) | mi(diabetes) | mi(bmi)
+
+/* drop if missing all self-reported illness, i.e. only the CAB section was asked */
+drop if sample == 1
 
 /* create a combined weight variable */
 /* - assume all AHS weights are 1 (since it's self-weighting) */
@@ -253,10 +245,6 @@ gen age_bin = ""
 foreach i in age18_40 age40_50 age50_60 age60_70 age70_80 age80_ {
   replace age_bin = "`i'" if `i' != 0 
 }
-
-/* drop duplicates and create a unique identifier */
-duplicates drop
-gen uid = _n
 
 /* save limited dataset with only comorbidity data */
 compress
