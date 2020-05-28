@@ -42,5 +42,28 @@ order nss_district_name, before(lgd_district_name)
 /* original key had 648 obs */
 /* jaintia hills was expanded into 2 obs bc lgd data has e & w. jaintia hills */
 
+/* pull population weights to handle jaintia hills split - these can
+be drawn from pc11:LGD key, which has the same split */
+preserve
+use $keys/lgd_pc11_district_key_weights.dta, clear
+
+/* make sure the key hasn't changed */
+count if regexm(lower(pc11_district_name), "jaintia")
+assert `r(N)' == 2
+
+/* pull weights into locals */
+sum pc11_lgd_wt_pop if regexm(lower(lgd_district_name), "east jaintia hills")
+local east = `r(mean)'
+sum pc11_lgd_wt_pop if regexm(lower(lgd_district_name), "west jaintia hills")
+local west = `r(mean)'
+
+/* back to the NSS key. weight is just 1 for all others */
+restore
+gen nss_lgd_pop_wt = 1
+
+/* replace for split */
+replace nss_lgd_pop_wt = `west' if regexm(lower(lgd_district_name), "west jaintia hills")
+replace nss_lgd_pop_wt = `east' if regexm(lower(lgd_district_name), "east jaintia hills")
+
 /* save */
 save $iec1/nss/nss-75-health/nss75_lgd_district_key, replace
