@@ -265,16 +265,16 @@ save $tmp/nss75/h365_ill, replace
 /**************************************************************************************/
 
 use $tmp/nss75/roster, clear
-merge m:1 hhid personid using $tmp/nss75/i15_ill, nogen
+merge 1:1 hhid personid using $tmp/nss75/i15_ill, nogen
 merge 1:1 hhid personid using $tmp/nss75/h365_ill, nogen
 
 *Add zeroes for non-ill individuals for population incidence
-foreach v of varlist i15*_any {
+foreach v of varlist i15*any {
   replace `v' = 0 if `v'== .
 }
 
 *DATA CHECK: THIS REPLICATES TABLE A1 in NSS REPORT: Share population reporting any ailment in 15days by state rural/urban 
-*table state_na urban [aw = w], c(mean i15_illany) row col 		
+*table nss_state_id urban [aw = w], c(mean i15_illany) row col 		
 
 *Collapse to district level 
 collapse_save_labels
@@ -310,7 +310,7 @@ use $tmp/nss75/roster, clear
 merge 1:m hhid personid using $tmp/nss75/h365_care, nogen
 
 *DATA CHECK: THIS REPLICATES TABLE A13 in NSS REPORT: Share of non-childbirth hospitals by type of hospital
-*table state_na urban [aw = w], c(mean h365_pubhosp mean h365_pvthosp mean h365_ngohosp) row col
+*table nss_state_id urban [aw = w], c(mean h365_pubhosp mean h365_pvthosp mean h365_ngohosp) row col
 
 *Collapse to district level 
 collapse_save_labels
