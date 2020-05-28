@@ -4,7 +4,7 @@
 qui do $ddl/covid/covid_progs.do
 
 /* load data */
-insheet using ~/iec1/nss/nss-75-health/Appendix-I.csv, clear
+insheet using $nss/nss-75-health/Appendix-I.csv, clear
 
 /* drop unnecessary vars */
 drop v1 v3 v6 v11 v10
@@ -60,11 +60,12 @@ local west = `r(mean)'
 
 /* back to the NSS key. weight is just 1 for all others */
 restore
-gen nss_lgd_pop_wt = 1
+gen nss_lgd_wt_pop = 1
 
 /* replace for split */
-replace nss_lgd_pop_wt = `west' if regexm(lower(lgd_district_name), "west jaintia hills")
-replace nss_lgd_pop_wt = `east' if regexm(lower(lgd_district_name), "east jaintia hills")
+replace nss_lgd_wt_pop = `west' if regexm(lower(lgd_district_name), "west jaintia hills")
+replace nss_lgd_wt_pop = `east' if regexm(lower(lgd_district_name), "east jaintia hills")
 
 /* save */
-save $iec1/nss/nss-75-health/nss75_lgd_district_key, replace
+save $nss/nss-75-health/nss75_lgd_district_key, replace
+save $covidpub/nss/nss75_lgd_district_key, replace
