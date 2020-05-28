@@ -1,3 +1,4 @@
+
 from bs4 import BeautifulSoup
 import datetime
 import json
@@ -230,6 +231,7 @@ def read_hmis_csv(year, filepath):
             df_all.to_csv(os.path.join(fp, f"{i.split('.')[0]}.csv"))
         except:
             print(f"Error in State File {i}")
+            print(f"Error in Year {year}")
     # drop the duplicates variables, for each state file with X districts the variables are repeated X times
     df_vars = df_vars.drop_duplicates()
     

@@ -2,13 +2,6 @@
 /* data source: https://nrhm-mis.nic.in/hmisreports/frmstandard_reports.aspx */
 
 /* make directories for hmis data*/
-cap mkdir $health/hmis
-cap mkdir $health/hmis/raw/
-cap mkdir $health/hmis/raw/itemwise_comparison/
-cap mkdir $health/hmis/raw/itemwise_monthly/
-cap mkdir $health/hmis/raw/itemwise_monthly/district
-cap mkdir $health/hmis/raw/itemwise_monthly/subdistrict
-cap mkdir $health/hmis/data_dictionary/
 cap mkdir $tmp/hmis
 cap mkdir $tmp/hmis/itemwise_monthly/
 cap mkdir $tmp/hmis/itemwise_monthly/district
@@ -187,7 +180,7 @@ foreach year in `years'{
 /* Process Number of Hospitals/data_reporting_status data */
 /**********************************************************/
 
-/* Unzip District Reporting Status Data from zip files and save .xls files in $tmp*/
+/* Unzip Hospitals/District Reporting Status Data from zip files and save .xls files in $tmp*/
 local filelist : dir "$health/hmis/raw/data_reporting_status" files "*.zip"
 foreach file in `filelist' {
   !unzip -u $health/hmis/raw/data_reporting_status/`file' -d $tmp/hmis/data_reporting_status
@@ -274,231 +267,22 @@ foreach year in `years'{
 
 }
 
-
-/*****************************/
-/* Create hmis_small Dataset */
-/*****************************/
-
-/* Append data for early years first */
-local early_years "2008-2009 2009-2010 2010-2011 2011-2012 2012-2013 2013-2014 2014-2015 2015-2016 2016-2017"
-
-/* Create temopfile to store all years' data */
-clear
-save $tmp/hmis_allyears, replace emptyok
-
-/* Loop over early_years and 
-1) Merge itemwise_monthly/health data with data reporting status/hospitals reporting data
-2) use tempfile to append all years' data into one file */
-foreach year in `early_years'{
-
-  /* Use health data, merge with hospitals data and then save */
-  use $health/hmis/hmis_dist_clean_`year', clear
-  merge 1:1 state district year month year_financial using $tmp/hmis/hmis_dist_clean_hospitals_`year' 
-
-  /* For unmerged districts drop hospitals data.
-  Some 20 odd districts in 2015 are unmerged with hospital data
-  due to changes in spelling*/
-  drop if _merge == 2
-  drop _merge
-  
-  /* Save merged health + hospitals data */
-  save $health/hmis/hmis_dist_clean_`year', replace
-
-  /* Child Immunisations  */
-  rename v_10_1_01_TOTAL	hm_vac_bcg
-  rename v_10_1_09A_TOTAL	hm_vac_hepb
-  rename v_10_1_05_TOTAL hm_vac_opv0
-  rename v_10_4_2_TOTAL hm_vac_sessions
-  
-  /* Hospital Attendance Numbers */
-  rename v_14_10_1_a_2	hm_inpatient_adult_m 
-  rename v_14_10_1_b_2	hm_inpatient_adult_f
-  rename v_14_10_1_a_1	hm_inpatient_kids_m
-  rename v_14_10_1_b_1	hm_inpatient_kids_f
-  rename v_14_13_1_TOTAL	hm_operation_major
-  rename v_14_13_2_TOTAL	hm_operation_minor
-
-  /* Testing */
-  rename v_15_1_2_a_1 hm_tests_hiv_m
-  rename v_15_1_2_b_1	hm_tests_hiv_f
-  rename v_15_1_2_c_1 hm_tests_hiv_f_anc
-  
-  /* Maternal Health */
-  rename v_1_1_TOTAL hm_anc_registered
-  rename v_2_1_1_a_TOTAL hm_delivery_anm	
-  rename v_2_1_1_b_TOTAL hm_delivery_no_anm
-  rename v_4_1_1_b_TOTAL hm_birth_f	
-  rename v_4_1_1_a_TOTAL hm_birth_m
-  
-  /*Maternal Health:
-  Instituional Deliveries broken into public and private, so add them both*/
-  gen hm_delivery_institutional = v_2_2_TOTAL + v_2_3_TOTAL
-  label var hm_delivery_institutional "Number of Institutional Deliveries conducted (Including C-Sections)"
-
-  /* PPE */
-  rename v_16_3_02_1 hm_gloves_balance
-  rename v_16_3_02_2 hm_gloves_received 
-  rename v_16_3_02_3 hm_gloves_unusable
-  rename v_16_3_02_4 hm_gloves_distributed
-  rename v_16_3_02_5 hm_gloves_total
-  
-  /* drop other variables */
-  drop v_* 
-
-  qui append using $tmp/hmis_allyears
-  save $tmp/hmis_allyears, replace
-  
-}
-
-/* Create a local for recent years */
-local later_years "2017-2018 2018-2019 2019-2020 2020-2021"
-
-/* Loop over later_ years and 
-1) Merge itemwise_monthly/health data with data reporting status/hospitals reporting data
-2) use tempfile to append all years' data into one file */
-foreach year in `later_years'{
+/**********************************/
+/* Merge Health and Hospital Data */
+/**********************************/
+foreach year in `years'{
 
   /* Use health data, merge with hospitals data and then save  */
   use $health/hmis/hmis_dist_clean_`year', clear
   merge 1:1 state district year month category year_financial using $tmp/hmis/hmis_dist_clean_hospitals_`year' 
 
   /* Drop unmerged hospitals data for 2020-2021  */
+  /* Some 20 odd districts in 2015 are unmerged with hospital data
+  due to changes in spelling */
   drop if _merge == 2
   drop _merge
   
   /* Save Merged health + hospitals data */
   save $health/hmis/hmis_dist_clean_`year', replace
 
-  /* Child Immunisations  */
-  rename v_9_1_2_TOTAL	hm_vac_bcg
-  rename v_9_1_13_TOTAL	hm_vac_hepb
-  rename v_9_1_9_TOTAL hm_vac_opv0
-  rename v_9_7_2_TOTAL hm_vac_sessions
-  
-  /* Hospital Attendance Numbers */
-  rename v_14_3_1_b_TOTAL	hm_inpatient_adult_m 
-  rename v_14_3_2_b_TOTAL	hm_inpatient_adult_f
-  rename v_14_3_1_a_TOTAL	hm_inpatient_kids_m
-  rename v_14_3_2_a_TOTAL	hm_inpatient_kids_f
-  rename v_14_4_4_TOTAL	hm_inpatient_respiratory
-  rename v_14_1_1_TOTAL	hm_outpatient_diabetes
-  rename v_14_1_2_TOTAL	hm_outpatient_hypertension
-  rename v_14_1_9_TOTAL	hm_outpatient_cancer
-  rename v_14_5_TOTAL	hm_emergency_total
-  rename v_14_6_1_TOTAL	hm_emergency_trauma
-  rename v_14_6_5_TOTAL	hm_emergency_heart_attack
-  rename v_14_8_1_TOTAL	hm_operation_major
-  rename v_14_8_4_TOTAL	hm_operation_minor
-
-  /* Testing */
-  rename v_15_1_TOTAL	hm_tests_total 
-  rename v_15_3_1_a_TOTAL	 hm_tests_hiv_m
-  rename v_15_3_2_a_TOTAL	hm_tests_hiv_f
-  rename v_15_3_3_a_TOTAL hm_tests_hiv_f_anc  
-
-  /* Maternal Health */
-  rename v_1_1_TOTAL hm_anc_registered
-  rename v_2_2_TOTAL hm_delivery_institutional
-  rename v_2_1_1_a_TOTAL hm_delivery_anm	
-  rename v_2_1_1_b_TOTAL  hm_delivery_no_anm
-  rename v_4_1_1_b_TOTAL hm_birth_f	
-  rename v_4_1_1_a_TOTAL hm_birth_m
-  rename v_2_1_3_TOTAL hm_care_home
-  rename v_2_2_2_TOTAL hm_care_institution	
-
-  /* PPE */
-  rename v_19_1_1 hm_gloves_balance
-  rename v_19_1_2	hm_gloves_received 
-  rename v_19_1_3	hm_gloves_unusable
-  rename v_19_1_4	hm_gloves_distributed
-  rename v_19_1_5	hm_gloves_total
-    
-  /* Drop all other variables */
-  drop v_*
-  
-  /* Append All years' data sequentially*/
-  qui append using $tmp/hmis_allyears
-  save $tmp/hmis_allyears, replace
-
 }
-
-/* Get identifiers to the front */
-order state district year month category year_financial 
-
-/* rename and label hospitals with their full names */
-label var sc "Number of Sub Center Reporting Reporting"
-label var phc "Number of Primary Health Center Reporting"
-label var chc "Number of Community Health Center Reporting"
-label var sdh "Number of Sub District Hospital Reporting"
-label var dh  "Number of District Hospital Reporting"
-label var total "Total Number of Hospitals Reporting"
-
-rename sc hm_hosp_sc
-rename phc hm_hosp_phc
-rename chc hm_hosp_chc
-rename sdh hm_hosp_sdh
-rename dh hm_hosp_dh
-rename total hm_hosp_total
-
-/* Label identifiers */
-label var state "Name of the State"
-label var district "Name of the district"
-label var year "Calendar Year"
-label var month "Month"
-label var category "Total/Rural/Urban/Private/Public"
-label var year_financial "Financial Year for whcih the data is reported"
-
-/* Drop 2020-2021 data */
-drop if year_financial == "2020-2021"
-
-/* Save data */
-save $health/hmis/hmis_clean_small, replace
-
-/*********************************************************/
-/* Create year state district matching key for hmis data */
-/*********************************************************/
-
-/* Use hmis small dataset to create key on identifiers*/
-use $health/hmis/hmis_clean_small, clear
-contract year_financial state district
-
-/* Rename Variables for merge clarity*/
-rename state hmis_state
-rename district hmis_district
-rename year_financial hmis_year
-
-/* Save hmis key  */
-save $health/hmis/hmis_clean_small_key, replace
-
-/******************************************************/
-/* Merge HMIS district key with lgd pc11 district key */
-/******************************************************/
-
-/* import data */
-use $health/hmis/hmis_clean_small_key, clear
-
-/* collapse dataset */
-bys hmis_state hmis_district: keep if _n == 1
-
-/* gen hmis state and district name vars */
-gen hmis_state_name = hmis_state
-gen hmis_district_name = hmis_district
-
-/* define programs to merge variables */
-qui do $ddl/covid/covid_progs.do
-
-/* format variables */
-lgd_state_clean hmis_state
-lgd_dist_clean hmis_district
-
-/* merge */
-lgd_state_match hmis_state
-lgd_dist_match hmis_district
-
-/* ren hmis vars */
-ren (hmis_state_name hmis_district_name) (hmis_state hmis_district)
-
-/* save matched dataset */
-save $health/hmis/hmis_district_key, replace
-
-
