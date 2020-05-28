@@ -1,16 +1,11 @@
 /***** TABLE OF CONTENTS *****/
+/* Preamble */
 /* Define program for final cleaning steps used in the last setcion of the do file */
-/* Generate demographic data at district and subdistrict levels */
-/* Prep Datasets at Geographic Levels */
-/* town directory */
-/* village directory */
-/* PCA */
-/* slums */
-/* Merge Together Data for Posting */
 /* Generate state-wise demographic, health capacity, and water access data at the district level */
 /* Create rural lgd-pc11 demographic dataset */
 /* Create urban lgd-pc11 demographic dataset */
 /* Append and collapse */
+
 
 /************/
 /* Preamble */
