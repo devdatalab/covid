@@ -13,7 +13,7 @@ merge 1:1 pc11_state_id pc11_district_id pc11_subdistrict_id pc11_village_id usi
 keep if _merge == 3
 drop _merge
 
-/* save rural PCA and VD subset in git repo */
+/* save rural PCA and VD subset in data repo */
 compress
 save $covidpub/hospitals/pc11r_hosp, replace
 cap mkdir $covidpub/hospitals/csv
@@ -36,12 +36,12 @@ ren pc11_td_tb_clinic pc11_td_tbc
 ren pc11_td_nur_homes pc11_td_nh
 ren pc11_td_mh_clinic pc11_td_mh
 
-/* merge with pca clean data at village level */
+/* merge with pca clean data at town level */
 merge 1:1 pc11_state_id pc11_district_id pc11_subdistrict_id pc11_town_id using $pc11/pc11u_pca_clean.dta, keepusing(pc11_pca_tot_p)
 keep if _merge == 3
 drop _merge
 
-/* save urban PCA and VD subset in git repo */
+/* save urban PCA and TD subset in data repo */
 compress
 save $covidpub/hospitals/pc11u_hosp, replace
 cap mkdir $covidpub/hospitals/csv

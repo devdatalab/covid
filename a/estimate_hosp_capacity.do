@@ -3,11 +3,11 @@
 
 /* merge DLHS, PC, EC together at district level */
 use $covidpub/hospitals/dlhs4_hospitals_dist.dta, clear
-merge 1:1 pc11_state_id pc11_district_id using $covidpub/hospitals/ec_hospitals_dist.dta, gen(_m_ec13)
-merge 1:1 pc11_state_id pc11_district_id using $covidpub/hospitals/pc_hospitals_dist.dta, gen(_m_pc11)
+merge 1:1 lgd_state_id lgd_district_id using $covidpub/hospitals/ec_hospitals_dist.dta, gen(_m_ec13)
+merge 1:1 lgd_state_id lgd_district_id using $covidpub/hospitals/pc_hospitals_dist.dta, gen(_m_pc11)
 
-/* drop if missing pc11 ids */
-drop if mi(pc11_state_id) | mi(pc11_district_id)
+/* drop if missing lgd ids */
+drop if mi(lgd_state_id) | mi(lgd_district_id)
 
 /* reconcile variable names (though really should do this in the build files above) */
 ren dlhs4* dlhs*
@@ -77,14 +77,34 @@ foreach y in dlhs_perk_pubpriv_beds pc_perk_pubpriv_hosp_beds {
 }
 
 /* get names */
-merge 1:1 pc11_state_id pc11_district_id using $keys/pc11_district_key, keepusing(pc11_state_name pc11_district_name)
+merge 1:1 lgd_state_id lgd_district_id using $keys/lgd_district_key, keepusing(lgd_state_name lgd_district_name)
 drop if _merge == 2
 drop _merge
 
 /* drop extraneous vars */
 drop _m_pc11 _m_ec13
 
-/* save district-level hospital dataset with 3 hospital sources: DLHS, PC, EC*/
+/* save LGD-identified district-level hospital dataset with 3 hospital sources: DLHS, PC, EC*/
 save $covidpub/estimates/hospitals_dist, replace
-cap mkdir $covidpub/estimates/csv
 export delimited $covidpub/estimates/csv/hospitals_dist.csv, replace
+
+/* save pc11-identified version. first define aggregation methods -
+all variables are sums, except dlhs_phc_mult */
+unab vars : _all
+unab nontarget_vars : lgd* dlhs_phc_mult
+local vars : list vars - nontarget_vars
+
+/* now loop over target vars and define agg globals for convert_ids to work */
+foreach var in `vars' {
+  global `var'_ sum
+}
+
+/* temporarily shorten a variable name that's too long */
+ren rank_pc_perk_pubpriv_hosp_beds tmp
+global tmp_ sum
+
+/* now run the conversion and save */
+convert_ids, from_ids(lgd_state_id lgd_district_id) to_ids(pc11_state_id pc11_district_id) key($keys/lgd_pc11_district_key_weights.dta) weight_var(lgd_pc11_wt_pop)
+ren tmp rank_pc_perk_pubpriv_hosp_beds
+save $covidpub/estimates/pc11/hospitals_dist_pc11, replace
+export delimited $covidpub/estimates/csv/hospitals_dist_pc11.csv, replace
