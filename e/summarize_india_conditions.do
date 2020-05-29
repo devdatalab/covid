@@ -147,6 +147,8 @@ drop hr_full_female hr_full_bmi_not_obese hr_full_bp_not_high
 /* see which hazards are correlated with age and which go in the other direction */
 rename hr_full_* hrf_*
 
+sum hrf*
+
 group pc11_state_id 
 foreach v of varlist hrf_* {
   quireg `v' hr_age_discrete, title(`v') cluster(sgroup)
@@ -162,6 +164,25 @@ foreach v of varlist hrf_* {
 
 /* collapse to age-specific data for plotting */
 use $tmp/tmp_hr_data, clear
+
+/* create some other risk factors to compare the graph */
+gen hr_full_age_discrete = hr_full_age18_40 * hr_full_age40_50 * hr_full_age50_60 * hr_full_age60_70 * hr_full_age70_80 * hr_full_age80_
+
+gen ln_d = ln(hr_full_age_discrete)
+gen ln_c = ln(hr_full_age_cts)
+
+collapse (mean) ln_c ln_d hr_full_age_discrete hr_full_age_cts, by(age)
+sort age
+twoway ///
+    (line ln_c age) ///
+    (line ln_d age)
+graphout collapse_log
+
+twoway ///
+    (line hr_full_age_discrete age) ///
+    (line hr_full_age_cts age), yscale(log)
+graphout collapse_level
+
 
 /* note: collapsing odds ratios here-- i'm still a bit unclear on what is correct. */
 collapse (mean) risk_factor_* [aw=wt], by(age)
@@ -194,3 +215,27 @@ sum risk_factor* if age == 65, d
 sum risk_factor* if age == 20 & male == 1, d
 sum risk_factor* if age == 65 & male == 1, d
 sum risk_factor* if age == 65 & male == 0, d
+
+
+/*****************************************/
+/* compare discrete and cts risk factors */
+/*****************************************/
+use $tmp/combined, clear
+
+/* compare discrete vs. continuous risk factors */
+keep hr_age_*_age* hr_full*age* age
+
+/* create combined discrete age factors */
+gen hr_age_discrete_full = hr_full_age18_40 * hr_full_age40_50 * hr_full_age50_60 * hr_full_age60_70 * hr_full_age70_80 * hr_full_age80_
+gen hr_age_discrete_age_sex = hr_age_sex_age18_40 * hr_age_sex_age40_50 * hr_age_sex_age50_60 * hr_age_sex_age60_70 * hr_age_sex_age70_80 * hr_age_sex_age80_
+
+gen ln_d_full = ln(hr_age_discrete_full)
+gen ln_d_age_sex = ln(hr_age_discrete_age_sex)
+gen ln_c_full = ln(hr_full_age_cts)
+gen ln_c_age_sex = ln(hr_age_sex_age_cts)
+
+binscatter ln_d_full ln_c_full age, linetype(none) xq(age)
+graphout hr_comp_full
+
+binscatter ln_d_age_sex ln_c_age_sex age, linetype(none) xq(age) legend(off)
+graphout hr_comp_age_sex

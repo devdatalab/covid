@@ -175,7 +175,6 @@ replace chronic_heart_dz = 1 if (cardio_illness == 1 | cardio_symptoms == 1)
 label var chronic_heart_dz "self-reported diagnosis or symptoms of heart disease"
 
 /* Diabetes */
-gen diabetes = 0
 
 /* standard WHO definition of diabetes is >=126mg/dL if fasting and >=200 if not */
 // replace diabetes = 1 if (hv91a >= 126 & hv91 == 1) | (hv91a >= 200 & hv91 == 2 & !mi(hv91a)) | (fasting_blood_glucose_mg_dl > 126 & !mi(fasting_blood_glucose_mg_dl)) 
@@ -183,6 +182,7 @@ gen diabetes = 0
 // label var diabetes "blood sugar >126mg/dL if fasting, >200mg/dL if not"
 
 /* we make the assumption that everyone is fasting and use that cutoff */
+gen diabetes = 0
 replace diabetes = 1 if fasting_blood_glucose_mg_dl >= 126
 replace diabetes = . if mi(fasting_blood_glucose_mg_dl)
 replace diabetes = . if pregnant == 1
@@ -361,18 +361,17 @@ apply_hr_to_comorbidities, hr(hr_full)
 apply_hr_to_comorbidities, hr(hr_age_sex)
 
 /* convert continuous age HRs to stata */
-import delimited $covidpub/covid/csv/uk_age_predicted_or.csv, clear
-ren or_simple hr_age_cts_simple
-ren or_full hr_age_cts_full
-replace hr_age_cts_simple = exp(hr_age_cts_simple)
-replace hr_age_cts_full = exp(hr_age_cts_full)
+import delimited $covidpub/covid/csv/uk_age_predicted_hr.csv, clear
+gen hr_age_sex_age_cts = exp(ln_hr_age_sex)
+gen hr_full_age_cts = exp(ln_hr_full)
+drop ln_*
 save $tmp/uk_age_predicted_or, replace
 
 /* combine the risk factors with the DLHS/AHS */
 use $health/dlhs/data/dlhs_ahs_covid_comorbidities, clear
 
 /* shrink by dropping string vars */
-drop prim_key tsend tsstart date_survey
+drop tsend tsstart date_survey
 
 merge 1:1 uid using $tmp/individual_risk_factors_hr_full, gen(_m_full)
 assert _m_full == 3
@@ -385,12 +384,6 @@ drop _m_agesex
 winsorize age 18 100, replace
 merge m:1 age using $tmp/uk_age_predicted_or, gen(_m_cts_age) keep(match master)
 assert _m_cts_age == 3
-
-gen x = uniform()
-sort x
-drop x
-list age hr_*_age40_50 age40_50 hr_age_cts_full hr_age_cts_simple in 1/20
-list age hr_*_age60_70 age60_70 hr_age_cts_full hr_age_cts_simple in 1/200
 
 save $tmp/combined, replace
 use $tmp/combined, clear
@@ -430,14 +423,14 @@ foreach condition in $comorbid_vars_no_age_sex {
 }
 
 /* now do the continuous age adjustment */
-replace risk_factor_full_cts = risk_factor_full_cts * hr_age_cts_full
+replace risk_factor_full_cts = risk_factor_full_cts * hr_full_age_cts
 
 /* 4. age-sex only, continuous age */
 /* adjust gender */
 replace risk_factor_simple_cts = risk_factor_simple_cts * hr_age_sex_male * hr_age_sex_female
 
 /* adjust continuous age */
-replace risk_factor_simple_cts = risk_factor_simple_cts * hr_age_cts_simple
+replace risk_factor_simple_cts = risk_factor_simple_cts * hr_age_sex_age_cts
 
 /* 5. experimental: risk factor from comorbid conditions only */
 foreach condition in $comorbid_vars_no_age_sex {
@@ -447,7 +440,7 @@ foreach condition in $comorbid_vars_no_age_sex {
 /* 6. experimental: use fully adjusted age model, but adjust for
       age-sex only (to see how much the conditions actually change the
       result) */
-replace risk_factor_age_weird = risk_factor_age_weird * hr_age_cts_full * hr_full_male * hr_full_female
+replace risk_factor_age_weird = risk_factor_age_weird * hr_full_age_cts * hr_full_male * hr_full_female
 
 /* save full dat set */
 save $tmp/tmp_hr_data, replace
