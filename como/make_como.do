@@ -4,7 +4,7 @@
 /*********************/
 
 /* get continuous fit to UK age hazard ratios */
-shell matlab $ccode/como/b/fit_cts_uk_age_hr.m
+// shell matlab $ccode/como/b/fit_cts_uk_age_hr.m
 
 /* combine DLHS and AHS */
 do $ccode/como/b/prep_health_data.do
