@@ -109,18 +109,20 @@ prog def sc
   syntax varlist, name(string) [yscale(passthru)]
   tokenize `varlist'
 
+  /* set a default yscale */
   if mi("`yscale'") local yscale yscale(log) ylabel(.125 .25 1 4 16 64)
   
+  /* loop over the outcome vars */
   while (!mi("`1'")) {
 
     /* store the variable label */
     local label : variable label `1'
 
+    /* add the line plot for this variable */
     local command `command' (line `1' age, `yscale' xtitle("`label'") ytitle("Mortality Hazard Ratio") lwidth(medthick) )
     mac shift
   }
 
-di `"`command'"  '
   twoway `command'
   graphout `name'
 end
