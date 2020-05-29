@@ -42,7 +42,12 @@ do $ccode/b/create_hmis_clean.do
 do $ccode/b/create_hmis_keys.do
 
 /* download latest district-level case data (runs in py3 conda env) */
- do $ccode/b/get_case_data
+do $ccode/b/get_case_data
+
+/* build NSS deaths data */
+do $ccode/b/gen_nss_district_key.do
+do $ccode/b/prep_nss75.do
+
 
 /***********************************************/
 /* PART 2 -- RUNS FROM DATA LINKED IN GIT REPO */
