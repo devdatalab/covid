@@ -171,6 +171,9 @@ foreach v in state mandi district item unit source spec priceunit group {
   drop old`v'
 }
 
+/* drop duplicates present in the raw data which do not provide additional information */
+duplicates drop date state mandi district item, force
+
 /* write out master dataset */
 order date state mandi district item unit priceunit source spec group, first
 compress
@@ -178,3 +181,4 @@ save $covidpub/agmark/agmark_clean.dta, replace
 
 * If you are generating only 2020 data comment above line and uncomment following line,
 *save $covidpub/agmark/agmark_2020lsgcoded.dta, replace 
+
