@@ -192,8 +192,12 @@ if mi("$covidpub") {
   di "Not in covid context; use set_context to continue"
   error 345
 }
-save $covidpub/hospitals/dlhs4_hospitals_dist, replace
+save $covidpub/hospitals/pc11/dlhs4_hospitals_dist_pc11, replace
+export delimited $covidpub/hospitals/csv/dlhs4_hospitals_dist_pc11, replace
 
-/* save a CSV version */
-cap mkdir $covidpub/hospitals/csv
+/* create LGD version */
+convert_ids, from_ids(pc11_state_id pc11_district_id) to_ids(lgd_state_id lgd_district_id) key($keys/lgd_pc11_district_key_weights.dta) weight_var(pc11_lgd_wt_pop) metadata_urls(https://docs.google.com/spreadsheets/d/e/2PACX-1vR8pkaS86ZlwcSe0ljKyL6wR_YOGE380JrHgAhG5Z66Oq1WtD4xtsJCsdCt-yAv8Qw0X74twBeIQ9of/pub?gid=1900447643&single=true&output=csv)
+save $covidpub/hospitals/dlhs4_hospitals_dist, replace
 export delimited $covidpub/hospitals/csv/dlhs4_hospitals_dist, replace
+
+

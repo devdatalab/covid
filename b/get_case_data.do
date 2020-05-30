@@ -165,12 +165,11 @@ ren cum_infected total_cases
 order lgd_state_id lgd_district_id date covid_state_name covid_district_name
 compress
 save $covidpub/covid/covid_infected_deaths, replace
-
-/* save csv version */
 export delimited using $covidpub/covid/csv/covid_infected_deaths.csv, replace
 
 /* save PC11-identified version */
 convert_ids, from_ids(lgd_state_id lgd_district_id) to_ids(pc11_state_id pc11_district_id) long(covid_state_name covid_district_name date) key($keys/lgd_pc11_district_key_weights.dta) weight_var(lgd_pc11_wt_pop) labels metadata_urls(https://docs.google.com/spreadsheets/d/e/2PACX-1vTKTuciRsUd6pk5kWhlMyhF85Iv5x04b0njSrWzCkaN5IeEZpBwwvmSdw-mUJOp215jBgv2NPMeTHXK/pub?gid=0&single=true&output=csv)
 order pc11*, first
 save $covidpub/covid/pc11/covid_infected_deaths_pc11, replace
+export delimited using $covidpub/covid/csv/covid_infected_deaths_pc11.csv, replace
 

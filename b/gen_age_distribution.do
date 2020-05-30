@@ -268,8 +268,26 @@ foreach level in district subdistrict {
   /* save totals */
   label data ""
   cap mkdir $covidpub/demography
-  save $covidpub/demography/age_bins_`level'_t, replace
+  save $covidpub/demography/pc11/age_bins_`level'_t_pc11, replace
   cap mkdir $covidpub/demography/csv
-  export delimited $covidpub/demography/csv/age_bins_`level'_t.csv, replace
+  export delimited $covidpub/demography/csv/age_bins_`level'_t_pc11.csv, replace
+
+  /* district data also gets saved to lgd */
+  if "`level'" == "district" {
+
+    /* first build variable globals to define the aggregation method */
+    foreach type in u r t {
+      global pc11_pca_tot_`type'_ sum
+      forval i = 0(5)80 {
+        global age_`i'_`type'_ sum
+        global age_`i'_`type'_share_ mean
+      }
+    }
+
+    /* convert to LGD, weighted by population */
+    convert_ids, from_ids(pc11_state_id pc11_district_id) to_ids(lgd_state_id lgd_district_id) key($keys/lgd_pc11_district_key_weights.dta) weight_var(pc11_lgd_wt_pop) 
+    save $covidpub/hospitals/ec_hospitals_dist, replace
+    export delimited $covidpub/hospitals/csv/ec_hospitals_dist.csv, replace
+  }
 }
 

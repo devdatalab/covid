@@ -303,4 +303,6 @@ foreach id in pc11 lgd {
 foreach file in water_district health_district dem_district {
   use $covidpub/demography/`file', clear
   export delimited $covidpub/demography/csv/`file'.csv, replace
+  use $covidpub/demography/pc11/`file'_pc11, clear
+  export delimited $covidpub/demography/csv/`file'_pc11.csv, replace
 }
