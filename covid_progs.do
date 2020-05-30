@@ -32,7 +32,7 @@ prog def lgd_state_clean
     replace lgd_state_name = "maharashtra" if lgd_state_name == "maharastra"
     replace lgd_state_name = "chhattisgarh" if lgd_state_name == "chattisgarh"
     replace lgd_state_name = "odisha" if lgd_state_name == "orissa"
-    
+
     /* fill down state identifier when missing */
     replace lgd_state_name = lgd_state_name[_n-1] if mi(lgd_state_name)
   }
@@ -121,6 +121,16 @@ prog def lgd_dist_clean
       replace lgd_district_name = "east jaintia hills" if dups == 1
       replace lgd_district_name = "west jaintia hills" if lgd_district_name == "jaintia hills"   
       drop dups
+
+      /*expand warangal into two obs*/
+      expand 2 if lgd_district_name == "warangal", gen(dups)                             
+      replace lgd_district_name = "warangal rural" if dups == 1                          
+      replace lgd_district_name = "warangal urban" if lgd_district_name == "warangal"    
+      drop dups                                                                          
+    }
+
+    /* idiosyncratic hmis data changes */
+    if "`0'" == "hmis_district" {
 
       /*expand warangal into two obs*/
       expand 2 if lgd_district_name == "warangal", gen(dups)                             
