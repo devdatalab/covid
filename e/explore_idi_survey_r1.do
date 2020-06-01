@@ -1,3 +1,6 @@
+global idi $iec/covid/idi_survey
+
+
 use $iec/covid/idi_survey/round1/wb1_cleaned_dataset_2020-05-10, clear
 
 /* declare survey data */
@@ -81,22 +84,96 @@ graphout migwage_effect_agri
 gen condecline = con_weekchange_mean < 0 & !mi(con_weekchange_mean)
 iebaltab demo_ag_hh mig_return_size mig_noreturn_ratio mig_most_inc mig_avg_wage mig_zeroinc_prop mig_wage_change_mean mig_size con_feb demo_hh_size lab_wagechange_mean lab_workdayschange_mean rel_transfer_rec, grpvar(condecline) save($tmp/balance.xlsx) replace
 
+/* consumption associations */
+binscatter con_weekchange_mean agr_prc_change_yr_mean
+graphout inputchange
 
-/* WIP */
+drop flag mig_stuck condecline
 
-/* labor surplus - those reporting not working because wages were too low? */
-fre lab_nowork_wages_prop
 
-/* labor scarce */
-fre agr_selldiff_labor
-fre agr_nosell_labor
+/*****************************/
+/* Analysis using shrug data */
+/*****************************/
 
-svy: tabulate lab_march_occu lab_curr_occu
+/* merge to shrug data */
+merge m:1 shrid using $idi/survey_shrid_data, keep(match master) nogen
+/* 70 obs with missing shrid didn't match */
+/* 2 obs with shrid 11-10-244076 didn't match, not present in shrug data */
 
-graphout currentlyunemployed
+/* label values prior to analysis */
+label define road 0 "no road" 1 "has road"
+label values rural_road road
 
-fre lab_march_occu if lab_curr_occu == 0
-fre lab_curr_occu if lab_march_occu == 1
-fre lab_curr_occu if lab_march_occu == 2
-fre lab_curr_occu if lab_march_occu == 3
-fre lab_curr_occu if lab_march_occu == 4
+/* consumption change */
+
+/* consumption decline and share of workforce in agricultural jobs */
+binscatter con_weekchange_mean pc11_pca_agr_work_share [aw = weight_hh]
+graphout con_ag_share
+
+/* consumption decline and share of workforce in agri + roads */
+binscatter con_weekchange_mean pc11_pca_agr_work_share [aw = weight_hh], by(rural_road)
+graphout con_ag_share_road
+
+/* consumption decline and landless share */
+binscatter con_weekchange_mean landless_share [aw = weight_hh]
+graphout con_landless
+
+/* consumption decline and size of landholding */
+binscatter con_weekchange_mean land_acres_per_capita [aw = weight_hh] if land_acres_per_capita < 3.5
+graphout con_landsize
+
+/* consumption and non farm jobs per capita */
+binscatter con_weekchange_mean ec13_nonfarm_emp_per_capita [aw = weight_hh]
+graphout con_nonfarmem_share
+
+/* consumption and roads */
+cibar con_weekchange_mean, over(rural_road) barcolor(teal black)
+graphout con_roads
+
+/* Relief */
+
+/* Relief and ag share */
+binscatter rel_amt_received_mean pc11_pca_agr_work_share [aw = weight_hh], absorb(geo_state)
+graphout relief_ag
+
+/* Relief and distance to city */
+binscatter rel_amt_received_mean tdist_100 [aw = weight_hh], absorb(geo_state)
+graphout relief_dist
+
+/* Price of perishables */
+
+/* onion price and distance */
+binscatter con_onionschange_mean tdist_100 [aw = weight_hh], absorb(geo_state)
+graphout price_onion_dist
+
+/* atta price and distance */
+binscatter con_attachange_mean tdist_100 [aw = weight_hh], absorb(geo_state)
+graphout price_atta_dist
+
+/* onion price and roads */
+binscatter con_onionschange_mean tdist_100 [aw = weight_hh], absorb(geo_state) by(rural_road)
+graphout price_onions_dist_road
+
+/* onion price and roads */
+binscatter con_attachange_mean tdist_100 [aw = weight_hh], absorb(geo_state) by(rural_road)
+graphout price_atta_dist_road
+
+/* Inputs and prices */
+binscatter agr_prc_change_yr_mean agr_inputs_change_abs_mean [aw = weight_hh], absorb(geo_state)
+graphout inputs_price
+
+/* Migration */
+
+/* consumption and migrant size of households */
+binscatter con_weekchange_mean mig_size [aw = weight_hh]
+graphout migsize_con
+
+/* Wage change */
+
+/* wage change and labor surplus */
+binscatter lab_wagechange_mean land_acres_per_capita [aw = weight_hh] if land_acres_per_capita < 3.5, absorb(geo_state)
+graphout labsurplus
+
+/* zero income for the past week */
+catplot lab_zeroinc_prop [aw = weight_hh], over(geo_state) perc(geo_state) ytitle(" " ) 
+graphout zero_inc
