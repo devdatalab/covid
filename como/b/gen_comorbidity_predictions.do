@@ -208,6 +208,16 @@ replace diabetes = 1 if (fasting_blood_glucose_mg_dl >= 126 & !mi(fasting_blood_
 replace diabetes = . if pregnant == 1
 label var diabetes "blood sugar >126mg/dL if fasting, >200mg/dL if not"
 
+/* get diabetes that are self-reported */
+gen diabetes_selfreport = 0 if !mi(diagnosed_for)
+replace diabetes_selfreport = 1 if diagnosed_for == 1
+label var diabetes_selfreport "self-reported diagnosis of diabetes in the last year"
+
+/* combined diabetes measure */
+gen diabetes_combined = diabetes
+replace diabetes_combined = 1 if diabetes_selfreport == 1
+label var diabetes_combined "biomarker or self-reported diabetes diagnosis"
+
 /* Cancer - non-haematological */
 gen cancer_non_haem = 0 if sample != 1
 /* respiratory system, gastrointestinal system, genitourinary system, breast, tumor (any type), skin cancer */
@@ -240,16 +250,7 @@ replace autoimmune_dz = 1 if (diagnosed_for == 19 | diagnosed_for == 20)
 label var autoimmune_dz "self-reported psoriasis or rheumatoid arthritis"
 
 /* keep only identifying information and comorbidity variables */
-keep uid pc11* psu htype rcvid supid tsend tsstart person_index hh* *wt survey rural_urban stratum psu_id ahs_house_unit house_hold_no date_survey age* male female bmi* height weight_in_kg bp* resp* cardio_symptoms diabetes *haem* *_dz stroke diagnosed_for fasting* survey sample
-
-/* save the full sample to get our best estimates at population prevelance */
-save $health/dlhs/data/dlhs_ahs_covid_comorbidities_full, replace
-
-/* drop if missing key values from CAB survey - we want to only use observations that have these measureable values */
-drop if mi(bp_high) | mi(diabetes) | mi(bmi)
-
-/* drop if missing all self-reported illness, i.e. only the CAB section was asked */
-drop if sample == 1
+keep uid pc11* psu htype rcvid supid tsend tsstart person_index hh* *wt survey rural_urban stratum psu_id ahs_house_unit house_hold_no date_survey age* male female bmi* height weight_in_kg bp* resp* cardio_symptoms diabetes* *haem* *_dz stroke diagnosed_for fasting* survey sample
 
 /* create a combined weight variable */
 /* - assume all AHS weights are 1 (since it's self-weighting) */
@@ -259,6 +260,15 @@ drop if sample == 1
 replace dhhwt = 1 if mi(dhhwt)
 capdrop wt
 gen wt = dhhwt
+
+/* save the full sample to get our best estimates at population prevelance */
+save $health/dlhs/data/dlhs_ahs_covid_comorbidities_full, replace
+
+/* drop if missing key values from CAB survey - we want to only use observations that have these measureable values */
+drop if mi(bp_high) | mi(diabetes) | mi(bmi)
+
+/* drop if missing all self-reported illness, i.e. only the CAB section was asked */
+drop if sample == 1
 
 /* create a single age bin variable from the many binary variables */
 gen age_bin = ""
@@ -464,7 +474,6 @@ replace risk_factor_age_weird = risk_factor_age_weird * hr_full_age_cts * hr_ful
 
 /* save full dat set */
 save $tmp/tmp_hr_data, replace
-
 
 
 /* paul stopped here -- the rest needs to be updated with the risk ratios */
