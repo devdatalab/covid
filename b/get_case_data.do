@@ -12,10 +12,15 @@ This file does the following steps for both case data and death data:
 /********************************/
 /* COMBINED CASE AND DEATH DATA */
 /********************************/
-/* Added 05/05/2020: pull in case data from covindia. */
+/* Added 05/05/2020: pull in case data from covindia.
+   Note: as of June 1 2020, covindia is defunct.  We now use covindia data up until April 27
+   then use covid19india (crowdsource) data following that date.  We retain the covindia data 
+   because the structure of the covindia2019 data changed April 27, making the older data 
+   more difficult to make compatible with the current data. */
 cd $ddl/covid
 
-/* 1. Retrieve the data */
+/* 1. Retrieve the data from covindia up until April 27 */
+
 /* call python function to retrieve the district-date level covid data */
 shell python -c "from b.retrieve_case_data import retrieve_covindia_case_data; retrieve_covindia_case_data('https://v1.api.covindia.com/covindia-raw-data', '$tmp')"
 
@@ -47,6 +52,71 @@ replace state = trim(lower(state))
 
 /* correct internal misspellings of districts */
 synonym_fix district, synfile($ddl/covid/b/str/covid_district_fixes.txt) replace
+
+/* create a numerical date field */
+gen date_num = date(date, "DMY")
+
+/* keep only data on or before April 26 2020, which has a date_num == 22031 */
+keep if date_num <= 22031
+
+/* rename to match the language we use in covid19india data */
+ren infected cases
+drop time source
+
+/* sort by district */
+sort state district date_num
+
+/* count cumulative totals to match covid19india */
+bys state district (date_num) : gen cases_total = sum(cases)
+bys state district (date_num) : gen death_total = sum(death)
+
+/* restructure date to match cov19india */
+split date, p("/")
+replace date = date3 + "-" + date2 + "-" + date1
+drop date1 date2 date2
+
+/* replace state names to match cov19india */
+replace state = "andaman and nicobar islands" if state == "andaman and nicobar"
+replace state = "odisha" if state == "orissa"
+
+/* save data */
+save $tmp/covindia_raw_data, replace
+
+/* 2. Retrieve the data from covid19india for all dates April 27 onwards */
+
+/* define the url and pull the data files from covid19india */
+shell python -c "from b.retrieve_case_data import retrieve_covid19india_district_data; retrieve_covid19india_district_data('https://api.covid19india.org/districts_daily.json', '$tmp')"
+
+/* read in the data */
+import delimited using $tmp/covid19india_district_data.csv, clear
+
+/* create numerical date */
+gen date_num = date(date, "YMD")
+drop if mi(date)
+
+/* drop the few datapoints before April 27, these are data entry errors */
+drop if date_num <= 22031
+sort date_num state district
+
+/* 3. Combine covindia and covid2019india data */
+replace state = lower(state)
+replace state = "dadra and nagar haveli and daman and diu" if state == "dadra and nagar haveli"
+replace district = lower(district)
+
+/* correct internally inconsistent district names */
+synonym_fix district, synfile($ddl/covid/b/str/cov19india_district_fixes.txt) replace
+
+ren deceased death_total
+ren confirmed cases_total
+
+/* drop unneeded variables */
+drop v1 notes date_obj
+
+/* append the covindia data */
+append using $tmp/covindia_raw_data
+
+/* sort */
+sort date_num state district
 
 /* save data */
 save $tmp/covindia_raw_data, replace

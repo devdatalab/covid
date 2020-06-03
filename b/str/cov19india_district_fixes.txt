@@ -1,0 +1,6 @@
+master,district,state
+ysr kadapa,y.s.r kadapa,andhra pradesh
+ysr kadapa,y.s.r.,andhra pradesh
+ysr kadapa,y.s.r. kadapa,andhra pradesh
+ysr kadapa,y s r,andhra pradesh
+sri potti sriramulu nellore,s.p.s. nellore,andhra pradesh
