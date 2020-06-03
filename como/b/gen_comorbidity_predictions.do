@@ -214,8 +214,8 @@ replace diabetes_selfreport = 1 if diagnosed_for == 1
 label var diabetes_selfreport "self-reported diagnosis of diabetes in the last year"
 
 /* combined diabetes measure */
-gen diabetes_combined = diabetes
-replace diabetes_combined = 1 if diabetes_selfreport == 1
+gen diabetes_combined = 1 if diabetes == 1 | diabetes_selfreport == 1
+replace diabetes_combined = 0 if mi(diabetes_combined)
 label var diabetes_combined "biomarker or self-reported diabetes diagnosis"
 
 /* Cancer - non-haematological */
@@ -259,9 +259,40 @@ keep uid pc11* psu htype rcvid supid tsend tsstart person_index hh* *wt survey r
          (https://devdatalab.slack.com/archives/C012P55U163/p1590344336022400?thread_ts=1590343170.011200&cid=C012P55U163)*/
 replace dhhwt = 1 if mi(dhhwt)
 capdrop wt
-gen wt = dhhwt
+gen hhwt = dhhwt
 
 /* save the full sample to get our best estimates at population prevelance */
+save $health/dlhs/data/dlhs_ahs_covid_comorbidities_full, replace
+
+/* open the population data */
+use $iec1/pc11/pc11_pca_district_clean, clear
+
+/* calculate total state and national population */
+bys pc11_state_id: egen long state_pop = total(pc11_pca_tot_p)
+egen long national_pop = total(pc11_pca_tot_p)
+
+/* create state and district weights */
+gen swt = pc11_pca_tot_p / state_pop
+label var swt "district weight for state-level aggregation"
+gen dwt = pc11_pca_tot_p / national_pop
+label var dwt "district weight for national aggregation"
+
+/* save as a temporary file */
+keep pc11_state_id pc11_district_id pc11_pca_tot_p swt dwt
+save $tmp/pc11_popweights, replace
+
+/* re-open the health data */
+use $health/dlhs/data/dlhs_ahs_covid_comorbidities_full, clear
+
+/* merge in population weights */
+merge m:1 pc11_state_id pc11_district_id using $tmp/pc11_popweights, keep(match master)
+drop _merge
+
+/* calculate final weight which is household * district */
+gen wt = hhwt * dwt
+label var wt "household x district weight for national aggregation"
+
+/* re-save the full dataset */
 save $health/dlhs/data/dlhs_ahs_covid_comorbidities_full, replace
 
 /* drop if missing key values from CAB survey - we want to only use observations that have these measureable values */
