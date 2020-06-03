@@ -1,7 +1,7 @@
 global idi $iec/covid/idi_survey
 
-
-use $iec/covid/idi_survey/round1/wb1_cleaned_dataset_2020-05-10, clear
+/* use most recent data */
+use $idi/round1/wb1_cleaned_dataset_2020-06-02, clear
 
 /* declare survey data */
 svyset psu [pw=weight_hh], strata(strata_id) singleunit(scaled)
@@ -21,34 +21,8 @@ replace flag = 1 if demo_age >= 80 & !mi(demo_age)
 
 /* Note: disproportionately backward caste */
 
-/* occupation of non-agri households */
-fre lab_march_occu if demo_ag_hh == 0
-
-/* very large hhs */
-sum demo_hh_size, d
-replace flag = 1 if demo_hh_size >= r(p99) & !mi(demo_hh_size)
-replace flag = 1 if demo_hh_size == 0
-
 /* migrants and hh members */
 replace flag = 1 if mig_size >= demo_hh_size & demo_hh_size != 0
-
-/* no. of migrants returned/not home cannot exceed no. of migrants in hh */
-count if mig_return_size > mig_size & !mi(mig_return_size)
-count if mig_no_return_size > mig_size & !mi(mig_no_return_size)
-
-/* prices/availability of atta, rice, onions*/
-foreach i in atta rice onions {
-disp_nice "`i'"
-  compare con_wk_`i' con_curr_`i'
-}
-
-foreach i in atta rice onion {
-tab con_`i'_unavail_prop
-}
-
-/* check how occupation has changed pre/post lockdown */
-fre lab_march_occu
-fre lab_curr_occu
 
 /* check if anything valuable is in the other option */
 tab lab_march_occu_oth
@@ -104,11 +78,11 @@ merge m:1 shrid using $idi/survey_shrid_data, keep(match master) nogen
 label define road 0 "no road" 1 "has road"
 label values rural_road road
 
-/* consumption change */
-
-/* consumption decline and share of workforce in agricultural jobs */
-binscatter con_weekchange_mean pc11_pca_agr_work_share [aw = weight_hh]
-graphout con_ag_share
+/* consumption levels */
+foreach x of var con_feb con_wk con_weekchange_mean {
+  binscatter `x' pc11_pca_agr_work_share [aw = weight_hh]
+  graphout `x'_ag
+}
 
 /* consumption decline and share of workforce in agri + roads */
 binscatter con_weekchange_mean pc11_pca_agr_work_share [aw = weight_hh], by(rural_road)
@@ -130,11 +104,19 @@ graphout con_nonfarmem_share
 cibar con_weekchange_mean, over(rural_road) barcolor(teal black)
 graphout con_roads
 
+/* consumption and religion */
+cibar con_weekchange_mean [aw = weight_hh], over(demo_religion) barcolor(teal black)
+graphout con_rel
+
 /* Relief */
 
 /* Relief and ag share */
 binscatter rel_amt_received_mean pc11_pca_agr_work_share [aw = weight_hh], absorb(geo_state)
 graphout relief_ag
+
+/* Relief and pre covid consumption */
+binscatter rel_amt_received_mean con_feb [aw = weight_hh], absorb(geo_state) 
+graphout relief_confeb
 
 /* Relief and distance to city */
 binscatter rel_amt_received_mean tdist_100 [aw = weight_hh], absorb(geo_state)
@@ -154,7 +136,7 @@ graphout price_atta_dist
 binscatter con_onionschange_mean tdist_100 [aw = weight_hh], absorb(geo_state) by(rural_road)
 graphout price_onions_dist_road
 
-/* onion price and roads */
+/* atta price and roads */
 binscatter con_attachange_mean tdist_100 [aw = weight_hh], absorb(geo_state) by(rural_road)
 graphout price_atta_dist_road
 
@@ -162,11 +144,27 @@ graphout price_atta_dist_road
 binscatter agr_prc_change_yr_mean agr_inputs_change_abs_mean [aw = weight_hh], absorb(geo_state)
 graphout inputs_price
 
+/* prices and distance to city */
+binscatter agr_prc_change_yr_mean tdist_100 [aw = weight_hh], absorb(geo_state)
+graphout price_dist
+
+/* above plot by crop category */
+binscatter agr_prc_change_yr_mean tdist_100 [aw = weight_hh], by(agr_crop_cat_prop) absorb(geo_state)
+graphout price_crops
+
 /* Migration */
 
 /* consumption and migrant size of households */
-binscatter con_weekchange_mean mig_size [aw = weight_hh]
+binscatter con_weekchange_mean mig_ratio [aw = weight_hh]
 graphout migsize_con
+
+/* migration size and agriculture work share */
+binscatter mig_ratio pc11_pca_agr_work_share [aw = weight_hh]
+graphout migsize_ag
+
+/* mig wage change */
+binscatter mig_wage_change_mean land_acres_per_capita [aw = weight_hh] if land_acres_per_capita < 3.5, absorb(geo_state)
+graphout mig_wage
 
 /* Wage change */
 
@@ -174,6 +172,13 @@ graphout migsize_con
 binscatter lab_wagechange_mean land_acres_per_capita [aw = weight_hh] if land_acres_per_capita < 3.5, absorb(geo_state)
 graphout labsurplus
 
-/* zero income for the past week */
-catplot lab_zeroinc_prop [aw = weight_hh], over(geo_state) perc(geo_state) ytitle(" " ) 
-graphout zero_inc
+/* wage change and shrid vars */
+binscatter lab_wagechange_mean ec13_nonfarm_emp_per_capita [aw = weight_hh], absorb(geo_state)
+graphout labnonfarm
+
+/* what determines consumption change */
+svy: reg con_weekchange_mean pc11_pca_agr_work_share landless_share rel_amt_received_mean tdist_100 land_acres_per_capita demo_hh_size i.geo_state
+coefplot
+graphout reg
+
+
