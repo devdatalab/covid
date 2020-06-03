@@ -61,7 +61,7 @@ label var bmi "Body Mass Index kg/m^2"
 replace bmi = . if bmi >= 100 
 replace bmi = . if bmi <10
 
-/* get bmi categories */
+/* get bmi categories used in UK paper */
 gen bmi_not_obese = 0
 replace bmi_not_obese = 1 if (bmi < 30)
 replace bmi_not_obese = . if mi(bmi)
@@ -81,6 +81,27 @@ gen bmi_obeseIII = 0
 replace bmi_obeseIII = 1 if (bmi >= 40)
 replace bmi_obeseIII = . if mi(bmi)
 label var bmi_obeseIII "obese class III, bmi >=40"
+
+/* create additional WHO-defined BMI categories */
+gen bmi_underweight_severe = 0 if !mi(bmi)
+replace bmi_underweight_severe = 1 if bmi < 16 & !mi(bmi)
+label var bmi_underweight_severe "WHO-defined severe underweight bmi"
+
+gen bmi_underweight_moderate = 0 if !mi(bmi)
+replace bmi_underweight_moderate = 1 if (bmi >= 16 & bmi < 17) & !mi(bmi)
+label var bmi_underweight_moderate "WHO-defined moderate underweight bmi"
+
+gen bmi_underweight_mild = 0 if !mi(bmi)
+replace bmi_underweight_mild = 1 if (bmi >= 17 & bmi < 18.5) & !mi(bmi)
+label var bmi_underweight_mild "WHO-defined mild underweight bmi"
+
+gen bmi_normal = 0 if !mi(bmi)
+replace bmi_normal = 1 if (bmi >= 18.5 & bmi < 25) & !mi(bmi)
+label var bmi_normal "WHO-defined normal bmi"
+
+gen bmi_preobese = 0 if !mi(bmi)
+replace bmi_preobese = 1 if (bmi >= 25 & bmi < 30) & !mi(bmi)
+label var bmi_preobese "WHO-defined preobese bmi"
 
 /* Blood Pressure */
 /* take the average of two systolic measurements */
@@ -161,7 +182,7 @@ label var resp_chronic "self-reported diagnosis or symptoms of respiratory illne
 
 /* Chronic heart disease */
 gen cardio_illness = 0 if sample != 1
-replace cardio_illness = 1 if diagnosed_for == 3
+replace cardio_illness = 1 if diagnosed_for == 3 | diagnosed_for == 4 | diagnosed_for == 26
 label var cardio_illness "self-reported diagnosis of chronic heart disease"
 
 /* get cardiovascular system symptoms */
@@ -175,18 +196,27 @@ replace chronic_heart_dz = 1 if (cardio_illness == 1 | cardio_symptoms == 1)
 label var chronic_heart_dz "self-reported diagnosis or symptoms of heart disease"
 
 /* Diabetes */
+gen diabetes = 0 if !mi(fasting_blood_glucose_mg_dl)
 
 /* standard WHO definition of diabetes is >=126mg/dL if fasting and >=200 if not */
-// replace diabetes = 1 if (hv91a >= 126 & hv91 == 1) | (hv91a >= 200 & hv91 == 2 & !mi(hv91a)) | (fasting_blood_glucose_mg_dl > 126 & !mi(fasting_blood_glucose_mg_dl)) 
-// replace diabetes = . if (mi(hv91a) | mi(hv91)) & mi(fasting_blood_glucose_mg_dl)
-// label var diabetes "blood sugar >126mg/dL if fasting, >200mg/dL if not"
+replace diabetes = 1 if (fasting_blood_glucose_mg_dl >= 126 & fasting_blood_glucose == 1) | (fasting_blood_glucose_mg_dl >= 200 & fasting_blood_glucose == 2 & !mi(fasting_blood_glucose))
 
-/* we make the assumption that everyone is fasting and use that cutoff */
-gen diabetes = 0
-replace diabetes = 1 if fasting_blood_glucose_mg_dl >= 126
-replace diabetes = . if mi(fasting_blood_glucose_mg_dl)
+/* assume that people with a glucose measure but missing fasting data are fasting */
+replace diabetes = 1 if (fasting_blood_glucose_mg_dl >= 126 & !mi(fasting_blood_glucose_mg_dl)) & mi(fasting_blood_glucose)
+
+/* the threshold is not well established for pregnant women, set their values to missing */
 replace diabetes = . if pregnant == 1
-label var diabetes "blood sugar >126mg/dL"
+label var diabetes "blood sugar >126mg/dL if fasting, >200mg/dL if not"
+
+/* get diabetes that are self-reported */
+gen diabetes_selfreport = 0 if !mi(diagnosed_for)
+replace diabetes_selfreport = 1 if diagnosed_for == 1
+label var diabetes_selfreport "self-reported diagnosis of diabetes in the last year"
+
+/* combined diabetes measure */
+gen diabetes_combined = 1 if diabetes == 1 | diabetes_selfreport == 1
+replace diabetes_combined = 0 if mi(diabetes_combined)
+label var diabetes_combined "biomarker or self-reported diabetes diagnosis"
 
 /* Cancer - non-haematological */
 gen cancer_non_haem = 0 if sample != 1
@@ -220,16 +250,7 @@ replace autoimmune_dz = 1 if (diagnosed_for == 19 | diagnosed_for == 20)
 label var autoimmune_dz "self-reported psoriasis or rheumatoid arthritis"
 
 /* keep only identifying information and comorbidity variables */
-keep uid pc11* psu htype rcvid supid tsend tsstart person_index hh* *wt survey rural_urban stratum psu_id ahs_house_unit house_hold_no date_survey age* male female bmi* height weight_in_kg bp* resp* cardio_symptoms diabetes *haem* *_dz stroke diagnosed_for survey sample
-
-/* save the full sample to get our best estimates at population prevelance */
-save $health/dlhs/data/dlhs_ahs_covid_comorbidities_full, replace
-
-/* drop if missing key values from CAB survey - we want to only use observations that have these measureable values */
-drop if mi(bp_high) | mi(diabetes) | mi(bmi)
-
-/* drop if missing all self-reported illness, i.e. only the CAB section was asked */
-drop if sample == 1
+keep uid pc11* psu htype rcvid supid tsend tsstart person_index hh* *wt survey rural_urban stratum psu_id ahs_house_unit house_hold_no date_survey age* male female bmi* height weight_in_kg bp* resp* cardio_symptoms diabetes* *haem* *_dz stroke diagnosed_for fasting* survey sample
 
 /* create a combined weight variable */
 /* - assume all AHS weights are 1 (since it's self-weighting) */
@@ -238,7 +259,47 @@ drop if sample == 1
          (https://devdatalab.slack.com/archives/C012P55U163/p1590344336022400?thread_ts=1590343170.011200&cid=C012P55U163)*/
 replace dhhwt = 1 if mi(dhhwt)
 capdrop wt
-gen wt = dhhwt
+gen hhwt = dhhwt
+
+/* save the full sample to get our best estimates at population prevelance */
+save $health/dlhs/data/dlhs_ahs_covid_comorbidities_full, replace
+
+/* open the population data */
+use $iec1/pc11/pc11_pca_district_clean, clear
+
+/* calculate total state and national population */
+bys pc11_state_id: egen long state_pop = total(pc11_pca_tot_p)
+egen long national_pop = total(pc11_pca_tot_p)
+
+/* create state and district weights */
+gen swt = pc11_pca_tot_p / state_pop
+label var swt "district weight for state-level aggregation"
+gen dwt = pc11_pca_tot_p / national_pop
+label var dwt "district weight for national aggregation"
+
+/* save as a temporary file */
+keep pc11_state_id pc11_district_id pc11_pca_tot_p swt dwt
+save $tmp/pc11_popweights, replace
+
+/* re-open the health data */
+use $health/dlhs/data/dlhs_ahs_covid_comorbidities_full, clear
+
+/* merge in population weights */
+merge m:1 pc11_state_id pc11_district_id using $tmp/pc11_popweights, keep(match master)
+drop _merge
+
+/* calculate final weight which is household * district */
+gen wt = hhwt * dwt
+label var wt "household x district weight for national aggregation"
+
+/* re-save the full dataset */
+save $health/dlhs/data/dlhs_ahs_covid_comorbidities_full, replace
+
+/* drop if missing key values from CAB survey - we want to only use observations that have these measureable values */
+drop if mi(bp_high) | mi(diabetes) | mi(bmi)
+
+/* drop if missing all self-reported illness, i.e. only the CAB section was asked */
+drop if sample == 1
 
 /* create a single age bin variable from the many binary variables */
 gen age_bin = ""
@@ -444,7 +505,6 @@ replace risk_factor_age_weird = risk_factor_age_weird * hr_full_age_cts * hr_ful
 
 /* save full dat set */
 save $tmp/tmp_hr_data, replace
-
 
 
 /* paul stopped here -- the rest needs to be updated with the risk ratios */

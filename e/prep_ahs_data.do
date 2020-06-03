@@ -161,7 +161,7 @@ ddrop state district stratum ahs_house_unit house_hold_no sl_no identification_c
 /******************************/
 
 /* merge in some variables from the household data */
-merge 1:1 state district stratum ahs_house_unit house_hold_no sl_no identification_code using $tmp/ahs_comb_formerge, keepusing(illness_type illness_type diagnosed_for sex_comb year_of_birth_comb age_comb usual_residance_comb)
+merge 1:1 state district stratum ahs_house_unit house_hold_no sl_no identification_code using $tmp/ahs_comb_formerge, keepusing(illness_type illness_type diagnosed_for sex_comb year_of_birth_comb age_comb usual_residance_comb regular_treatment)
 
 /* keep the master (cab-only) and matched (cab + hh) data */
 ren _merge ahs_merge
@@ -174,7 +174,7 @@ ren bp_diastolic bp_diastolic_1_reading
 ren bp_diastolic_2reading bp_diastolic_2_reading
 
 /* clean missing values in the AHS */
-foreach var in weight_in_kg length_height_cm age haemoglobin_level bp_systolic_1_reading bp_systolic_2_reading bp_diastolic_1_reading bp_diastolic_2_reading pulse_rate pulse_rate_2_reading fasting_blood_glucose_mg_dl first_breast_feeding is_cur_breast_feeding illness_type treatment_type illness_duration{
+foreach var in weight_in_kg length_height_cm age haemoglobin_level bp_systolic_1_reading bp_systolic_2_reading bp_diastolic_1_reading bp_diastolic_2_reading pulse_rate pulse_rate_2_reading fasting_blood_glucose_mg_dl fasting_blood_glucose first_breast_feeding is_cur_breast_feeding illness_type treatment_type illness_duration{
   replace `var' = . if `var' == -1
 }
 
