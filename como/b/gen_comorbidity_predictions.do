@@ -307,6 +307,19 @@ foreach i in age18_40 age40_50 age50_60 age60_70 age70_80 age80_ {
   replace age_bin = "`i'" if `i' != 0 
 }
 
+/* map DLHS/AHS conditions to the ones we have hazard ratios for in the NHS paper */
+gen chronic_resp_dz = resp_chronic
+gen diabetes_uncontr = diabetes
+gen cancer_non_haem_1 = cancer_non_haem
+gen haem_malig_1 = haem_malig
+gen stroke_dementia = stroke
+
+label var chronic_resp_dz   "Chronic respiratory disease as matched to NHS"
+label var diabetes_uncontr  "Diabetes as matched to NHS"
+label var cancer_non_haem_1 "Non-Haem cancer as matched to NHS"
+label var haem_malig_1      "Haematological cancer as matched to NHS"
+label var stroke_dementia   "Stroke/dementia as matched to NHS"
+
 /* save limited dataset with only comorbidity data */
 compress
 save $health/dlhs/data/dlhs_ahs_covid_comorbidities, replace
@@ -356,7 +369,7 @@ prog def apply_hr_to_comorbidities
   save $tmp/uk_nhs_hazard_ratios, replace
 
   /* call a short python funciton to flatten our selected HR value into an array */
-  cd $ddl/covid
+  cd $ddl/covid/como
   shell python -c "from e.flatten_hr_data import flatten_hr_data; flatten_hr_data('`hr'', '$tmp/uk_nhs_hazard_ratios.dta', '$tmp/uk_nhs_hazard_ratios_flat_`hr'.csv')"
 
   /* read in the csv and save as a stata file */
@@ -377,13 +390,6 @@ prog def apply_hr_to_comorbidities
 
   /* open the india data */
   use $health/dlhs/data/dlhs_ahs_covid_comorbidities, clear
-
-  /* rename variables according to how we want to match to the NHS HR */
-  ren `chronic_resp_dz' chronic_resp_dz
-  ren `diabetes_uncontr' diabetes_uncontr
-  ren `cancer_non_haem_1' cancer_non_haem_1
-  ren `haem_malig_1' haem_malig_1
-  ren `stroke_dementia' stroke_dementia
 
   /* create a dummy index to merge in the HR values */
   gen v1 = 0
@@ -503,38 +509,5 @@ foreach condition in $comorbid_vars_no_age_sex {
       result) */
 replace risk_factor_age_weird = risk_factor_age_weird * hr_full_age_cts * hr_full_male * hr_full_female
 
-/* save full dat set */
+/* save full data set */
 save $tmp/tmp_hr_data, replace
-
-
-/* paul stopped here -- the rest needs to be updated with the risk ratios */
-exit
-
-/* create sample size counter */
-gen N = 1
-
-/* Collapse to age/state groups */
-collapse (sum) N (mean) risk_total risk_age_sex, by(pc11_state_id pc11_state_name age_bin hr)
-
-/* get the risk for all comorbidities with the fully adjusted HR */
-gen r_comorbid_adj = risk_total if hr == "hr_full"
-replace r_comorbid_adj = 0 if mi(r_comorbid_adj)
-
-/* get the risk for age and sex with the fully adjusted HR */
-gen r_age_sex_adj = risk_age_sex if hr =="hr_full"
-replace r_age_sex_adj= 0 if mi(r_age_sex_adj)
-
-/* get the risk for age and sex with just age and sex adjusted HR */
-gen r_age_sex_unadj = risk_age_sex if hr == "hr_age_sex"
-replace r_age_sex_unadj = 0 if mi(r_age_sex_unadj)
-
-/* collpse across HR values */
-collapse (sum) r_comorbid_adj r_age_sex_adj r_age_sex_unadj, by(pc11_state_name pc11_state_id age_bin N)
-
-/* label variables */
-label var r_comorbid_adj "risk for all comorbidities with fully adjusted HR"
-label var r_age_sex_adj "risk for age and sex with fully adjusted HR"
-label var r_age_sex_unadj "risk for age and sex with only age-sex adjusted HR"
-
-/* save data set */
-save $health/dlhs/data/comorbid_risk_estimates, replace
