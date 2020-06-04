@@ -370,7 +370,7 @@ prog def apply_hr_to_comorbidities
 
   /* call a short python funciton to flatten our selected HR value into an array */
   cd $ddl/covid/como
-  shell python -c "from e.flatten_hr_data import flatten_hr_data; flatten_hr_data('`hr'', '$tmp/uk_nhs_hazard_ratios.dta', '$tmp/uk_nhs_hazard_ratios_flat_`hr'.csv')"
+  shell python -c "from b.flatten_hr_data import flatten_hr_data; flatten_hr_data('`hr'', '$tmp/uk_nhs_hazard_ratios.dta', '$tmp/uk_nhs_hazard_ratios_flat_`hr'.csv')"
 
   /* read in the csv and save as a stata file */
   import delimited $tmp/uk_nhs_hazard_ratios_flat_`hr'.csv, clear
@@ -432,7 +432,7 @@ import delimited $covidpub/covid/csv/uk_age_predicted_hr.csv, clear
 gen hr_age_sex_age_cts = exp(ln_hr_age_sex)
 gen hr_full_age_cts = exp(ln_hr_full)
 drop ln_*
-save $tmp/uk_age_predicted_or, replace
+save $tmp/uk_age_predicted_hr, replace
 
 /* combine the risk factors with the DLHS/AHS */
 use $health/dlhs/data/dlhs_ahs_covid_comorbidities, clear
@@ -449,7 +449,7 @@ drop _m_agesex
 
 /* bring in continuous age factors */
 winsorize age 18 100, replace
-merge m:1 age using $tmp/uk_age_predicted_or, gen(_m_cts_age) keep(match master)
+merge m:1 age using $tmp/uk_age_predicted_hr, gen(_m_cts_age) keep(match master)
 assert _m_cts_age == 3
 
 save $tmp/combined, replace

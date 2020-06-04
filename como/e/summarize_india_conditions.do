@@ -168,20 +168,20 @@ use $tmp/tmp_hr_data, clear
 /* create some other risk factors to compare the graph */
 gen hr_full_age_discrete = hr_full_age18_40 * hr_full_age40_50 * hr_full_age50_60 * hr_full_age60_70 * hr_full_age70_80 * hr_full_age80_
 
-gen ln_d = ln(hr_full_age_discrete)
-gen ln_c = ln(hr_full_age_cts)
-
-collapse (mean) ln_c ln_d hr_full_age_discrete hr_full_age_cts, by(age)
-sort age
-twoway ///
-    (line ln_c age) ///
-    (line ln_d age)
-graphout collapse_log
-
-twoway ///
-    (line hr_full_age_discrete age) ///
-    (line hr_full_age_cts age), yscale(log)
-graphout collapse_level
+// gen ln_d = ln(hr_full_age_discrete)
+// gen ln_c = ln(hr_full_age_cts)
+// 
+// collapse (mean) ln_c ln_d hr_full_age_discrete hr_full_age_cts, by(age)
+// sort age
+// twoway ///
+//     (line ln_c age) ///
+//     (line ln_d age)
+// graphout collapse_log
+// 
+// twoway ///
+//     (line hr_full_age_discrete age) ///
+//     (line hr_full_age_cts age), yscale(log)
+// graphout collapse_level
 
 
 /* note: collapsing odds ratios here-- i'm still a bit unclear on what is correct. */
