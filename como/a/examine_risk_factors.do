@@ -127,7 +127,9 @@ prog def sc
   graphout `name'
 end
 
-/* repeat, adding sex as a factor  */
+/* slowly build comparison between full and adjusted model to see what makes them change */
+
+/* age and sex only */
 sc rf_simple_agesex_c rf_full_agesex_c , name(agesex_only)
 /* good -- no difference */
 

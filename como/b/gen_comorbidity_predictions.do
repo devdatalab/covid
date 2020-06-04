@@ -491,8 +491,8 @@ foreach condition in $comorbid_vars_no_age_sex {
   replace risk_factor_full_cts = risk_factor_full_cts * hr_full_`condition'
 }
 
-/* now do the continuous age adjustment */
-replace risk_factor_full_cts = risk_factor_full_cts * hr_full_age_cts
+/* now do the continuous age adjustment and adjust for sex */
+replace risk_factor_full_cts = risk_factor_full_cts * hr_full_age_cts * hr_full_male
 
 /* 4. age-sex only, continuous age */
 /* adjust gender */
