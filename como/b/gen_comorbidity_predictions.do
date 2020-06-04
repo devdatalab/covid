@@ -320,13 +320,15 @@ gen cancer_non_haem_1 = cancer_non_haem
 gen haem_malig_1 = haem_malig
 gen stroke_dementia = stroke
 gen bp_high = hypertension_biomarker
+gen bp_not_high = hypertension_biomarker_not
 
 label var chronic_resp_dz   "Chronic respiratory disease as matched to NHS"
 label var diabetes_uncontr  "Diabetes as matched to NHS"
 label var cancer_non_haem_1 "Non-Haem cancer as matched to NHS"
 label var haem_malig_1      "Haematological cancer as matched to NHS"
 label var stroke_dementia   "Stroke/dementia as matched to NHS"
-label var bp_high "Hypertension as matched to NHS"
+label var bp_high           "Hypertension as matched to NHS"
+label var bp_not_high       "No Hypertension as matched to NHS"
 
 /* save limited dataset with only comorbidity data */
 compress
