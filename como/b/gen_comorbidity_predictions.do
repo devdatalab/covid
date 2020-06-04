@@ -148,8 +148,10 @@ replace bp_hypertension = 1 if diagnosed_for == 2
 label var bp_hypertension "self-reported diagnosis of hypertension"
 
 /* self-reported hypertension + BP high stage 2 */
-gen bp_high = 0
-replace bp_high = 1 if (bp_high_stage2 == 1 | bp_hypertension == 1)
+// gen bp_high = 0
+// replace bp_high = 1 if (bp_high_stage2 == 1 | bp_hypertension == 1)
+/* edit 06/02/2020: we will use just biomarkers to define high BP and not self-reported hypertension diagnosis */
+gen bp_high = bp_high_stage2
 
 /* only include people who have non-missing BP measurements as we can't trust the accuracy of self-reporting across the full population  */
 replace bp_high = . if mi(bp_systolic) | mi(bp_diastolic) 
@@ -199,7 +201,7 @@ label var chronic_heart_dz "self-reported diagnosis or symptoms of heart disease
 gen diabetes = 0 if !mi(fasting_blood_glucose_mg_dl)
 
 /* standard WHO definition of diabetes is >=126mg/dL if fasting and >=200 if not */
-replace diabetes = 1 if (fasting_blood_glucose_mg_dl >= 126 & fasting_blood_glucose == 1) | (fasting_blood_glucose_mg_dl >= 200 & fasting_blood_glucose == 2 & !mi(fasting_blood_glucose))
+replace diabetes = 1 if (fasting_blood_glucose_mg_dl >= 126 & fasting_blood_glucose == 2) | (fasting_blood_glucose_mg_dl >= 200 & fasting_blood_glucose == 1)
 
 /* assume that people with a glucose measure but missing fasting data are fasting */
 replace diabetes = 1 if (fasting_blood_glucose_mg_dl >= 126 & !mi(fasting_blood_glucose_mg_dl)) & mi(fasting_blood_glucose)
