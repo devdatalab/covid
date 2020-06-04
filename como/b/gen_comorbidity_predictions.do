@@ -143,24 +143,28 @@ label var bp_high_stage2 "systolic BP >= 140 mm Hg or diastolic BP >= 90 mm Hg"
 
 /* self-reported hypertension */
 /* if data is from AHS CAB-only sample, keep as missing because there was no HH module asked */
-gen bp_hypertension = 0 if sample != 1
-replace bp_hypertension = 1 if diagnosed_for == 2
-label var bp_hypertension "self-reported diagnosis of hypertension"
+gen hypertension_diagnosis = 0 if sample != 1
+replace hypertension_diagnosis = 1 if diagnosed_for == 2
+label var hypertension_diagnosis "self-reported diagnosis of hypertension"
+
+/* just biomarker BP high stage 2 definition of hypertension */
+gen hypertension_biomarker = bp_high_stage2
+label var hypertension_biomarker "systolic BP >= 140 mm Hg or diastolic BP >= 90 mm Hg"
 
 /* self-reported hypertension + BP high stage 2 */
-// gen bp_high = 0
-// replace bp_high = 1 if (bp_high_stage2 == 1 | bp_hypertension == 1)
-/* edit 06/02/2020: we will use just biomarkers to define high BP and not self-reported hypertension diagnosis */
-gen bp_high = bp_high_stage2
+gen hypertension_both = 0
+replace hypertension_both = 1 if (hypertension_biomarker == 1 | hypertension_diagnosis == 1)
+label var hypertension_both "self-reported hypertension and/or measured BP high stage 2"
 
-/* only include people who have non-missing BP measurements as we can't trust the accuracy of self-reporting across the full population  */
-replace bp_high = . if mi(bp_systolic) | mi(bp_diastolic) 
-label var bp_high "self-reported hypertension and/or measured BP high stage 2"
+/* create the inverse of hypertension_both */
+gen hypertension_both_not = 1 if hypertension_both == 0
+replace hypertension_both_not = 0 if hypertension_both == 1
+label var hypertension_both_not "normal blood pressure as defined as not hypertension_both"
 
-/* create the inverse of bp_high */
-gen bp_not_high = 1 if bp_high == 0
-replace bp_not_high = 0 if bp_high == 1
-label var bp_high "normal blood pressure as defined as not bp_high"
+/* create the inverse of hypertension_both */
+gen hypertension_biomarker_not = 1 if hypertension_biomarker == 0
+replace hypertension_biomarker_not = 0 if hypertension_biomarker == 1
+label var hypertension_biomarker_not "normal blood pressure as defined as not hypertension_biomarker"
 
 /* Respiratory Disease */
 gen resp_illness = 0 if sample != 1
@@ -198,27 +202,27 @@ replace chronic_heart_dz = 1 if (cardio_illness == 1 | cardio_symptoms == 1)
 label var chronic_heart_dz "self-reported diagnosis or symptoms of heart disease"
 
 /* Diabetes */
-gen diabetes = 0 if !mi(fasting_blood_glucose_mg_dl)
+gen diabetes_biomarker = 0 if !mi(fasting_blood_glucose_mg_dl)
 
 /* standard WHO definition of diabetes is >=126mg/dL if fasting and >=200 if not */
-replace diabetes = 1 if (fasting_blood_glucose_mg_dl >= 126 & fasting_blood_glucose == 2) | (fasting_blood_glucose_mg_dl >= 200 & fasting_blood_glucose == 1)
+replace diabetes_biomarker = 1 if (fasting_blood_glucose_mg_dl >= 126 & fasting_blood_glucose == 2) | (fasting_blood_glucose_mg_dl >= 200 & fasting_blood_glucose == 1)
 
 /* assume that people with a glucose measure but missing fasting data are fasting */
-replace diabetes = 1 if (fasting_blood_glucose_mg_dl >= 126 & !mi(fasting_blood_glucose_mg_dl)) & mi(fasting_blood_glucose)
+replace diabetes_biomarker = 1 if (fasting_blood_glucose_mg_dl >= 126 & !mi(fasting_blood_glucose_mg_dl)) & mi(fasting_blood_glucose)
 
 /* the threshold is not well established for pregnant women, set their values to missing */
-replace diabetes = . if pregnant == 1
-label var diabetes "blood sugar >126mg/dL if fasting, >200mg/dL if not"
+replace diabetes_biomarker = . if pregnant == 1
+label var diabetes_biomarker "blood sugar >126mg/dL if fasting, >200mg/dL if not"
 
 /* get diabetes that are self-reported */
-gen diabetes_selfreport = 0 if !mi(diagnosed_for)
-replace diabetes_selfreport = 1 if diagnosed_for == 1
-label var diabetes_selfreport "self-reported diagnosis of diabetes in the last year"
+gen diabetes_diagnosis = 0 if !mi(diagnosed_for)
+replace diabetes_diagnosis = 1 if diagnosed_for == 1
+label var diabetes_diagnosis "self-reported diagnosis of diabetes in the last year"
 
 /* combined diabetes measure */
-gen diabetes_combined = 1 if diabetes == 1 | diabetes_selfreport == 1
-replace diabetes_combined = 0 if mi(diabetes_combined)
-label var diabetes_combined "biomarker or self-reported diabetes diagnosis"
+gen diabetes_both = 1 if diabetes_biomarker == 1 | diabetes_diagnosis == 1
+replace diabetes_both = 0 if mi(diabetes_both)
+label var diabetes_both "biomarker or self-reported diabetes diagnosis"
 
 /* Cancer - non-haematological */
 gen cancer_non_haem = 0 if sample != 1
@@ -252,7 +256,7 @@ replace autoimmune_dz = 1 if (diagnosed_for == 19 | diagnosed_for == 20)
 label var autoimmune_dz "self-reported psoriasis or rheumatoid arthritis"
 
 /* keep only identifying information and comorbidity variables */
-keep uid pc11* psu htype rcvid supid tsend tsstart person_index hh* *wt survey rural_urban stratum psu_id ahs_house_unit house_hold_no date_survey age* male female bmi* height weight_in_kg bp* resp* cardio_symptoms diabetes* *haem* *_dz stroke diagnosed_for fasting* survey sample
+keep uid pc11* psu htype rcvid supid tsend tsstart person_index hh* *wt survey rural_urban stratum psu_id ahs_house_unit house_hold_no date_survey age* male female bmi* height weight_in_kg bp* hypertension* resp* cardio_symptoms diabetes* *haem* *_dz stroke diagnosed_for fasting* survey sample
 
 /* create a combined weight variable */
 /* - assume all AHS weights are 1 (since it's self-weighting) */
@@ -298,7 +302,7 @@ label var wt "household x district weight for national aggregation"
 save $health/dlhs/data/dlhs_ahs_covid_comorbidities_full, replace
 
 /* drop if missing key values from CAB survey - we want to only use observations that have these measureable values */
-drop if mi(bp_high) | mi(diabetes) | mi(bmi)
+drop if mi(hypertension_biomarker) | mi(diabetes_biomarker) | mi(bmi)
 
 /* drop if missing all self-reported illness, i.e. only the CAB section was asked */
 drop if sample == 1
@@ -311,16 +315,18 @@ foreach i in age18_40 age40_50 age50_60 age60_70 age70_80 age80_ {
 
 /* map DLHS/AHS conditions to the ones we have hazard ratios for in the NHS paper */
 gen chronic_resp_dz = resp_chronic
-gen diabetes_uncontr = diabetes
+gen diabetes_uncontr = diabetes_biomarker
 gen cancer_non_haem_1 = cancer_non_haem
 gen haem_malig_1 = haem_malig
 gen stroke_dementia = stroke
+gen bp_high = hypertension_biomarker
 
 label var chronic_resp_dz   "Chronic respiratory disease as matched to NHS"
 label var diabetes_uncontr  "Diabetes as matched to NHS"
 label var cancer_non_haem_1 "Non-Haem cancer as matched to NHS"
 label var haem_malig_1      "Haematological cancer as matched to NHS"
 label var stroke_dementia   "Stroke/dementia as matched to NHS"
+label var bp_high "Hypertension as matched to NHS"
 
 /* save limited dataset with only comorbidity data */
 compress
