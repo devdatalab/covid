@@ -193,16 +193,17 @@ save $tmp/india_models, replace
 /* COMPARE INDIA WITH UK */
 /*************************/
 use $tmp/uk_sim, clear
-gen round_age = round(age)
+gen round_age = floor(age)
 collapse (mean) uk_risk, by(round_age)
 ren round_age age
 
 merge 1:1 age using $tmp/india_models
 label var uk_risk "Aggregate risk (UK)"
+save $tmp/combined_risks_india_uk, replace
 
 sc arisk_full arisk_gbd uk_risk, name(vs_uk)
-
 
 /* explore at a few ages */
 sum arisk_simple arisk_full arisk_gbd uk_risk if age == 30
 sum arisk_simple arisk_full arisk_gbd uk_risk if age == 60
+

@@ -21,6 +21,9 @@ do $ccode/como/b/prep_india_sim_prevalence.do
 /* prep NY odds ratios of death */
 do $ccode/como/b/prep_ny_mortality.do
 
+/* prep population distributions */
+do $ccode/como/b/prep_populations.do
+
 /************/
 /* analysis */
 /************/
@@ -29,7 +32,7 @@ do $ccode/como/b/prep_ny_mortality.do
 do $ccode/como/a/compare_uk_india_prevalence.do
 
 /* plot India risk factors under various assumptions*/
-do $ccode/como/e/explore_india_aggregates.do
+do $ccode/como/a/analyze_age_mort_risk.do
 
 /* plot relationship between risk and poverty */
 do $ccode/como/a/examine_risk_factors_poverty.do
