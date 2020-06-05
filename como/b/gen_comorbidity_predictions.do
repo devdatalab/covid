@@ -365,15 +365,15 @@ prog def apply_hr_to_comorbidities
   lab var hr_full_low_ec "hazard ratio fully adjusted early censoring lower CI"
   lab var hr_full_up_ec "hazard ratio fully adjusted early censoring upper CI"
 
-  /* keep only the variables we need */
-  gen ok = 0
-
-  /* mark each variable we want to keep */
-  foreach var in $comorbid_vars {
-    replace ok = 1 if variable == "`var'"
-  }
-  keep if ok == 1
-  drop ok
+  // /* keep only the variables we need */
+  // gen ok = 0
+  // 
+  // /* mark each variable we want to keep */
+  // foreach var in $comorbid_vars {
+  //   replace ok = 1 if variable == "`var'"
+  // }
+  // keep if ok == 1
+  // drop ok
 
   /* save as dta file */
   save $tmp/uk_nhs_hazard_ratios, replace
@@ -462,62 +462,5 @@ winsorize age 18 100, replace
 merge m:1 age using $tmp/uk_age_predicted_hr, gen(_m_cts_age) keep(match master)
 assert _m_cts_age == 3
 
+/* save micro dataset with NHS hazard ratios */
 save $tmp/combined, replace
-use $tmp/combined, clear
-
-/* for each person, calculate relative mortality risk by combining HRs from all conditions */
-
-/* note that each person appears twice in the data, with identical
-conditions but different risk adjustments.  which is why e.g. diabetes
-can take on 3 different values instead of 2. */
-
-/* risk_factor is the heightened probability of mortality relative to the reference group
-  for this individual. Note that this is a probability multiplier, *not* a multiplier of
-  relative risk, odds ratio, or hazard ratio.
-
-  FIX: However, it is calculated by treating the HR as an OR-- this is inconsequential but
-       we should do the conversion above anyway just to be precise. */
-
-/* create separate risk factors for each different assumption set */
-foreach v in simple full simple_cts full_cts conditions_only age_weird {
-  gen risk_factor_`v' = 1
-}
-
-/* 1. fully adjusted model, binned ages */
-foreach condition in $comorbid_vars {
-  replace risk_factor_full = risk_factor_full * hr_full_`condition'
-}
-
-/* 2. age-sex only, binned ages */
-foreach condition in age18_40 age40_50 age50_60 age60_70 age70_80 age80_ male female {
-  replace risk_factor_simple = risk_factor_simple * hr_age_sex_`condition'
-}
-
-/* 3. fully adjusted, continuous age */
-/* first do the non-age conditions */
-foreach condition in $comorbid_vars_no_age_sex {
-  replace risk_factor_full_cts = risk_factor_full_cts * hr_full_`condition'
-}
-
-/* now do the continuous age adjustment and adjust for sex */
-replace risk_factor_full_cts = risk_factor_full_cts * hr_full_age_cts * hr_full_male
-
-/* 4. age-sex only, continuous age */
-/* adjust gender */
-replace risk_factor_simple_cts = risk_factor_simple_cts * hr_age_sex_male * hr_age_sex_female
-
-/* adjust continuous age */
-replace risk_factor_simple_cts = risk_factor_simple_cts * hr_age_sex_age_cts
-
-/* 5. experimental: risk factor from comorbid conditions only */
-foreach condition in $comorbid_vars_no_age_sex {
-  replace risk_factor_conditions_only = risk_factor_conditions_only * hr_full_`condition'
-}
-
-/* 6. experimental: use fully adjusted age model, but adjust for
-      age-sex only (to see how much the conditions actually change the
-      result) */
-replace risk_factor_age_weird = risk_factor_age_weird * hr_full_age_cts * hr_full_male * hr_full_female
-
-/* save full data set */
-save $tmp/tmp_hr_data, replace

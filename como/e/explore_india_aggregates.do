@@ -1,4 +1,6 @@
-/* function to scatter multiple variables over age */
+/*********************************************************/
+/* sc: a function to scatter multiple variables over age */
+/*********************************************************/
 cap prog drop sc
 prog def sc
 
@@ -28,7 +30,11 @@ prog def sc
   twoway `command'
   graphout `name'
 end
+/****************** end sc *********************** */
 
+/************************************/
+/* define global sets of conditions */
+/************************************/
 global comorbid_vars  age18_40 age40_50 age50_60 age60_70 age70_80 age80_ female male bmi_not_obese bmi_obeseI ///
                       bmi_obeseII bmi_obeseIII bp_not_high bp_high chronic_heart_dz stroke_dementia liver_dz kidney_dz autoimmune_dz ///
                       cancer_non_haem_1 haem_malig_1 chronic_resp_dz diabetes_uncontr 
@@ -41,18 +47,33 @@ global comorbid_vars_no_age_sex bmi_not_obese bmi_obeseI ///
                       bmi_obeseII bmi_obeseIII bp_not_high bp_high chronic_heart_dz stroke_dementia liver_dz kidney_dz autoimmune_dz ///
                       cancer_non_haem_1 haem_malig_1 chronic_resp_dz diabetes_uncontr 
 
-/* collapse the data to age-sex bins */
-use $tmp/tmp_hr_data, clear
+/* define the biomarker variables from DLHS/AHS */
+global comorbid_biomarker_vars bmi_obeseI bmi_obeseII bmi_obeseIII bp_high diabetes_uncontr 
 
-/* drop redundant risk factors built in other file since we rebuild here more granularly */
-drop risk_factor*
+/* define the non-biomarker variables from GBD */
+global comorbid_gbd_vars asthma_ocs autoimmune_dz haem_malig_1 cancer_non_haem_1 chronic_heart_dz chronic_resp_dz immuno_other_dz kidney_dz liver_dz neuro_other stroke_dementia
+
+/* collapse the data to age-sex bins */
+use $tmp/combined, clear
 
 /* drop old folks */
 drop if age > 85
 
 /*********************************************************/
-/* REBUILD RISK FACTORS WHICH SOMEHOW ENDED UP DIFFERENT */
+/* COMBINE RISK FACTORS  */
 /*********************************************************/
+/* for each person, calculate relative mortality risk by combining HRs from all conditions */
+
+/* note that each person appears twice in the data, with identical
+conditions but different risk adjustments.  which is why e.g. diabetes
+can take on 3 different values instead of 2. */
+
+/* risk_factor is the heightened probability of mortality relative to the reference group
+  for this individual. Note that this is a probability multiplier, *not* a multiplier of
+  relative risk, odds ratio, or hazard ratio.
+
+  FIX: However, it is calculated by treating the HR as an OR-- this is inconsequential but
+       we should do the conversion above anyway just to be precise. */
 
 /* create combined discrete age risk factors */
 gen hr_full_age_discrete = hr_full_age18_40 * hr_full_age40_50 * hr_full_age50_60 * hr_full_age60_70 * hr_full_age70_80 * hr_full_age80_
@@ -70,13 +91,13 @@ gen rf_full_age_c = hr_full_age_cts
 gen rf_simple_age_d = hr_simple_age_discrete
 gen rf_simple_age_c = hr_simple_age_cts
 
-/* add sex */
+/* age and sex */
 gen rf_full_agesex_d = hr_full_age_discrete * hr_full_male
 gen rf_full_agesex_c = hr_full_age_cts * hr_full_male
 gen rf_simple_agesex_d = hr_simple_age_discrete * hr_simple_male
 gen rf_simple_agesex_c = hr_simple_age_cts * hr_simple_male
 
-/* add conditions other than diabetes */
+/* create a factor combining conditions other than diabetes */
 gen rf_full_nond_conditions = 1
 foreach condition in $comorbid_conditions_no_diab {
   replace rf_full_nond_conditions = rf_full_nond_conditions * hr_full_`condition'
@@ -89,32 +110,34 @@ gen rf_full_diab = hr_full_diabetes_uncontr
 gen rf_full_abd_d = rf_full_nond_conditions * rf_full_agesex_d
 gen rf_full_abd_c = rf_full_nond_conditions * rf_full_agesex_c
 
-/* generate fully adjusted */
+/* generate fully adjusted DLHS model */
 gen rf_full_d = rf_full_abd_d * hr_full_diabetes_uncontr 
 gen rf_full_c = rf_full_abd_c * hr_full_diabetes_uncontr 
 
+/* collapse the data to 1 combined risk factor for each age */
 collapse (mean) rf_* $comorbid_vars_no_age_sex [aw=wt], by(age)
+save $tmp/foo, replace
 
-/* bring in the NHS hazard ratios so we can recalculate on the binned means */
+/* bring in the NHS hazard ratios so we can calculate combined risk using aggregate data */
 gen v1 = 0
 merge m:1 v1 using $tmp/uk_nhs_hazard_ratios_flat_hr_full, nogen
 merge m:1 v1 using $tmp/uk_nhs_hazard_ratios_flat_hr_age_sex, nogen
 merge m:1 age using $tmp/uk_age_predicted_hr, keep(match master) nogen
 
 /* bring in some GBD prevalence data */
-merge m:1 age using $tmp/india_prevalences, keep(match master) nogen
+merge m:1 age using $health/gbd/gbd_nhs_conditions_india, keep(match master) nogen
 
 /* bring in NY odds ratios */
 merge m:1 age using $tmp/nystate_or, keep(match master) nogen
 
-/* create fully-adjusted continuous risk hazard model */
+/* ***** CREATE FULLY-ADJUSTED CONTINUOUS RISK HAZARD MODEL */
 /* assume 47% men for now in both simple and full models */
 gen arisk_full = hr_full_age_cts * (male_hr_full * .47 + .53)
 foreach v in $comorbid_vars_no_age_sex {
   replace arisk_full = arisk_full * ( (`v'_hr_full * `v') + (1 - `v'))
 }
 
-/* create aggregate risk from simple model */
+/* **** CREATE AGGREGATE RISK FROM SIMPLE MODEL */
 gen arisk_simple = hr_age_sex_age_cts * (male_hr_age_sex * .47 + .53)
 
 /* label micro data and aggregate risk models */
@@ -123,13 +146,21 @@ label var arisk_full   "aggregate fully adjusted model"
 label var rf_simple_agesex_c "microdata age-sex only (simple) model"
 label var rf_full_c "microdata fully adjusted model"
 
-/* create an aggregate risk model using GBD prevalences for respiratory disease */
-/* note: we first divide out the old respiratory factor and stick in the new */
-gen     arisk_gbd = arisk_full / ( (chronic_resp_dz_hr_full * chronic_resp_dz) + (1 - chronic_resp_dz))
-replace arisk_gbd = arisk_gbd  * ( (chronic_resp_dz_hr_full * india_prev_copd) + (1 - india_prev_copd))
-label var arisk_gbd "full w/COPD from GBD"
 
-/* create a fully adjusted model using NY odds ratios instead of NHS */
+/* **************** CREATE THE DLHS BIOMARKER + GBD EVERYTHING ELSE MODEL */
+/* stick to 47% male for consistency with DLHS */
+gen arisk_gbd = hr_full_age_cts * (male_hr_full * .47 + .53)
+
+/* add in biomarkers */
+foreach v in $comorbid_biomarker_vars {
+  replace arisk_gbd = arisk_gbd * ( (`v'_hr_full * `v') + (1 - `v'))
+}
+foreach v in $comorbid_gbd_vars {
+  replace arisk_gbd = arisk_gbd * ( (`v'_hr_full * gbd_`v') + (1 - gbd_`v'))
+}
+label var arisk_gbd "aggregate biomarker + GBD model"
+
+/* **** CREATE A FULLY ADJUSTED MODEL using NY odds ratios instead of NHS */
 gen arisk_ny = arisk_full
 foreach v in bp_high diabetes_uncontr chronic_heart_dz kidney_dz chronic_resp_dz {
 
@@ -153,36 +184,25 @@ sc arisk_full arisk_simple arisk_gbd, name(vs_gbd_copd)
 /* compare full model to NY OR model */
 sc arisk_full arisk_ny, name(vs_ny)
 
+/* 3 models: 1. agesex; 2. biomarkers; 3. biomarker + GBD   */
+sc arisk_simple arisk_full arisk_gbd, name(vs_gbd)
 
-/* show results */
-sort age
-twoway ///
-    (line ln_arisk_full age) ///
-    (line ln_arisk_simple age) ///
-    , legend(lab(1 "Fully adjusted") lab(2 "Age-sex only"))
-graphout arisk_aggregate
+save $tmp/india_models, replace
 
-/* compare with same two things in microdata risk factors */
-twoway ///
-    (line ln_rf_full_cts age) ///
-    (line ln_rf_simple_cts age) ///
-    , legend(lab(1 "Fully adjusted") lab(2 "Age-sex only"))
-graphout mrisk_aggregate
+/*************************/
+/* COMPARE INDIA WITH UK */
+/*************************/
+use $tmp/uk_sim, clear
+gen round_age = round(age)
+collapse (mean) uk_risk, by(round_age)
+ren round_age age
+
+merge 1:1 age using $tmp/india_models
+label var uk_risk "Aggregate risk (UK)"
+
+sc arisk_full arisk_gbd uk_risk, name(vs_uk)
 
 
-/*********************/
-/* explore weirdness */
-/*********************/
-use $tmp/combined, clear
-
-/* slowly build up the point at which 30-year-olds end up sicker in the full model */
-gen rf_full = hr_full_age_cts
-gen rf_simple = hr_age_sex_age_cts
-
-sum rf_full rf_simple if age == 30
-
-replace rf_full = rf_full * hr_full_male
-replace rf_simple = rf_simple * hr_age_sex_male
-
-sum rf_full rf_simple if age == 30
-
+/* explore at a few ages */
+sum arisk_simple arisk_full arisk_gbd uk_risk if age == 30
+sum arisk_simple arisk_full arisk_gbd uk_risk if age == 60

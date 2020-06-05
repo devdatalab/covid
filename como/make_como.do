@@ -29,7 +29,9 @@ do $ccode/como/b/prep_ny_mortality.do
 do $ccode/como/a/compare_uk_india_prevalence.do
 
 /* plot India risk factors under various assumptions*/
-do $ccode/como/a/examine_risk_factors.do
+do $ccode/como/e/explore_india_aggregates.do
 
 /* plot relationship between risk and poverty */
 do $ccode/como/a/examine_risk_factors_poverty.do
+
+

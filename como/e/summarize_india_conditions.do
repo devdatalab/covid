@@ -1,7 +1,7 @@
 /**************************************************************/
 /* explore different risk factors across the age distribution */
 /**************************************************************/
-use $tmp/tmp_hr_data, clear
+use $tmp/combined, clear
 collapse (mean) risk_factor_* [aw=wt], by(age)
 
 keep if age < 85
@@ -14,8 +14,6 @@ graphout simple_comp
 
 twoway (line risk_factor_full_cts age) (line risk_factor_full age), yscale(log) ylabel(0.1 0.5 1 2 5 10 50) 
 graphout full_comp
-THIS IS WEIRD AGAIN. WHY?
-
 
 /* 2. compare fully adjusted, age-sex, comorbid conditions only  */
 twoway (line risk_factor_full_cts age, lwidth(medthick)) (line risk_factor_simple_cts age, lwidth(medthick)) , yscale(log) ylabel(0.1 0.5 1 2 5 10 50)
@@ -59,34 +57,7 @@ gen v1 = 0
 save $tmp/uk_nhs_incidence, replace
 
 
-/*************************************************/
-/* verify that continuous age HRs match discrete */
-/*************************************************/
-/* collapse to age-specific data for plotting */
-use $tmp/tmp_hr_data, clear
-
-/* create some other risk factors to compare the graph */
-gen hr_full_age_discrete = hr_full_age18_40 * hr_full_age40_50 * hr_full_age50_60 * hr_full_age60_70 * hr_full_age70_80 * hr_full_age80_
-
-gen ln_d = ln(hr_full_age_discrete)
-gen ln_c = ln(hr_full_age_cts)
-
-collapse (mean) ln_c ln_d hr_full_age_discrete hr_full_age_cts, by(age)
-sort age
-twoway ///
-    (line ln_c age) ///
-    (line ln_d age)
-graphout collapse_log
-
-twoway ///
-    (line hr_full_age_discrete age) ///
-    (line hr_full_age_cts age), yscale(log)
-graphout collapse_level
-
-
-/*****************************************/
-/* compare discrete and cts risk factors */
-/*****************************************/
+/* run some HR comparisons [obsolete i think] */
 use $tmp/combined, clear
 
 /* compare discrete vs. continuous risk factors */
