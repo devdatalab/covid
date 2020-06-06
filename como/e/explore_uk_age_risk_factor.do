@@ -87,3 +87,4 @@ keep age uk_risk
 gen ln_uk_risk = ln(uk_risk)
 save $tmp/uk_sim, replace
 
+

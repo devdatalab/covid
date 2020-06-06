@@ -143,22 +143,28 @@ label var bp_high_stage2 "systolic BP >= 140 mm Hg or diastolic BP >= 90 mm Hg"
 
 /* self-reported hypertension */
 /* if data is from AHS CAB-only sample, keep as missing because there was no HH module asked */
-gen bp_hypertension = 0 if sample != 1
-replace bp_hypertension = 1 if diagnosed_for == 2
-label var bp_hypertension "self-reported diagnosis of hypertension"
+gen hypertension_diagnosis = 0 if sample != 1
+replace hypertension_diagnosis = 1 if diagnosed_for == 2
+label var hypertension_diagnosis "self-reported diagnosis of hypertension"
+
+/* just biomarker BP high stage 2 definition of hypertension */
+gen hypertension_biomarker = bp_high_stage2
+label var hypertension_biomarker "systolic BP >= 140 mm Hg or diastolic BP >= 90 mm Hg"
 
 /* self-reported hypertension + BP high stage 2 */
-gen bp_high = 0
-replace bp_high = 1 if (bp_high_stage2 == 1 | bp_hypertension == 1)
+gen hypertension_both = 0
+replace hypertension_both = 1 if (hypertension_biomarker == 1 | hypertension_diagnosis == 1)
+label var hypertension_both "self-reported hypertension and/or measured BP high stage 2"
 
-/* only include people who have non-missing BP measurements as we can't trust the accuracy of self-reporting across the full population  */
-replace bp_high = . if mi(bp_systolic) | mi(bp_diastolic) 
-label var bp_high "self-reported hypertension and/or measured BP high stage 2"
+/* create the inverse of hypertension_both */
+gen hypertension_both_not = 1 if hypertension_both == 0
+replace hypertension_both_not = 0 if hypertension_both == 1
+label var hypertension_both_not "normal blood pressure as defined as not hypertension_both"
 
-/* create the inverse of bp_high */
-gen bp_not_high = 1 if bp_high == 0
-replace bp_not_high = 0 if bp_high == 1
-label var bp_high "normal blood pressure as defined as not bp_high"
+/* create the inverse of hypertension_both */
+gen hypertension_biomarker_not = 1 if hypertension_biomarker == 0
+replace hypertension_biomarker_not = 0 if hypertension_biomarker == 1
+label var hypertension_biomarker_not "normal blood pressure as defined as not hypertension_biomarker"
 
 /* Respiratory Disease */
 gen resp_illness = 0 if sample != 1
@@ -196,27 +202,27 @@ replace chronic_heart_dz = 1 if (cardio_illness == 1 | cardio_symptoms == 1)
 label var chronic_heart_dz "self-reported diagnosis or symptoms of heart disease"
 
 /* Diabetes */
-gen diabetes = 0 if !mi(fasting_blood_glucose_mg_dl)
+gen diabetes_biomarker = 0 if !mi(fasting_blood_glucose_mg_dl)
 
 /* standard WHO definition of diabetes is >=126mg/dL if fasting and >=200 if not */
-replace diabetes = 1 if (fasting_blood_glucose_mg_dl >= 126 & fasting_blood_glucose == 1) | (fasting_blood_glucose_mg_dl >= 200 & fasting_blood_glucose == 2 & !mi(fasting_blood_glucose))
+replace diabetes_biomarker = 1 if (fasting_blood_glucose_mg_dl >= 126 & fasting_blood_glucose == 2) | (fasting_blood_glucose_mg_dl >= 200 & fasting_blood_glucose == 1)
 
 /* assume that people with a glucose measure but missing fasting data are fasting */
-replace diabetes = 1 if (fasting_blood_glucose_mg_dl >= 126 & !mi(fasting_blood_glucose_mg_dl)) & mi(fasting_blood_glucose)
+replace diabetes_biomarker = 1 if (fasting_blood_glucose_mg_dl >= 126 & !mi(fasting_blood_glucose_mg_dl)) & mi(fasting_blood_glucose)
 
 /* the threshold is not well established for pregnant women, set their values to missing */
-replace diabetes = . if pregnant == 1
-label var diabetes "blood sugar >126mg/dL if fasting, >200mg/dL if not"
+replace diabetes_biomarker = . if pregnant == 1
+label var diabetes_biomarker "blood sugar >126mg/dL if fasting, >200mg/dL if not"
 
 /* get diabetes that are self-reported */
-gen diabetes_selfreport = 0 if !mi(diagnosed_for)
-replace diabetes_selfreport = 1 if diagnosed_for == 1
-label var diabetes_selfreport "self-reported diagnosis of diabetes in the last year"
+gen diabetes_diagnosis = 0 if !mi(diagnosed_for)
+replace diabetes_diagnosis = 1 if diagnosed_for == 1
+label var diabetes_diagnosis "self-reported diagnosis of diabetes in the last year"
 
 /* combined diabetes measure */
-gen diabetes_combined = 1 if diabetes == 1 | diabetes_selfreport == 1
-replace diabetes_combined = 0 if mi(diabetes_combined)
-label var diabetes_combined "biomarker or self-reported diabetes diagnosis"
+gen diabetes_both = 1 if diabetes_biomarker == 1 | diabetes_diagnosis == 1
+replace diabetes_both = 0 if mi(diabetes_both)
+label var diabetes_both "biomarker or self-reported diabetes diagnosis"
 
 /* Cancer - non-haematological */
 gen cancer_non_haem = 0 if sample != 1
@@ -250,7 +256,7 @@ replace autoimmune_dz = 1 if (diagnosed_for == 19 | diagnosed_for == 20)
 label var autoimmune_dz "self-reported psoriasis or rheumatoid arthritis"
 
 /* keep only identifying information and comorbidity variables */
-keep uid pc11* psu htype rcvid supid tsend tsstart person_index hh* *wt survey rural_urban stratum psu_id ahs_house_unit house_hold_no date_survey age* male female bmi* height weight_in_kg bp* resp* cardio_symptoms diabetes* *haem* *_dz stroke diagnosed_for fasting* survey sample
+keep uid pc11* psu htype rcvid supid tsend tsstart person_index hh* *wt survey rural_urban stratum psu_id ahs_house_unit house_hold_no date_survey age* male female bmi* height weight_in_kg bp* hypertension* resp* cardio_symptoms diabetes* *haem* *_dz stroke diagnosed_for fasting* survey sample
 
 /* create a combined weight variable */
 /* - assume all AHS weights are 1 (since it's self-weighting) */
@@ -296,7 +302,7 @@ label var wt "household x district weight for national aggregation"
 save $health/dlhs/data/dlhs_ahs_covid_comorbidities_full, replace
 
 /* drop if missing key values from CAB survey - we want to only use observations that have these measureable values */
-drop if mi(bp_high) | mi(diabetes) | mi(bmi)
+drop if mi(hypertension_biomarker) | mi(diabetes_biomarker) | mi(bmi)
 
 /* drop if missing all self-reported illness, i.e. only the CAB section was asked */
 drop if sample == 1
@@ -306,6 +312,23 @@ gen age_bin = ""
 foreach i in age18_40 age40_50 age50_60 age60_70 age70_80 age80_ {
   replace age_bin = "`i'" if `i' != 0 
 }
+
+/* map DLHS/AHS conditions to the ones we have hazard ratios for in the NHS paper */
+gen chronic_resp_dz = resp_chronic
+gen diabetes_uncontr = diabetes_biomarker
+gen cancer_non_haem_1 = cancer_non_haem
+gen haem_malig_1 = haem_malig
+gen stroke_dementia = stroke
+gen bp_high = hypertension_biomarker
+gen bp_not_high = hypertension_biomarker_not
+
+label var chronic_resp_dz   "Chronic respiratory disease as matched to NHS"
+label var diabetes_uncontr  "Diabetes as matched to NHS"
+label var cancer_non_haem_1 "Non-Haem cancer as matched to NHS"
+label var haem_malig_1      "Haematological cancer as matched to NHS"
+label var stroke_dementia   "Stroke/dementia as matched to NHS"
+label var bp_high           "Hypertension as matched to NHS"
+label var bp_not_high       "No Hypertension as matched to NHS"
 
 /* save limited dataset with only comorbidity data */
 compress
@@ -342,22 +365,22 @@ prog def apply_hr_to_comorbidities
   lab var hr_full_low_ec "hazard ratio fully adjusted early censoring lower CI"
   lab var hr_full_up_ec "hazard ratio fully adjusted early censoring upper CI"
 
-  /* keep only the variables we need */
-  gen ok = 0
-
-  /* mark each variable we want to keep */
-  foreach var in $comorbid_vars {
-    replace ok = 1 if variable == "`var'"
-  }
-  keep if ok == 1
-  drop ok
+  // /* keep only the variables we need */
+  // gen ok = 0
+  // 
+  // /* mark each variable we want to keep */
+  // foreach var in $comorbid_vars {
+  //   replace ok = 1 if variable == "`var'"
+  // }
+  // keep if ok == 1
+  // drop ok
 
   /* save as dta file */
   save $tmp/uk_nhs_hazard_ratios, replace
 
   /* call a short python funciton to flatten our selected HR value into an array */
-  cd $ddl/covid
-  shell python -c "from e.flatten_hr_data import flatten_hr_data; flatten_hr_data('`hr'', '$tmp/uk_nhs_hazard_ratios.dta', '$tmp/uk_nhs_hazard_ratios_flat_`hr'.csv')"
+  cd $ddl/covid/como
+  shell python -c "from b.flatten_hr_data import flatten_hr_data; flatten_hr_data('`hr'', '$tmp/uk_nhs_hazard_ratios.dta', '$tmp/uk_nhs_hazard_ratios_flat_`hr'.csv')"
 
   /* read in the csv and save as a stata file */
   import delimited $tmp/uk_nhs_hazard_ratios_flat_`hr'.csv, clear
@@ -377,13 +400,6 @@ prog def apply_hr_to_comorbidities
 
   /* open the india data */
   use $health/dlhs/data/dlhs_ahs_covid_comorbidities, clear
-
-  /* rename variables according to how we want to match to the NHS HR */
-  ren `chronic_resp_dz' chronic_resp_dz
-  ren `diabetes_uncontr' diabetes_uncontr
-  ren `cancer_non_haem_1' cancer_non_haem_1
-  ren `haem_malig_1' haem_malig_1
-  ren `stroke_dementia' stroke_dementia
 
   /* create a dummy index to merge in the HR values */
   gen v1 = 0
@@ -426,7 +442,7 @@ import delimited $covidpub/covid/csv/uk_age_predicted_hr.csv, clear
 gen hr_age_sex_age_cts = exp(ln_hr_age_sex)
 gen hr_full_age_cts = exp(ln_hr_full)
 drop ln_*
-save $tmp/uk_age_predicted_or, replace
+save $tmp/uk_age_predicted_hr, replace
 
 /* combine the risk factors with the DLHS/AHS */
 use $health/dlhs/data/dlhs_ahs_covid_comorbidities, clear
@@ -443,98 +459,8 @@ drop _m_agesex
 
 /* bring in continuous age factors */
 winsorize age 18 100, replace
-merge m:1 age using $tmp/uk_age_predicted_or, gen(_m_cts_age) keep(match master)
+merge m:1 age using $tmp/uk_age_predicted_hr, gen(_m_cts_age) keep(match master)
 assert _m_cts_age == 3
 
+/* save micro dataset with NHS hazard ratios */
 save $tmp/combined, replace
-use $tmp/combined, clear
-
-/* for each person, calculate relative mortality risk by combining HRs from all conditions */
-
-/* note that each person appears twice in the data, with identical
-conditions but different risk adjustments.  which is why e.g. diabetes
-can take on 3 different values instead of 2. */
-
-/* risk_factor is the heightened probability of mortality relative to the reference group
-  for this individual. Note that this is a probability multiplier, *not* a multiplier of
-  relative risk, odds ratio, or hazard ratio.
-
-  FIX: However, it is calculated by treating the HR as an OR-- this is inconsequential but
-       we should do the conversion above anyway just to be precise. */
-
-/* create separate risk factors for each different assumption set */
-foreach v in simple full simple_cts full_cts conditions_only age_weird {
-  gen risk_factor_`v' = 1
-}
-
-/* 1. fully adjusted model, binned ages */
-foreach condition in $comorbid_vars {
-  replace risk_factor_full = risk_factor_full * hr_full_`condition'
-}
-
-/* 2. age-sex only, binned ages */
-foreach condition in age18_40 age40_50 age50_60 age60_70 age70_80 age80_ male female {
-  replace risk_factor_simple = risk_factor_simple * hr_age_sex_`condition'
-}
-
-/* 3. fully adjusted, continuous age */
-/* first do the non-age conditions */
-foreach condition in $comorbid_vars_no_age_sex {
-  replace risk_factor_full_cts = risk_factor_full_cts * hr_full_`condition'
-}
-
-/* now do the continuous age adjustment */
-replace risk_factor_full_cts = risk_factor_full_cts * hr_full_age_cts
-
-/* 4. age-sex only, continuous age */
-/* adjust gender */
-replace risk_factor_simple_cts = risk_factor_simple_cts * hr_age_sex_male * hr_age_sex_female
-
-/* adjust continuous age */
-replace risk_factor_simple_cts = risk_factor_simple_cts * hr_age_sex_age_cts
-
-/* 5. experimental: risk factor from comorbid conditions only */
-foreach condition in $comorbid_vars_no_age_sex {
-  replace risk_factor_conditions_only = risk_factor_conditions_only * hr_full_`condition'
-}
-
-/* 6. experimental: use fully adjusted age model, but adjust for
-      age-sex only (to see how much the conditions actually change the
-      result) */
-replace risk_factor_age_weird = risk_factor_age_weird * hr_full_age_cts * hr_full_male * hr_full_female
-
-/* save full dat set */
-save $tmp/tmp_hr_data, replace
-
-
-/* paul stopped here -- the rest needs to be updated with the risk ratios */
-exit
-
-/* create sample size counter */
-gen N = 1
-
-/* Collapse to age/state groups */
-collapse (sum) N (mean) risk_total risk_age_sex, by(pc11_state_id pc11_state_name age_bin hr)
-
-/* get the risk for all comorbidities with the fully adjusted HR */
-gen r_comorbid_adj = risk_total if hr == "hr_full"
-replace r_comorbid_adj = 0 if mi(r_comorbid_adj)
-
-/* get the risk for age and sex with the fully adjusted HR */
-gen r_age_sex_adj = risk_age_sex if hr =="hr_full"
-replace r_age_sex_adj= 0 if mi(r_age_sex_adj)
-
-/* get the risk for age and sex with just age and sex adjusted HR */
-gen r_age_sex_unadj = risk_age_sex if hr == "hr_age_sex"
-replace r_age_sex_unadj = 0 if mi(r_age_sex_unadj)
-
-/* collpse across HR values */
-collapse (sum) r_comorbid_adj r_age_sex_adj r_age_sex_unadj, by(pc11_state_name pc11_state_id age_bin N)
-
-/* label variables */
-label var r_comorbid_adj "risk for all comorbidities with fully adjusted HR"
-label var r_age_sex_adj "risk for age and sex with fully adjusted HR"
-label var r_age_sex_unadj "risk for age and sex with only age-sex adjusted HR"
-
-/* save data set */
-save $health/dlhs/data/comorbid_risk_estimates, replace
