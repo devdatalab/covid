@@ -1,38 +1,3 @@
-/***********************************************************/
-/* sc: a function to compare multiple prevalences over age */
-/***********************************************************/
-cap prog drop scp
-prog def scp
-
-  syntax varlist, [name(string) yscale(passthru) yline(passthru)]
-  tokenize `varlist'
-
-  /* set a default yscale (or not) */
-  if mi("`yscale'") local yscale
-
-  /* set a default name */
-  if mi("`name'") local name euripides
-  
-  /* loop over the outcome vars */
-  while (!mi("`1'")) {
-
-    /* store the variable label */
-    local label : variable label `1'
-
-    /* add the line plot for this variable to the twoway command string */
-    local command `command' (line `1' age, `yscale' xtitle("`label'") ytitle("Prevalence") lwidth(medthick) )
-
-    /* get the next variable in the list */
-    mac shift
-  }
-
-  /* draw the graph */
-  twoway `command', `yline' name(`name', replace)
-  graphout `name'
-end
-/****************** end sc *********************** */
-
-
 use $health/dlhs/data/dlhs_ahs_covid_comorbidities, clear
 
 collapse (mean) diabetes_both diabetes_uncontr bp_high chronic_resp_dz, by(age)

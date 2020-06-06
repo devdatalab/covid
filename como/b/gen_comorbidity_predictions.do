@@ -263,7 +263,7 @@ gen hhwt = dhhwt
 save $health/dlhs/data/dlhs_ahs_covid_comorbidities_full, replace
 
 /* open the population data */
-use $iec1/pc11/pc11_pca_district_clean, clear
+use $pc11/pc11_pca_district_clean, clear
 
 /* calculate total state and national population */
 bys pc11_state_id: egen long state_pop = total(pc11_pca_tot_p)
@@ -306,13 +306,14 @@ foreach i in age18_40 age40_50 age50_60 age60_70 age70_80 age80_ {
 }
 
 /* map DLHS/AHS conditions to the ones we have hazard ratios for in the NHS paper */
+/* note: following the NHS study, we use biomarker for this part, not diagnosis */
 gen chronic_resp_dz = resp_chronic
-gen diabetes_uncontr = diabetes_biomarker
 gen cancer_non_haem_1 = cancer_non_haem
 gen haem_malig_1 = haem_malig
 gen stroke_dementia = stroke
 gen bp_high = hypertension_biomarker
 gen bp_not_high = hypertension_biomarker_not
+gen diabetes_uncontr = diabetes_biomarker
 
 label var chronic_resp_dz   "Chronic respiratory disease as matched to NHS"
 label var diabetes_uncontr  "Diabetes as matched to NHS"
@@ -356,16 +357,6 @@ prog def apply_hr_to_comorbidities
   lab var hr_full_ec "hazard ratio fully adjusted early censoring"
   lab var hr_full_low_ec "hazard ratio fully adjusted early censoring lower CI"
   lab var hr_full_up_ec "hazard ratio fully adjusted early censoring upper CI"
-
-  // /* keep only the variables we need */
-  // gen ok = 0
-  // 
-  // /* mark each variable we want to keep */
-  // foreach var in $comorbid_vars {
-  //   replace ok = 1 if variable == "`var'"
-  // }
-  // keep if ok == 1
-  // drop ok
 
   /* save as dta file */
   save $tmp/uk_nhs_hazard_ratios, replace
@@ -411,10 +402,10 @@ prog def apply_hr_to_comorbidities
        which will be 1 if the individual does not have the condition, or the HR if they
        do have it.
   */
-  foreach condition in $comorbid_vars {
-    gen `hr'_`condition' = `condition'_`hr' if `condition' == 1
-    replace `hr'_`condition' = 1 if `condition' == 0
-    drop `condition'_`hr'
+  foreach var in $age_vars male $hr_biomarker_vars {
+    gen `hr'_`var' = `var'_`hr' if `var' == 1
+    replace `hr'_`var' = 1 if `var' == 0
+    drop `var'_`hr'
   }
 
   /* can we save only the risk factors and the individual identifier?

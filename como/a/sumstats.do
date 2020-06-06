@@ -1,7 +1,5 @@
 /* generate stats used in paper */
-
 use $tmp/combined, clear
-
 
 /* sample size */
 count

@@ -1,6 +1,8 @@
 /* import hazard ratios from NHS study, fully adjusted model */
 use $tmp/uk_nhs_hazard_ratios_flat_hr_fully_adj, clear
 
+global varlist $age_vars $hr_biomarker_vars $hr_gbd_vars
+
 /* define reference group mortality -- 50--60 year olds */
 global r = 355 / 3068883
 

@@ -1,46 +1,9 @@
-/*********************************************************/
-/* sc: a function to scatter multiple variables over age */
-/*********************************************************/
-cap prog drop sc
-prog def sc
-
-  syntax varlist, [name(string) yscale(passthru)]
-  tokenize `varlist'
-
-  /* set a default yscale */
-  if mi("`yscale'") local yscale yscale(log) ylabel(.125 .25 1 4 16 64)
-
-  /* set a default name */
-  if mi("`name'") local name euripides
-  
-  /* loop over the outcome vars */
-  while (!mi("`1'")) {
-
-    /* store the variable label */
-    local label : variable label `1'
-
-    /* add the line plot for this variable to the twoway command string */
-    local command `command' (line `1' age, `yscale' xtitle("`label'") ytitle("Mortality Hazard Ratio") lwidth(medthick) )
-
-    /* get the next variable in the list */
-    mac shift
-  }
-
-  /* draw the graph */
-  twoway `command'
-  graphout `name'
-end
-/****************** end sc *********************** */
-
 /************************************/
 /* define global sets of conditions */
 /************************************/
 
 /* collapse the data to age-sex bins */
 use $tmp/combined, clear
-
-/* drop old folks */
-drop if age > 85
 
 /*********************************************************/
 /* COMBINE RISK FACTORS  */
@@ -80,25 +43,18 @@ gen rf_full_agesex_c = hr_full_age_cts * hr_full_male
 gen rf_simple_agesex_d = hr_simple_age_discrete * hr_simple_male
 gen rf_simple_agesex_c = hr_simple_age_cts * hr_simple_male
 
-/* create a factor combining conditions other than diabetes */
-gen rf_full_nond_conditions = 1
-foreach condition in $comorbid_conditions_no_diab {
-  replace rf_full_nond_conditions = rf_full_nond_conditions * hr_full_`condition'
+/* create a factor combining conditions with biomarkers */
+gen rf_full_biomarkers = 1
+foreach condition in $hr_biomarker_vars {
+  replace rf_full_biomarkers = rf_full_biomarkers * hr_full_`condition'
 }
 
-/* generate diabetes only */
-gen rf_full_diab = hr_full_diabetes_uncontr
-
-/* generate age + sex + non-diabetes conditions */
-gen rf_full_abd_d = rf_full_nond_conditions * rf_full_agesex_d
-gen rf_full_abd_c = rf_full_nond_conditions * rf_full_agesex_c
-
 /* generate fully adjusted DLHS model */
-gen rf_full_d = rf_full_abd_d * hr_full_diabetes_uncontr 
-gen rf_full_c = rf_full_abd_c * hr_full_diabetes_uncontr 
+gen rf_full_d = rf_full_agesex_d * rf_full_biomarkers
+gen rf_full_c = rf_full_agesex_c * rf_full_biomarkers
 
 /* collapse the data to 1 combined risk factor for each age */
-collapse (mean) rf_* $comorbid_vars_no_age_sex [aw=wt], by(age)
+collapse (mean) rf_* $hr_biomarker_vars $hr_selfreport_vars [aw=wt], by(age)
 save $tmp/foo, replace
 
 /* bring in the NHS hazard ratios so we can calculate combined risk using aggregate data */
@@ -116,7 +72,7 @@ merge m:1 age using $tmp/nystate_or, keep(match master) nogen
 /* ***** CREATE FULLY-ADJUSTED CONTINUOUS RISK HAZARD MODEL */
 /* assume 47% men for now in both simple and full models */
 gen arisk_full = hr_full_age_cts * (male_hr_full * .47 + .53)
-foreach v in $comorbid_vars_no_age_sex {
+foreach v in $hr_biomarker_vars {
   replace arisk_full = arisk_full * ( (`v'_hr_full * `v') + (1 - `v'))
 }
 
@@ -135,10 +91,11 @@ label var rf_full_c "microdata fully adjusted model"
 gen arisk_gbd = hr_full_age_cts * (male_hr_full * .47 + .53)
 
 /* add in biomarkers */
-foreach v in $comorbid_biomarker_vars {
+foreach v in $hr_biomarker_vars {
   replace arisk_gbd = arisk_gbd * ( (`v'_hr_full * `v') + (1 - `v'))
 }
-foreach v in $comorbid_gbd_vars {
+/* add in GBD vars */
+foreach v in $hr_gbd_vars {
   replace arisk_gbd = arisk_gbd * ( (`v'_hr_full * gbd_`v') + (1 - gbd_`v'))
 }
 label var arisk_gbd "aggregate biomarker + GBD model"
@@ -195,7 +152,7 @@ sum arisk_simple arisk_full arisk_gbd uk_risk if age == 60
 /* decompose risk factors to see which raise india mortality the most */
 /**********************************************************************/
 use $tmp/aggs, clear
-foreach v in $comorbid_gbd_vars {
+foreach v in $hr_biomarker_vars $hr_gbd_vars {
   gen contrib_`v' = ( (`v'_hr_full * gbd_`v') + (1 - gbd_`v'))
 }
 
