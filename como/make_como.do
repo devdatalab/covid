@@ -9,6 +9,9 @@
 /* combine DLHS and AHS */
 do $ccode/como/b/prep_health_data.do
 
+/* prepare global burden of disease data */
+do $ccode/como/b/prep_gbd.do
+
 /* calculate risk factors */
 do $ccode/como/b/gen_comorbidity_predictions.do
 

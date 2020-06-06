@@ -42,7 +42,6 @@ foreach condition in $conditionlist {
       replace prev_`condition' = `r(mean)' if age == `age'
     }
   }
-  replace prev_`condition' = prev_`condition' / 100
 }
 
 /* drop the original fields and limit to ages with data */

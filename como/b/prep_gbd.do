@@ -10,26 +10,34 @@ drop measure sex metric year
 /* set the start and end age for this prevalence */
 gen agestart = real(substr(age, 1, 2))
 gen ageend = real(substr(age, 7, 2))
+replace agestart = -99 if age == "All Ages"
+replace ageend = -99 if age == "All Ages"
 drop age
 
 /* rename variable names for consistency with our other stuff */
 ren val prevalence
 ren location country
 ren cause condition
+replace condition = lower(condition)
 
 /* expand to ages 20-89 */
-expand 5
+expand 5 if agestart != -99
 bys country agestart condition: egen age = seq()
 replace age = age + agestart - 1
 drop agestart ageend
 
+/* drop hemoglobinopathies which clearly don't correspond to the NHS immunosuppressive category */
+drop if inlist(condition, "hemoglobinopathies and hemolytic anemias")
+
+/* drop liver disease NASH which is a predictive category not a severe illness */
+drop if inlist(condition, "cirrhosis due to nash")
+
 /* create aggregate condition groups that correspond to the hazard ratios we have in the NHS study */
-replace condition = lower(condition)
-gen     cgroup = "immuno_other_dz" if inlist(condition, "hiv/aids", "hemoglobinopathies and hemolytic anemias")
+gen     cgroup = "immuno_other_dz" if inlist(condition, "hiv/aids")
 replace cgroup = "chronic_heart_dz" if inlist(condition, "cardiovascular diseases")
 replace cgroup = "kidney_dz" if inlist(condition, "chronic kidney disease")
 replace cgroup = "chronic_resp_dz" if inlist(condition, "chronic obstructive pulmonary disease")
-replace cgroup = "liver_dz" if inlist(condition, "cirrhosis and other chronic liver diseases")
+replace cgroup = "liver_dz" if inlist(condition, "cirrhosis and other chronic liver diseases due to alcohol use", "cirrhosis and other chronic liver diseases due to hepatitis b", "cirrhosis and other chronic liver diseases due to hepatitis c", "cirrhosis and other chronic liver diseases due to other causes")
 replace cgroup = "diabetes" if inlist(condition, "diabetes mellitus")
 replace cgroup = "headaches" if inlist(condition, "headache disorders")
 replace cgroup = "haem_malig_1" if inlist(condition, "hodgkin lymphoma", "leukemia", "multiple myeloma", "non-hodgkin lymphoma")
@@ -54,6 +62,7 @@ foreach v in "" _upper _lower {
   replace cancer_non_haem_1`v' = cancer_non_haem_1`v' - haem_malig_1`v'
   replace chronic_heart_dz`v' = chronic_heart_dz`v' - stroke`v'
   replace neuro_other`v' = neuro_other`v' - headaches`v' - dementia`v'
+  winsorize neuro_other`v' 0 1, replace
   gen stroke_dementia`v' = stroke`v' + dementia`v'
 }
 drop headache* stroke stroke_upper stroke_lower dementia*

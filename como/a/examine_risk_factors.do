@@ -1,11 +1,3 @@
-global comorbid_conditions_only bmi_not_obese bmi_obeseI ///
-                      bmi_obeseII bmi_obeseIII bp_not_high bp_high chronic_heart_dz stroke_dementia liver_dz kidney_dz autoimmune_dz ///
-                      cancer_non_haem_1 haem_malig_1 chronic_resp_dz diabetes_uncontr 
-
-global comorbid_conditions_no_diab bmi_not_obese bmi_obeseI ///
-                      bmi_obeseII bmi_obeseIII bp_not_high bp_high chronic_heart_dz stroke_dementia liver_dz kidney_dz autoimmune_dz ///
-                      cancer_non_haem_1 haem_malig_1 chronic_resp_dz 
-
 cap prog drop labelstuff
 prog def labelstuff
   label var rf_full_age_d "Full, age only, discrete"

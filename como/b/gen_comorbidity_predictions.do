@@ -1,11 +1,3 @@
-global comorbid_vars age18_40 age40_50 age50_60 age60_70 age70_80 age80_ female male bmi_not_obese bmi_obeseI ///
-                      bmi_obeseII bmi_obeseIII bp_not_high bp_high chronic_heart_dz stroke_dementia liver_dz kidney_dz autoimmune_dz ///
-                      cancer_non_haem_1 haem_malig_1 chronic_resp_dz diabetes_uncontr 
-
-global comorbid_vars_no_age_sex bmi_not_obese bmi_obeseI ///
-                      bmi_obeseII bmi_obeseIII bp_not_high bp_high chronic_heart_dz stroke_dementia liver_dz kidney_dz autoimmune_dz ///
-                      cancer_non_haem_1 haem_malig_1 chronic_resp_dz diabetes_uncontr 
-
 /* open the full dataset */
 use $health/dlhs/data/dlhs_ahs_merged, clear
 
@@ -461,6 +453,9 @@ drop _m_agesex
 winsorize age 18 100, replace
 merge m:1 age using $tmp/uk_age_predicted_hr, gen(_m_cts_age) keep(match master)
 assert _m_cts_age == 3
+
+/* limit to the 20-79 year old sample for the paper  */
+keep if inrange(age, 20, 79)
 
 /* save micro dataset with NHS hazard ratios */
 save $tmp/combined, replace
