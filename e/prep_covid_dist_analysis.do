@@ -120,7 +120,7 @@ save $out/hh_size_district, replace
 use $iec/misc_data/india_GIS/distances/pc01_village_highway_distances, clear
 
 /* keep relevant vars */
-keep pc01_state_id pc01_district_id pc01_village_id dist_mumb
+keep pc01_state_id pc01_district_id pc01_village_id dist_mumb dist_delhi
 
 /* merge with pc11 key to get pc11 ids */
 merge 1:m pc01_state_id pc01_district_id pc01_village_id using $keys/pcec/pc01r_pc11r_key, keepusing(pc11_state_id pc11_district_id pc11_village_id) nogen keep(match)
@@ -130,11 +130,11 @@ merge 1:1 pc11_state_id pc11_district_id pc11_village_id using $pc11/pc11r_pca_c
 
 /* collapse at district level */
 collapse_save_labels
-collapse (mean) dist_mumb [aw = pc11_pca_tot_p], by(pc11_state_id pc11_district_id)
+collapse (mean) dist_mumb dist_delhi [aw = pc11_pca_tot_p], by(pc11_state_id pc11_district_id)
 collapse_apply_labels
 
 /* save as tempfile */
-save $out/dist_mumb, replace
+save $out/dist_mumb_delhi, replace
 
 /* get shrug distance variables */
 use $iec/covid/idi_survey/survey_shrid_data, clear
