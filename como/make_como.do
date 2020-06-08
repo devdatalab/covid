@@ -31,11 +31,17 @@ do $ccode/como/b/prep_populations.do
 /* analysis */
 /************/
 
+/* calculate summary statistics and prevalences */
+do $ccode/como/a/sumstats.do
+
 /* plot UK / India prevalence of comorbid conditions */
 do $ccode/como/a/compare_uk_india_prevalence.do
 
 /* plot India risk factors under various assumptions*/
 do $ccode/como/a/analyze_age_mort_risk.do
+
+/* run model in levels with population weighting to predict E(deaths) */
+do $ccode/como/a/analyze_mort_counts.do
 
 /* plot relationship between risk and poverty */
 do $ccode/como/a/examine_risk_factors_poverty.do

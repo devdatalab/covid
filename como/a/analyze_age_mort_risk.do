@@ -118,44 +118,85 @@ save $tmp/aggs, replace
 /* compare microdata risk factor to aggregate risk factor models */
 sc arisk_full rf_full_c arisk_simple rf_simple_agesex_c, name(agg_v_micro)
 
-/* compare full model to GBD-COPD model */
-sc arisk_full arisk_simple arisk_gbd, name(vs_gbd_copd)
+/* 3 models: 1. agesex; 2. biomarkers; 3. biomarker + GBD   */
+sc arisk_simple arisk_full arisk_gbd, name(3models)
 
 /* compare full model to NY OR model */
 sc arisk_full arisk_ny, name(vs_ny)
 
-/* 3 models: 1. agesex; 2. biomarkers; 3. biomarker + GBD   */
-sc arisk_simple arisk_full arisk_gbd, name(vs_gbd)
+/* list the mortality predictions so we can report the expected %
+   change in mortality from switching models */
+list age arisk_simple arisk_full arisk_gbd
 
 save $tmp/india_models, replace
-
-/*************************/
-/* COMPARE INDIA WITH UK */
-/*************************/
-use $tmp/uk_sim, clear
-gen round_age = floor(age)
-collapse (mean) uk_risk, by(round_age)
-ren round_age age
-
-merge 1:1 age using $tmp/india_models
-label var uk_risk "Aggregate risk (UK)"
-save $tmp/combined_risks_india_uk, replace
-
-sc arisk_full arisk_gbd uk_risk, name(vs_uk)
-
-/* explore at a few ages */
-sum arisk_simple arisk_full arisk_gbd uk_risk if age == 30
-sum arisk_simple arisk_full arisk_gbd uk_risk if age == 60
-
 
 /**********************************************************************/
 /* decompose risk factors to see which raise india mortality the most */
 /**********************************************************************/
 use $tmp/aggs, clear
-foreach v in $hr_biomarker_vars $hr_gbd_vars {
-  gen contrib_`v' = ( (`v'_hr_full * gbd_`v') + (1 - gbd_`v'))
+
+/* put age group vars back in so we can risk adjust with them */
+gen age18_40 = inrange(age, 18, 39)
+gen age40_50 = inrange(age, 40, 50)
+gen age50_60 = inrange(age, 50, 60)
+gen age60_70 = inrange(age, 60, 70)
+gen age70_80 = inrange(age, 70, 80)
+gen age80_   = inrange(age, 80, 100)
+gen male     = 0.52
+
+/* bring in india population */
+merge 1:1 age using $tmp/india_pop, keep(match master)
+keep if _merge == 3
+drop _merge
+
+/* calculate population share of each group */
+sum india_pop
+gen total_pop = `r(mean)' * `r(N)'
+gen pop_share = india_pop / total_pop
+
+/* multiple risk factor by prevalence to get increased mortality risk from this condition at each age */
+foreach v in $age_vars male $hr_biomarker_vars {
+  gen age_risk_full_`v' = ( (`v'_hr_full * `v') + (1 - `v'))
+}
+foreach v in $hr_gbd_vars {
+  gen age_risk_full_`v' = ( (`v'_hr_full * gbd_`v') + (1 - gbd_`v'))
 }
 
-sum contrib_* if inrange(age, 20, 25)
-sum contrib_* if inrange(age, 40, 45)
-sum contrib_* if inrange(age, 60, 65)
+/* now multiply each risk factor contribution by the population share */
+foreach v in $age_vars male $hr_gbd_vars $hr_biomarker_vars {
+
+  /* calculate contribution to aggregate risk at each age */
+  gen pop_risk_fpart_`v' = age_risk_full_`v' * pop_share
+  
+  /* add it up across all ages */
+  bys v1: egen pop_risk_full_`v' = total(pop_risk_fpart_`v')
+}
+
+/* show the aggregate contribution of each risk factor */
+foreach v in $age_vars male $hr_gbd_vars $hr_biomarker_vars {
+  qui sum pop_risk_full_`v' in 1
+  di %20s "`v': " %6.3f `r(mean)'
+}
+
+/* REPEAT PROCESS FOR SIMPLE MODEL -- AGE-SEX ONLY */
+/* multiple risk factor by prevalence to get increased mortality risk from this condition at each age */
+foreach v in $age_vars male  {
+  gen age_risk_simple_`v' = ( (`v'_hr_age_sex * `v') + (1 - `v'))
+}
+foreach v in $age_vars male {
+
+  /* calculate contribution to aggregate risk at each age */
+  gen pop_risk_simple_part_`v' = age_risk_simple_`v' * pop_share
+  
+  /* add it up across all ages */
+  bys v1: egen pop_risk_simple_`v' = total(pop_risk_simple_part_`v')
+}
+
+/* show the aggregate contribution of each risk factor */
+foreach v in $age_vars male  {
+  qui sum pop_risk_simple_`v' in 1
+  di %20s "`v': " %6.3f `r(mean)'
+}
+
+exit
+

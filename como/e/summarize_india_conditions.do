@@ -40,21 +40,6 @@ use $tmp/combined, clear
 keep if uniform() < .1
 save $tmp/combined_short, replace
 
-/*****************************************/
-/* transform NHS incidence data into dta */
-/*****************************************/
-import delimited using $covidpub/covid/csv/uk_nhs_incidence.csv, clear varnames(1)
-replace prevalence = prevalence / 100
-
-/* reshape it to wide */
-gen x = 1
-ren prevalence uk_prev_
-reshape wide uk_prev_, i(x) j(condition) string
-drop x
-
-/* save NHS prevalence */
-gen v1 = 0
-save $tmp/uk_nhs_incidence, replace
 
 
 /* run some HR comparisons [obsolete i think] */

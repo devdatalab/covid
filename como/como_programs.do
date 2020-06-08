@@ -17,7 +17,7 @@ global hr_gbd_vars asthma_ocs autoimmune_dz haem_malig_1 cancer_non_haem_1    //
 
 /* define self-report vars found in DLHS/AHS (but not used in risk analysis)  */
 global hr_selfreport_vars chronic_heart_dz stroke_dementia liver_dz kidney_dz autoimmune_dz ///
-                      cancer_non_haem_1 haem_malig_1 chronic_resp_dz diabetes_uncontr 
+                      cancer_non_haem_1 haem_malig_1 chronic_resp_dz 
 
 /* SOME ALTERNATE CONDITION SETS USED BY THE ANALYSIS */
 // global comorbid_vars age18_40 age40_50 age50_60 age60_70 age70_80 age80_ female male bmi_not_obese bmi_obeseI ///

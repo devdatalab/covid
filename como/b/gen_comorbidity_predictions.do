@@ -260,7 +260,7 @@ capdrop wt
 gen hhwt = dhhwt
 
 /* save the full sample to get our best estimates at population prevelance */
-save $health/dlhs/data/dlhs_ahs_covid_comorbidities_full, replace
+save $tmp/dlhs_ahs_tmp, replace
 
 /* open the population data */
 use $pc11/pc11_pca_district_clean, clear
@@ -280,7 +280,7 @@ keep pc11_state_id pc11_district_id pc11_pca_tot_p swt dwt
 save $tmp/pc11_popweights, replace
 
 /* re-open the health data */
-use $health/dlhs/data/dlhs_ahs_covid_comorbidities_full, clear
+use $tmp/dlhs_ahs_tmp, clear
 
 /* merge in population weights */
 merge m:1 pc11_state_id pc11_district_id using $tmp/pc11_popweights, keep(match master)
@@ -445,8 +445,8 @@ winsorize age 18 100, replace
 merge m:1 age using $tmp/uk_age_predicted_hr, gen(_m_cts_age) keep(match master)
 assert _m_cts_age == 3
 
-/* limit to the 20-79 year old sample for the paper  */
-keep if inrange(age, 20, 79)
+/* limit to the 18-89 year old sample for the paper */
+keep if inrange(age, 18, 89)
 
 /* save micro dataset with NHS hazard ratios */
 save $tmp/combined, replace

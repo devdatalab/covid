@@ -1,6 +1,16 @@
 /******************************************************/
 /* AGGREGATE OVER AGES TO GET AN EXPECTED DEATH COUNT */
 /******************************************************/
+
+/* create combined UK / India dataset */
+use $tmp/uk_sim, clear
+gen round_age = floor(age)
+collapse (mean) uk_risk, by(round_age)
+ren round_age age
+
+merge 1:1 age using $tmp/india_models
+label var uk_risk "Aggregate risk (UK)"
+save $tmp/combined_risks_india_uk, replace
 use $tmp/combined_risks_india_uk, replace
 
 /* keep age and risk factors only */
@@ -68,7 +78,9 @@ twoway ///
 , title("Predicted years life lost given UK medical system, infection rate") ytitle("Predicted YLLs")
 graphout pred_yll_model
 
+
 /* collapse across age bins to get total predicted deaths and death rate */
+preserve
 gen x = 1
 collapse (sum) india_pop uk_pop *deaths* *yll*, by(x)
 drop x
@@ -87,3 +99,13 @@ foreach v of varlist *yll* {
 
 format *yll* %10.0f
 list *yll*
+restore
+
+/* count the number of deaths over 60 and under 60 in both countries */
+gen young = age < 60
+collapse (sum) india_pop uk_pop *deaths*, by(young)
+
+foreach v of varlist *death* *pop {
+  replace `v' = `v' / 1000000
+}
+list
