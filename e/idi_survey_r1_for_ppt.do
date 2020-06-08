@@ -24,6 +24,9 @@ gen lab_curr_earn = lab_curr_wage * lab_curr_freq
 gen lost_earn = lab_curr_earn - lab_march_earn
 gen lab_earn_change = lost_earn/lab_march_earn
 
+/* migrants ratio */
+gen mig_ratio = mig_total_ratio/demo_hh_size
+
 /* label variables */
 la var lab_march_earn "Pre-lockdown weekly earning"
 la var lab_curr_earn "Post-lockdown weekly earning"
@@ -48,6 +51,19 @@ foreach x of var *occu {
   replace `x' = . if `x' == 1
 }
 
+
+/* replace labor and migrant income and earnings as percentage changes */
+foreach x of var lab_workdayschange_mean lab_earn_change mig_wage_change_mean{
+  gen `x'_og = `x'
+  replace `x' = `x' * 100
+  }
+
+/* converat agr price and input change into % changes */
+foreach x of var agr_prc_change_yr_mean agr_inputs_change_abs_mean {
+  gen `x'_og = `x'
+  replace `x' = `x' * 100
+  }
+  
 /* the following analysis is being done with and without weights - so in a loop */
 forval i = 0/2{
 
@@ -81,19 +97,20 @@ forval i = 0/2{
 
   /* shrid variables */
   foreach x of var pc11_pca_agr_work_share tdist* landless_share ec13_nonfarm_emp_per_capita {
-    binscatter lab_earn_change `x' `wt'
+    local lab: variable label `x'
+    binscatter lab_earn_change `x' `wt', ytitle("% Change in weekly earnings") xtitle("`lab'", margin(medium))
     graphout le_`x'_`i'
-    binscatter lab_workdayschange `x' `wt'
+    binscatter lab_workdayschange_mean `x' `wt', ytitle("% Change in days worked per week") xtitle("`lab'", margin(medium))
     graphout lw_`x'_`i'
   }
 
   /* land per working person */
-  binscatter lab_earn_change land_acres_per_capita `wt' if land_acres_per_capita < 5
+  binscatter lab_earn_change land_acres_per_capita `wt' if land_acres_per_capita < 5, ytitle("% Change in weekly earnings") xtitle("Land acres available per working person")
   graphout le_lac_`i'
 
   /* note: the binscatter below won't run for sub-sample restricted to Raj/JK, Ns get too low */
-  binscatter lab_workdayschange land_acres_per_capita `wt' if land_acres_per_capita < 5
-  graphout le_lac_`i'
+  binscatter lab_workdayschange_mean land_acres_per_capita `wt' if land_acres_per_capita < 5, ytitle("% Change in days worked per week") xtitle("Land acres available per working person")
+  graphout lw_lac_`i'
 
   /* relief and pre and post covid earnings */
   binscatter rel_amt_received_mean lab_curr_earn `wt' if lab_curr_occu != 0 & lab_curr_earn < 10000, ytitle("Relief amount received") xtitle("Post-lockdown earnings") xlabel(0 (2000) 10000)
@@ -106,7 +123,6 @@ forval i = 0/2{
     restore
   }
 }
-
 
 /* distribution of total days worked */
 foreach i in march curr {
@@ -138,11 +154,16 @@ graphout relief_loss
 
 /* relief and earnings by distance */
 foreach i in lab_workdayschange rel_amt_received_mean{
-  binscatter `i' tdist_100 [aw = weight_hh], saving(`i'_t100)
-  }
+  local lab: variable label `i'
+  binscatter `i' tdist_100 [aw = weight_hh], ytitle("`lab'") xtitle("Min dist.(km) to nearest place with pop>100k", margin(medium))saving(`i'_tdi100) 
+}
 
-graph combine "lab_workdayschange_t100" "rel_amt_received_mean_t100"
+graph combine "lab_workdayschange_tdi100" "rel_amt_received_mean_tdi100"
 graphout rel_earn_distance
+
+/* Relief and distance to nearest town */
+binscatter rel_amt_received_mean tdist_100 [aw = weight_hh], xtitle("Min dist. (km) to nearest place with population > 100k (including self") ytitle("Mean relief amount received")
+graphout rel_distance
 
 /* nrega */
 graph hbar rel_nrega_unavail_prop, over(geo_state) ytitle("% of hh reporting unavailability of NREGA")
@@ -152,7 +173,7 @@ cibar lab_workdayschange_mean [aw = weight_hh], over(rel_nrega_unavail_prop) bar
 graphout n_lw
 
 /* relief per week, lost earnings per week */
-graph bar lost_earn rel_amt_received, ylabel(-5000 (1000) 5000)
+graph bar lost_earn rel_amt_received, ylabel(-5000 (1000) 5000) legend(lab(1 "Lost earnings per week") lab(2 "Relief amount received across past 4 weeks"))
 graphout relief_loss_earn
 
 /* relief and spending on ag */
@@ -161,3 +182,46 @@ cibar agr_inputs_change_abs_mean [aw = weight_hh], over(rel_nrega_unavail_prop) 
 
 graph combine rel_ag nreg_ag
 graphout relief_ag_use
+
+/* mig and ag outputs */
+forval i = 0/2{
+
+  /* declare various weight conditions */
+  if `i' == 0 local wt [aw = no_weight]
+  if `i' == 1 local wt [aw = weight_hh]
+  if `i' == 2 local wt [aw = no_weight]
+
+  /* declare conditon for just keeping obs to Rajasthan, Jharkhand */
+  if `i' == 2 {
+    preserve
+
+    keep if inlist(geo_state, 8, 20)
+  }
+
+/* characteristics of households with higher proportion of migrants */  
+foreach x of var pc11_pca_agr_work_share tdist_100 landless_share ec13_nonfarm_emp_per_capita {
+  local lab: variable label `x'
+
+  binscatter mig_ratio `x' `wt', ytitle("Migrant: HH size ratio") xtitle("`lab'", margin(medium))
+  graphout mr_`x'_`i'
+
+  }
+
+/* Inputs and prices */
+  binscatter agr_prc_change_yr_mean agr_inputs_change_abs_mean `wt', ytitle("% change in price of crops") xtitle("% change in expenditure on inputs", margin(medium))
+  graphout inputs_price_`i'
+
+/* prices and distance to towns */
+  binscatter agr_prc_change_yr_mean tdist_100 `wt', ytitle("% change in price of crops") xtitle("Min. distance to nearest place with population > 100k (inc. self)", margin(medium))
+  graphout price_dist_`i'
+
+/* above plot by crop category */
+  binscatter agr_prc_change_yr_mean tdist_100 `wt', by(agr_crop_cat_prop)  ytitle("% change in price of crops") xtitle("Min. distance to nearest place with population > 100k (inc. self)", margin(medium))
+  graphout price_crops_`i'
+
+  if `i' == 2 {
+    restore
+  }
+}
+
+
