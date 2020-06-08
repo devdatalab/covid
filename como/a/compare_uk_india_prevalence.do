@@ -1,41 +1,7 @@
-/***********************************************************/
-/* sc: a function to compare multiple prevalences over age */
-/***********************************************************/
-cap prog drop scp
-prog def scp
-
-  syntax varlist, [name(string) yscale(passthru) yline(passthru)]
-  tokenize `varlist'
-
-  /* set a default yscale (or not) */
-  if mi("`yscale'") local yscale
-
-  /* set a default name */
-  if mi("`name'") local name euripides
-  
-  /* loop over the outcome vars */
-  while (!mi("`1'")) {
-
-    /* store the variable label */
-    local label : variable label `1'
-
-    /* add the line plot for this variable to the twoway command string */
-    local command `command' (line `1' age, `yscale' xtitle("`label'") ytitle("Prevalence") lwidth(medthick) )
-
-    /* get the next variable in the list */
-    mac shift
-  }
-
-  /* draw the graph */
-  twoway `command', `yline'
-  graphout `name'
-end
-/****************** end sc *********************** */
-
-
 use $health/dlhs/data/dlhs_ahs_covid_comorbidities, clear
 
 collapse (mean) diabetes_both diabetes_uncontr bp_high chronic_resp_dz, by(age)
+save $tmp/post_collapse, replace
 
 /* merge UK prevalences from various sources */
 merge 1:1 age using $tmp/uk_prevalences, keep(match) nogen
@@ -55,6 +21,8 @@ label var bp_high "BP High (India)"
 label var chronic_resp_dz "Chronic Respiratory (India)"
 
 /* label UK summary report vars */
+gen uk_prev_diabetes = uk_prev_diabetes_both
+gen uk_prev_hypertension = uk_prev_hypertension_both
 label var uk_prev_diabetes "Diabetes (UK)"
 label var uk_prev_hypertension "Hypertension (UK)"
 label var uk_prev_asthma "Asthma (UK)"
@@ -84,29 +52,38 @@ foreach v in diabetes_both diabetes_uncontr bp_high chronic_resp_dz {
 }
 
 sort age
+keep if age < 80
 
 /* respiratory disease */
 scp chronic_resp_dz uk_prev_copd gbd_uk_chronic_resp gbd_india_chronic_resp, name(copd) yline(.041)
 
 /* asthma */
-scp uk_prev_asthma gbd_*_asthma*, name(asthma) yline(.017)
+scp uk_prev_asthma gbd_*_asthma*, name(asthma) yline(.017 .142)
 
 /* heart disease */
 scp gbd_uk_chronic_heart_dz gbd_india_chronic_heart_dz, name(heart) yline(.067)
 
 /* diabetes */
-scp diabetes_both uk_prev_diabetes gbd_uk_diabetes gbd_india_diabetes, name(diabetes) yline(.088)
+scp diabetes_both uk_prev_diabetes gbd_uk_diabetes gbd_india_diabetes, name(diabetes_all) yline(.088)
 
 /* high blood pressure */
-scp bp_high uk_prev
+scp bp_high uk_prev_hypertension, name(hypertension) yline(.342)
 
-twoway (line diabetes age, lwidth(medthick)) (line uk_prev_diabetes age, lwidth(medthick)), name(d, replace) yline(.028)
-graphout diabetes_uk_india
 
-twoway (line bp_high age, lwidth(medthick)) (line uk_prev_hypertension age, lwidth(medthick)), name(bp, replace) yline(.342)
-graphout bp_uk_india
+/* biomarker comparisons only */
+scp diabetes_both uk_prev_diabetes, name(diabetes) yline(.088)
+scp bp_high uk_prev_hypertension, name(hypertension) yline(.342)
+graph combine diabetes hypertension
+graphout biomarker_uk_india
 
-twoway (line resp_chronic age, lwidth(medthick)) (line uk_prev_asthma age, lwidth(medthick)) (line uk_prev_copd age, lwidth(medthick)), name(resp, replace) yline(.142 .041)
-graphout resp_uk_india
+/* compare all India vs. UK GBD measures */
+foreach v in asthma_ocs autoimmune_dz cancer_non_haem_1 chronic_heart_dz chronic_resp_dz diabetes haem_malig_1 immuno_other_dz kidney_dz liver_dz neuro_other stroke_dementia {
+  label var gbd_uk_`v' "`v' (UK)"
+  label var gbd_india_`v' "`v' (India)"
+  scp gbd_uk_`v' gbd_india_`v', name(`v'_compare)
+}
 
+foreach v in asthma_ocs autoimmune_dz cancer_non_haem_1 chronic_heart_dz chronic_resp_dz diabetes haem_malig_1 immuno_other_dz kidney_dz liver_dz neuro_other stroke_dementia {
+  tabstat gbd_uk_`v' gbd_india_`v' if inrange(age, 30, 39), col(stat) varwidth(20)
+}
 

@@ -1,63 +1,9 @@
-/*********************************************************/
-/* sc: a function to scatter multiple variables over age */
-/*********************************************************/
-cap prog drop sc
-prog def sc
-
-  syntax varlist, [name(string) yscale(passthru)]
-  tokenize `varlist'
-
-  /* set a default yscale */
-  if mi("`yscale'") local yscale yscale(log) ylabel(.125 .25 1 4 16 64)
-
-  /* set a default name */
-  if mi("`name'") local name euripides
-  
-  /* loop over the outcome vars */
-  while (!mi("`1'")) {
-
-    /* store the variable label */
-    local label : variable label `1'
-
-    /* add the line plot for this variable to the twoway command string */
-    local command `command' (line `1' age, `yscale' xtitle("`label'") ytitle("Mortality Hazard Ratio") lwidth(medthick) )
-
-    /* get the next variable in the list */
-    mac shift
-  }
-
-  /* draw the graph */
-  twoway `command'
-  graphout `name'
-end
-/****************** end sc *********************** */
-
 /************************************/
 /* define global sets of conditions */
 /************************************/
-global comorbid_vars  age18_40 age40_50 age50_60 age60_70 age70_80 age80_ female male bmi_not_obese bmi_obeseI ///
-                      bmi_obeseII bmi_obeseIII bp_not_high bp_high chronic_heart_dz stroke_dementia liver_dz kidney_dz autoimmune_dz ///
-                      cancer_non_haem_1 haem_malig_1 chronic_resp_dz diabetes_uncontr 
-
-global comorbid_conditions_no_diab bmi_not_obese bmi_obeseI ///
-                      bmi_obeseII bmi_obeseIII bp_not_high bp_high chronic_heart_dz stroke_dementia liver_dz kidney_dz autoimmune_dz ///
-                      cancer_non_haem_1 haem_malig_1 chronic_resp_dz 
-
-global comorbid_vars_no_age_sex bmi_not_obese bmi_obeseI ///
-                      bmi_obeseII bmi_obeseIII bp_not_high bp_high chronic_heart_dz stroke_dementia liver_dz kidney_dz autoimmune_dz ///
-                      cancer_non_haem_1 haem_malig_1 chronic_resp_dz diabetes_uncontr 
-
-/* define the biomarker variables from DLHS/AHS */
-global comorbid_biomarker_vars bmi_obeseI bmi_obeseII bmi_obeseIII bp_high diabetes_uncontr 
-
-/* define the non-biomarker variables from GBD */
-global comorbid_gbd_vars asthma_ocs autoimmune_dz haem_malig_1 cancer_non_haem_1 chronic_heart_dz chronic_resp_dz immuno_other_dz kidney_dz liver_dz neuro_other stroke_dementia
 
 /* collapse the data to age-sex bins */
 use $tmp/combined, clear
-
-/* drop old folks */
-drop if age > 85
 
 /*********************************************************/
 /* COMBINE RISK FACTORS  */
@@ -97,25 +43,18 @@ gen rf_full_agesex_c = hr_full_age_cts * hr_full_male
 gen rf_simple_agesex_d = hr_simple_age_discrete * hr_simple_male
 gen rf_simple_agesex_c = hr_simple_age_cts * hr_simple_male
 
-/* create a factor combining conditions other than diabetes */
-gen rf_full_nond_conditions = 1
-foreach condition in $comorbid_conditions_no_diab {
-  replace rf_full_nond_conditions = rf_full_nond_conditions * hr_full_`condition'
+/* create a factor combining conditions with biomarkers */
+gen rf_full_biomarkers = 1
+foreach condition in $hr_biomarker_vars {
+  replace rf_full_biomarkers = rf_full_biomarkers * hr_full_`condition'
 }
 
-/* generate diabetes only */
-gen rf_full_diab = hr_full_diabetes_uncontr
-
-/* generate age + sex + non-diabetes conditions */
-gen rf_full_abd_d = rf_full_nond_conditions * rf_full_agesex_d
-gen rf_full_abd_c = rf_full_nond_conditions * rf_full_agesex_c
-
 /* generate fully adjusted DLHS model */
-gen rf_full_d = rf_full_abd_d * hr_full_diabetes_uncontr 
-gen rf_full_c = rf_full_abd_c * hr_full_diabetes_uncontr 
+gen rf_full_d = rf_full_agesex_d * rf_full_biomarkers
+gen rf_full_c = rf_full_agesex_c * rf_full_biomarkers
 
 /* collapse the data to 1 combined risk factor for each age */
-collapse (mean) rf_* $comorbid_vars_no_age_sex [aw=wt], by(age)
+collapse (mean) rf_* $hr_biomarker_vars $hr_selfreport_vars [aw=wt], by(age)
 save $tmp/foo, replace
 
 /* bring in the NHS hazard ratios so we can calculate combined risk using aggregate data */
@@ -133,7 +72,7 @@ merge m:1 age using $tmp/nystate_or, keep(match master) nogen
 /* ***** CREATE FULLY-ADJUSTED CONTINUOUS RISK HAZARD MODEL */
 /* assume 47% men for now in both simple and full models */
 gen arisk_full = hr_full_age_cts * (male_hr_full * .47 + .53)
-foreach v in $comorbid_vars_no_age_sex {
+foreach v in $hr_biomarker_vars {
   replace arisk_full = arisk_full * ( (`v'_hr_full * `v') + (1 - `v'))
 }
 
@@ -152,10 +91,11 @@ label var rf_full_c "microdata fully adjusted model"
 gen arisk_gbd = hr_full_age_cts * (male_hr_full * .47 + .53)
 
 /* add in biomarkers */
-foreach v in $comorbid_biomarker_vars {
+foreach v in $hr_biomarker_vars {
   replace arisk_gbd = arisk_gbd * ( (`v'_hr_full * `v') + (1 - `v'))
 }
-foreach v in $comorbid_gbd_vars {
+/* add in GBD vars */
+foreach v in $hr_gbd_vars {
   replace arisk_gbd = arisk_gbd * ( (`v'_hr_full * gbd_`v') + (1 - gbd_`v'))
 }
 label var arisk_gbd "aggregate biomarker + GBD model"
@@ -178,32 +118,85 @@ save $tmp/aggs, replace
 /* compare microdata risk factor to aggregate risk factor models */
 sc arisk_full rf_full_c arisk_simple rf_simple_agesex_c, name(agg_v_micro)
 
-/* compare full model to GBD-COPD model */
-sc arisk_full arisk_simple arisk_gbd, name(vs_gbd_copd)
+/* 3 models: 1. agesex; 2. biomarkers; 3. biomarker + GBD   */
+sc arisk_simple arisk_full arisk_gbd, name(3models)
 
 /* compare full model to NY OR model */
 sc arisk_full arisk_ny, name(vs_ny)
 
-/* 3 models: 1. agesex; 2. biomarkers; 3. biomarker + GBD   */
-sc arisk_simple arisk_full arisk_gbd, name(vs_gbd)
+/* list the mortality predictions so we can report the expected %
+   change in mortality from switching models */
+list age arisk_simple arisk_full arisk_gbd
 
 save $tmp/india_models, replace
 
-/*************************/
-/* COMPARE INDIA WITH UK */
-/*************************/
-use $tmp/uk_sim, clear
-gen round_age = floor(age)
-collapse (mean) uk_risk, by(round_age)
-ren round_age age
+/**********************************************************************/
+/* decompose risk factors to see which raise india mortality the most */
+/**********************************************************************/
+use $tmp/aggs, clear
 
-merge 1:1 age using $tmp/india_models
-label var uk_risk "Aggregate risk (UK)"
-save $tmp/combined_risks_india_uk, replace
+/* put age group vars back in so we can risk adjust with them */
+gen age18_40 = inrange(age, 18, 39)
+gen age40_50 = inrange(age, 40, 50)
+gen age50_60 = inrange(age, 50, 60)
+gen age60_70 = inrange(age, 60, 70)
+gen age70_80 = inrange(age, 70, 80)
+gen age80_   = inrange(age, 80, 100)
+gen male     = 0.52
 
-sc arisk_full arisk_gbd uk_risk, name(vs_uk)
+/* bring in india population */
+merge 1:1 age using $tmp/india_pop, keep(match master)
+keep if _merge == 3
+drop _merge
 
-/* explore at a few ages */
-sum arisk_simple arisk_full arisk_gbd uk_risk if age == 30
-sum arisk_simple arisk_full arisk_gbd uk_risk if age == 60
+/* calculate population share of each group */
+sum india_pop
+gen total_pop = `r(mean)' * `r(N)'
+gen pop_share = india_pop / total_pop
+
+/* multiple risk factor by prevalence to get increased mortality risk from this condition at each age */
+foreach v in $age_vars male $hr_biomarker_vars {
+  gen age_risk_full_`v' = ( (`v'_hr_full * `v') + (1 - `v'))
+}
+foreach v in $hr_gbd_vars {
+  gen age_risk_full_`v' = ( (`v'_hr_full * gbd_`v') + (1 - gbd_`v'))
+}
+
+/* now multiply each risk factor contribution by the population share */
+foreach v in $age_vars male $hr_gbd_vars $hr_biomarker_vars {
+
+  /* calculate contribution to aggregate risk at each age */
+  gen pop_risk_fpart_`v' = age_risk_full_`v' * pop_share
+  
+  /* add it up across all ages */
+  bys v1: egen pop_risk_full_`v' = total(pop_risk_fpart_`v')
+}
+
+/* show the aggregate contribution of each risk factor */
+foreach v in $age_vars male $hr_gbd_vars $hr_biomarker_vars {
+  qui sum pop_risk_full_`v' in 1
+  di %20s "`v': " %6.3f `r(mean)'
+}
+
+/* REPEAT PROCESS FOR SIMPLE MODEL -- AGE-SEX ONLY */
+/* multiple risk factor by prevalence to get increased mortality risk from this condition at each age */
+foreach v in $age_vars male  {
+  gen age_risk_simple_`v' = ( (`v'_hr_age_sex * `v') + (1 - `v'))
+}
+foreach v in $age_vars male {
+
+  /* calculate contribution to aggregate risk at each age */
+  gen pop_risk_simple_part_`v' = age_risk_simple_`v' * pop_share
+  
+  /* add it up across all ages */
+  bys v1: egen pop_risk_simple_`v' = total(pop_risk_simple_part_`v')
+}
+
+/* show the aggregate contribution of each risk factor */
+foreach v in $age_vars male  {
+  qui sum pop_risk_simple_`v' in 1
+  di %20s "`v': " %6.3f `r(mean)'
+}
+
+exit
 
