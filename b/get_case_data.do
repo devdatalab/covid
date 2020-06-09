@@ -312,7 +312,7 @@ by dgroup: gen cum_deaths = sum(death)
 by dgroup: gen cum_cases = sum(cases)
 
 /* only save the cumulative counts */
-drop death cases dgroup _fillin day_number
+drop dgroup _fillin day_number
 ren cum_deaths total_deaths
 ren cum_cases total_cases
 
