@@ -22,6 +22,9 @@ replace uk_pop = uk_pop / 5
 drop agestart ageend age_str
 keep if inrange(age, 16, 90)
 
+/* smooth the population across bins */
+lpoly uk_pop age, bw(2) gen(uk_pop_smooth) at(age) 
+
 order age
 save $tmp/uk_pop, replace
 
@@ -53,4 +56,8 @@ replace india_pop = india_pop / 5
 drop agebin
 keep if inrange(age, 16, 90)
 order age
+
+/* smooth across age bins */
+lpoly india_pop age, bw(3) gen(india_pop_smooth) at(age) 
+
 save $tmp/india_pop, replace
