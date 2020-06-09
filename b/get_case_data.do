@@ -13,6 +13,7 @@ This file does the following steps for both case data and death data:
 /********************************/
 /* define lgd matching programs */
 qui do $ddl/covid/covid_progs.do
+qui do $ddl/tools/do/tools.do
 
 /* Added 05/05/2020: pull in case data from covindia.
    Note: as of June 1 2020, covindia is defunct.  We now use covindia data up until April 27
@@ -158,9 +159,9 @@ drop if mi(district)
 sort state district
 save $covidpub/covid/covid19india_state_district_list, replace
 
-/**************************/
-/* Create covid-LGD keyes */
-/**************************/
+/*************************/
+/* Create covid-LGD keys */
+/*************************/
 /* import the lgd keys to match to */
 use $keys/lgd_district_key, clear
 
@@ -318,13 +319,13 @@ ren cum_cases total_cases
 
 /* order and save */
 order lgd_state_id lgd_district_id date lgd_state_name lgd_district_name
+drop cases death
 compress
 save $covidpub/covid/covid_infected_deaths, replace
 export delimited using $covidpub/covid/csv/covid_infected_deaths.csv, replace
 
 /* save PC11-identified version --> need to adjust this 06/05/2020 */
-convert_ids, from_ids(lgd_state_id lgd_district_id) to_ids(pc11_state_id pc11_district_id) long(covid_state_name covid_district_name date) key($keys/lgd_pc11_district_key_weights.dta) weight_var(lgd_pc11_wt_pop) labels metadata_urls(https://docs.google.com/spreadsheets/d/e/2PACX-1vTKTuciRsUd6pk5kWhlMyhF85Iv5x04b0njSrWzCkaN5IeEZpBwwvmSdw-mUJOp215jBgv2NPMeTHXK/pub?gid=0&single=true&output=csv)
+convert_ids, from_ids(lgd_state_id lgd_district_id) to_ids(pc11_state_id pc11_district_id) long(date) key($keys/lgd_pc11_district_key_weights.dta) weight_var(lgd_pc11_wt_pop) labels metadata_urls(https://docs.google.com/spreadsheets/d/e/2PACX-1vTKTuciRsUd6pk5kWhlMyhF85Iv5x04b0njSrWzCkaN5IeEZpBwwvmSdw-mUJOp215jBgv2NPMeTHXK/pub?gid=0&single=true&output=csv)
 order pc11*, first
 save $covidpub/covid/pc11/covid_infected_deaths_pc11, replace
 export delimited using $covidpub/covid/csv/covid_infected_deaths_pc11.csv, replace
-
