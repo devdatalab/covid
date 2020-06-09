@@ -1,3 +1,4 @@
+
 use $covidpub/agmark/agmark_clean, clear
 drop if mi(lgd_state_id)
 
