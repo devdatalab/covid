@@ -27,6 +27,12 @@ do $ccode/como/b/prep_ny_mortality.do
 /* prep population distributions */
 do $ccode/como/b/prep_populations.do
 
+/* clean state-level GBD for India */
+do $ccode/como/b/clean_gbd_india.do
+
+/* create state-level biomarker variables */
+do $ccode/como/b/collapse_biomarkers_to_state.do
+
 /************/
 /* analysis */
 /************/
@@ -42,6 +48,9 @@ do $ccode/como/a/analyze_age_mort_risk.do
 
 /* run model in levels with population weighting to predict E(deaths) */
 do $ccode/como/a/analyze_mort_counts.do
+
+/* examine risk factor distribution across states */
+
 
 /* plot relationship between risk and poverty */
 do $ccode/como/a/examine_risk_factors_poverty.do

@@ -53,6 +53,8 @@ foreach condition in $hr_biomarker_vars {
 gen rf_full_d = rf_full_agesex_d * rf_full_biomarkers
 gen rf_full_c = rf_full_agesex_c * rf_full_biomarkers
 
+save $tmp/combined_w_risk_factors, replace
+
 /* collapse the data to 1 combined risk factor for each age */
 collapse (mean) rf_* $hr_biomarker_vars $hr_selfreport_vars [aw=wt], by(age)
 save $tmp/foo, replace

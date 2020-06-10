@@ -79,8 +79,62 @@ merge 1:1 age using $tmp/uk_age_predicted_hr, nogen keep(master match)
 /* create continuous uk age-specific risk */
 gen uk_risk = hr_full_age_cts * uk_risk_non_age
 
-save $tmp/uk_sim, replace
+save $tmp/uk_sim_age_fixed, replace
 
+/****************************************************************************/
+/* create a version using age-variant conditions with GBD and external data */
+/****************************************************************************/
+use $tmp/uk_prevalences, clear
+
+merge 1:1 age using $health/gbd/gbd_nhs_conditions_uk, nogen
+drop *upper *lower
+keep if inrange(age, 18, 84)
+
+/* rename all conditions to vars matching the HR names */
+drop gbd_diabetes
+
+/* merge in risk factors */
+gen v1 = 0
+merge m:1 v1 using $tmp/uk_nhs_hazard_ratios_flat_hr_full, nogen
+
+drop *granular
+ren uk_prev_diabetes_biomarker uk_prev_diabetes_uncontr
+ren uk_prev_hypertension_biomarker uk_prev_bp_high
+drop uk_prev_hyp* uk_prev_diabetes_both uk_prev_diabetes_diagnosed
+ren gbd_* uk_prev_*
+
+/* drop hRs we don't use */
+drop *age*hr_full *bp_not_high*
+
+foreach v of varlist *hr_full {
+  local x = substr("`v'", 1, strlen("`v'") - 8)
+  cap confirm variable uk_prev_`x'
+  if _rc {
+    di "Missing `x'"
+  }
+}
+
+/* bring in age-invariant prevalences for the fields we don't have otherwise */
+merge m:1 v1 using $tmp/uk_nhs_incidence, nogen keepusing( *bmi_not_obese *bmi_obeseI *bmi_obeseII *bmi_obeseIII *asthma_no_ocs *diabetes_contr *cancer_non_haem_1_5 *cancer_non_haem_5 *haem_malig_1_5 *haem_malig_5 *organ_transplant *spleen_dz)
+
+/* bring in cts age risk factor */
+merge 1:1 age using $tmp/uk_age_predicted_hr, nogen keep(master match) keepusing(hr_full_age_cts)
+
+/* set male share at 49.9 following OpenSafely */
+gen uk_prev_male = 0.499
+
+/* multiply through all the risk factors */
+gen uk_risk = 1
+global os_vars asthma_no_ocs diabetes_contr cancer_non_haem_1_5 cancer_non_haem_5 haem_malig_1_5 haem_malig_5  organ_transplant spleen_dz 
+global all_vars male $hr_biomarker_vars $hr_gbd_vars 
+foreach v in $all_vars {
+  replace uk_risk = uk_risk * (uk_prev_`v' * `v'_hr_full + (1-uk_prev_`v'))
+  drop uk_prev_`v'
+}
+replace uk_risk = uk_risk * hr_full_age_cts
+sum uk_risk
+
+save $tmp/uk_sim_age_flex, replace
 
 /************************************************************************************/
 /* can we replicate the overall mortality rate by multiplying all the risk factors? */
