@@ -62,3 +62,34 @@ graphout nonperish
 
 graph combine perish nonperish, ycommon r(1) name(combined, replace)
 graphout combined
+
+
+
+*********************************
+
+use $tmp/agmark_data.dta, clear
+
+replace qty = . if unit == 1
+
+collapse (sum) qty (mean) price_avg, by(date item group)
+
+gen daily_output_value = qty * price_avg
+
+gen year = year(date)
+gen week = week(date)
+
+egen mean_qty = mean(qty) if year == 2018, by(year item)
+egen mean_output_value = mean(daily_output_value) if year == 2018, by(year item)
+
+collapse (sum) qty mean_qty mean_output_value, by (year week item group)
+
+egen mean_output_value_2018 = max(mean_output_value), by(week item)
+egen mean_qty_2018 = max(mean_qty), by(week item)
+
+
+/* indicate if something is a perishable */
+gen perishable = 1 if (group == 8 | group == 9 | group == 15)
+replace perishable = 0 if mi(perishable)
+
+save $tmp/perishables, replace
+keep if perishable == 1
