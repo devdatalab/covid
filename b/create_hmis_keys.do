@@ -12,7 +12,7 @@ rename district hmis_district
 rename year_financial hmis_year
 
 /* Save hmis key  */
-save $health/hmis/hmis_dist_clean_key, replace
+save $tmp/hmis/hmis_dist_clean_key, replace
 
 /******************************************************/
 /* Merge HMIS district key with lgd pc11 district key */
@@ -44,7 +44,7 @@ foreach year in `fin_years'{
 	gen hmis_district_name = hmis_district
 		
 	/* format variables */
-	plgd_state_clean hmis_state
+	lgd_state_clean hmis_state
 	lgd_dist_clean hmis_district
 	
 	/* merge */
