@@ -113,6 +113,11 @@ merge m:1  pc11_state_name using $keys/pc11_state_key, keep(master match) nogen 
 get_state_ids, y(11)
 drop pc01*
 
+/* convert everything from X/100,000 to % prevalence */
+foreach v in $hr_gbd_vars diabetes {
+  replace `v' = `v' / 100000
+}
+
 /* save clean state-level GBD */
 order pc11_state_id pc11_state_name
 save $health/gbd/gbd_india_states, replace
