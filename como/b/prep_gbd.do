@@ -26,6 +26,9 @@ replace condition = lower(condition)
 expand 5 if !inlist(agestart, -99, -90)
 bys country agestart condition: egen age = seq()
 replace age = age + agestart - 1
+
+/* adjust first category for the fact that is only length 4 (ages 1-4) */
+drop if age == 5 & agestart == 1
 drop agestart ageend
 
 /* drop hemoglobinopathies which clearly don't correspond to the NHS immunosuppressive category */
@@ -76,6 +79,28 @@ ren (gbd_country gbd_age) (country age)
 /* label all-age and age-standardized */
 label define gbdage -99 "All Ages" -90 "Age-standardized"
 label values age gbdage
+
+/* smooth each variable to make age continuous */
+foreach v in $hr_gbd_vars diabetes {
+  lpoly gbd_`v' age if age > 0 & country == "India", bw(4) gen(gbd_`v'_smooth_ind) at(age)
+  lpoly gbd_`v' age if age > 0 & country == "United Kingdom", bw(4) gen(gbd_`v'_smooth_uk) at(age)
+
+  /* assign smooth vars correctly since lpoly isn't smart enough */
+  gen     gbd_`v'_smooth = gbd_`v'_smooth_ind if country == "India"
+  replace gbd_`v'_smooth = gbd_`v'_smooth_uk  if country == "United Kingdom"
+  drop gbd_`v'_smooth_ind gbd_`v'_smooth_uk
+}
+
+/* set smoothed vars as defaults */
+save $tmp/prerename, replace
+ren *_upper upper_*
+ren *_lower lower_*
+ren gbd_*_smooth tmp_*
+ren gbd* gbd*_granular
+order country age tmp*
+ren tmp_* gbd_*
+ren upper_* *_upper
+ren lower_* *_lower
 
 savesome if country == "United Kingdom" using $health/gbd/gbd_nhs_conditions_uk, replace
 savesome if country == "India" using $health/gbd/gbd_nhs_conditions_india, replace

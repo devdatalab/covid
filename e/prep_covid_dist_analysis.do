@@ -1,7 +1,6 @@
 cap mkdir $tmp/covid_district
 global out $tmp/covid_district
 
-
 /* prepare demographic district level data */
 use $covidpub/demography/pc11/dem_district_pc11, clear
 
@@ -88,21 +87,74 @@ foreach i in r u {
 use $tmp/hh_r, clear
 append using $tmp/hh_u
 
-/* convert shares into numbers */
-foreach x of var *hl_dwelling_r* *hhsize* {
-  replace `x' = `x' * pc11_pca_no_hh
-  }
+/* convert household size to total before collapse */
+egen pc11_pca_total_hh = sum(pc11_pca_no_hh)
 
 /* collapse at district level */
 collapse_save_labels
-collapse (sum) *hl_dwelling_r* *hhsize*, by(pc11_state_id pc11_district_id)
+collapse (mean) *hl_dwelling_r* *hhsize* *total_hh, by(pc11_state_id pc11_district_id)
 collapse_apply_labels
+
+/* rename variable to calculate avg dwelling size */
+ren pc11_hl_dwelling_r_6p pc11_hl_dwelling_r_6
+
+/* average dwelling size */
+gen pc11_avg_room_no = 0
+
+/* calculate numerator */
+forval i = 1/6{
+  replace pc11_avg_room_no = pc11_avg_room_no + `i' * pc11_hl_hhsize_`i'
+  }
+
+/* calculate avg no of rooms in each house */
+replace pc11_avg_room_no = pc11_avg_room_no/100
+la var pc11_avg_room_no "Avg no. of rooms in a house"
+
+/* keep necessary vars */
+keep pc11_avg_room_no pc11_pca_total_hh pc11_state_id pc11_district_id 
 
 /* save as tempfile */
 save $out/hh_size_district, replace
 
+/* get distance variables */
+use $iec/misc_data/india_GIS/distances/pc01_village_highway_distances, clear
+
+/* keep relevant vars */
+keep pc01_state_id pc01_district_id pc01_village_id dist_mumb dist_delhi
+
+/* merge with pc11 key to get pc11 ids */
+merge 1:m pc01_state_id pc01_district_id pc01_village_id using $keys/pcec/pc01r_pc11r_key, keepusing(pc11_state_id pc11_district_id pc11_village_id) nogen keep(match)
+
+/* merge with population data for population weighting */
+merge 1:1 pc11_state_id pc11_district_id pc11_village_id using $pc11/pc11r_pca_clean, nogen keep(match) keepusing(pc11_pca_tot_p)
+
+/* collapse at district level */
+collapse_save_labels
+collapse (mean) dist_mumb dist_delhi [aw = pc11_pca_tot_p], by(pc11_state_id pc11_district_id)
+collapse_apply_labels
+
+/* save as tempfile */
+save $out/dist_mumb_delhi, replace
+
+/* get shrug distance variables */
+use $iec/covid/idi_survey/survey_shrid_data, clear
+
+/* keep necessary vars */
+keep shrid tdist* 
+
+/* merge to get pc11 ids */
+merge 1:1 shrid using $shrug/keys/shrug_pc11_district_key, keep(match) nogen keepusing(pc11_state_id pc11_district_id)
+
+/* collapse */
+collapse_save_labels
+collapse (mean) tdist*, by(pc11_state_id pc11_district_id)
+collapse_apply_labels
+
+/* save */
+save $out/shrid_tdist_district, replace
+
 /* get case data */
-use $covidpub/pc11/covid_infected_deaths_pc11, clear
+use $covidpub/covid/pc11/covid_infected_deaths_pc11, clear
 
 /* collapse cases to district level */
 collapse_save_labels
@@ -122,9 +174,8 @@ foreach file in `filelist' {
   merge 1:1 pc11_state_id pc11_district_id using $out/`file', nogen
 }
 
-
 /* save final dataset */
-save $out/covid_district_clean, replace
+save $iec/output/covid/covid_district_clean, replace
 
 /* save data dictionary to share */
 write_data_dict using $tmp/covid_dist.csv, replace

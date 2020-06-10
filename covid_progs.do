@@ -202,6 +202,7 @@ prog def lgd_dist_match
     
     /* merge */
     masala_merge lgd_state_name using $tmp/lgd_fmm, s1(lgd_district_name) idmaster(idm) idusing(idu) minbigram(0.2) minscore(0.6) outfile($tmp/`0'_lgd)
+    save $tmp/lgd_covid_merge_results, replace
     drop lgd_district_name_master
     ren lgd_district_name_using lgd_district_name
 
