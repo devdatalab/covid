@@ -6,13 +6,24 @@ format date %dM_d,_CY
 tostring lgd_state_id, format("%02.0f") replace
 tostring lgd_district_id, format("%03.0f") replace
 
-/* indicate if something is a perishabel */
+/* indicate if something is a perishable */
 gen perishable = 1 if (group == 8 | group == 9 | group == 15)
 replace perishable = 0 if mi(perishable)
 
+/* generate year and day variables  */
+gen year = year(date)
+gen doy = doy(date)
+
+/* generate mean price and quantity  in 2018 */
+egen annual_price_avg = mean(price_avg), by(item year)
+egen annual_qty_avg = mean(qty), by(item year)
+
+/* collapse */
+collapse annual_output_value, by(year doy lgd_state_id lgd_district_id)
+
 /* save overall data file */
 save $tmp/agmark_data, replace
-
+ 
 /**********************/
 /* Explore new trends */
 /**********************/
@@ -30,10 +41,6 @@ drop _merge
 
 collapse (sum) qty total_cases total_deaths, by(date)
 
-gen year = year(date)
-
-gen doy = doy(date)
-
 twoway (line qty doy if year == 2018) (line qty doy if year == 2019) (line qty doy if year == 2020), title(perishables) name(perish, replace) legend(label(1 "2018", 2 "2019", 3 "2020")) xline(83)  legend(label(1 "2018") label(2 "2019") label(3 "2020"))
 
 use $tmp/agmark_data, replace
@@ -48,10 +55,6 @@ merge m:1 date lgd_state_id lgd_district_id using $covidpub/covid/covid_infected
 drop _merge
 
 collapse (sum) qty total_cases total_deaths, by(date)
-
-gen year = year(date)
-
-gen doy = doy(date)
 
 twoway (line qty doy if year == 2018) (line qty doy if year == 2019) (line qty doy if year ==2020), name(nonperish, replace) xline(83) title(non-perishables) legend(label(1 "2018") label(2 "2019") label(3 "2020"))
 graphout perish
