@@ -3,18 +3,21 @@
 /******************************************************/
 
 /* create combined UK / India dataset */
-use $tmp/uk_sim, clear
-gen round_age = floor(age)
-collapse (mean) uk_risk, by(round_age)
-ren round_age age
 
-merge 1:1 age using $tmp/india_models
-label var uk_risk "Aggregate risk (UK)"
+/* get fixed and flexible UK age datasets */
+use age uk_risk using $tmp/uk_sim_age_fixed, clear
+ren uk_risk uk_risk_age_fixed
+merge 1:1 age using $tmp/uk_sim_age_flex, keepusing(age uk_risk) nogen
+
+merge 1:1 age using $tmp/india_models, nogen
+label var uk_risk "Aggregate risk (UK, flex age)"
+label var uk_risk_age_fixed "Aggregate risk (UK, fixed age)"
+
 save $tmp/combined_risks_india_uk, replace
 use $tmp/combined_risks_india_uk, replace
 
 /* keep age and risk factors only */
-keep age arisk_simple arisk_full arisk_gbd uk_risk
+keep age arisk_simple arisk_full arisk_gbd uk_risk uk_risk_age_fixed
 
 /* import population in each bin */
 merge 1:1 age using $tmp/india_pop, keep(master match) nogen keepusing(india_pop_smooth)
@@ -33,42 +36,57 @@ foreach v of varlist *risk* {
 
 /* rescale UK population to same as India so we can be scale invariant.
    We care about rates, not total number of deaths. */
-sum india_pop, meanonly
-local ipop `r(mean)'
-sum uk_pop, meanonly
-local upop `r(mean)'
-replace uk_pop = uk_pop * `ipop' / `upop'
+// sum india_pop, meanonly
+// local ipop `r(mean)'
+// sum uk_pop, meanonly
+// local upop `r(mean)'
+// replace uk_pop = uk_pop * `ipop' / `upop'
+
+/* TEST: rescale all populations to size 100000, so the graph shows the density of expected deaths */
+qui sum india_pop
+replace india_pop = india_pop / (`r(mean)' * `r(N)') * 100000
+qui sum uk_pop
+replace uk_pop = uk_pop / (`r(mean)' * `r(N)') * 100000
 
 /* predict death count in each age bin under each assumption */
-/* assume baseline mortality of 1% for the reference group -- the UK population */
-global mortrate .01
+/* population is measure 1. We want the density function of deaths, so set the UK mortality rate to 100%. */
+global mortrate 1
 gen uk_deaths = uk_risk * $mortrate * uk_pop
+gen uk_deaths_age_fixed = uk_risk_age_fixed * $mortrate * uk_pop
 foreach model in full simple gbd {
   gen india_deaths_`model' = arisk_`model' * $mortrate * india_pop
 }
 
 /* plot the number of deaths from each model by age */
 label var uk_deaths "UK age distribution and comorbidities"
+label var uk_deaths_age_fixed "UK FIXED age distribution and comorbidities"
 label var india_deaths_simple "India, age distribution only"
 label var india_deaths_full "India, age distribution + biomarkers"
 label var india_deaths_gbd "India, age distribution + biomarkers + GBD"
 
-
 sort age
 twoway ///
     (line uk_deaths           age, lwidth(medthick))                ///
-    (line india_deaths_simple age, lwidth(medthick))      ///
-    (line india_deaths_gbd    age, lwidth(medthick))      ///
-, title("Predicted deaths at each age given UK medical system, infection rate") ytitle("Predicted Deaths")
-graphout pred_mort_model
+    (line uk_deaths_age_fixed age, lwidth(medthick))                ///
+    , yscale(log)
+graphout fixed_flex
 
-/* log model */
+sort age
+label var age "Age"
 twoway ///
     (line uk_deaths           age, lwidth(medthick))                ///
     (line india_deaths_simple age, lwidth(medthick))      ///
     (line india_deaths_gbd    age, lwidth(medthick))      ///
-, title("Predicted deaths given UK medical system, infection rate") ytitle("Predicted Deaths") yscale(log)
-graphout pred_mort_model_log
+, title("Modeled distribution of deaths, given UK medical system / infection rate") ytitle("Predicted Deaths" "Normalized population size 100,000")
+graphout pred_mort_model
+
+// /* log model */
+// twoway ///
+//     (line uk_deaths           age, lwidth(medthick))                ///
+//     (line india_deaths_simple age, lwidth(medthick))      ///
+//     (line india_deaths_gbd    age, lwidth(medthick))      ///
+// , title("Distribution of expected deaths, given UK medical system and infection distribution") ytitle("Share of Deaths at each Age") yscale(log)
+// graphout pred_mort_model_log
 
 /* alternate graph --- number of india deaths relative to UK deaths */
 gen india_deaths_simple_rel = india_deaths_simple / uk_deaths
@@ -77,13 +95,14 @@ sort age
 twoway ///
     (line india_deaths_simple_rel age, lwidth(medthick))      ///
     (line india_deaths_gbd_rel    age, lwidth(medthick))      ///
-, title("Predicted number of deaths at each age compared with UK, given UK medical system, infection rate") ytitle("Predicted Deaths")
+    , title("Distribution of Deaths: India relative to U.K.") ytitle("Proportional Change in Number of Deaths" "between UK and India") yline(1, lcolor(gs8) lpattern(-)) ///
+    legend(lab(1 "Age-Sex Adjustment Only") lab(2 "Age, Sex, and Comorbidity Adjustment")) ///
+    text(1.05 65 "1 = Density of deaths at this age is the same in U.K. and India", size(vsmall) color(gs8))    
 graphout deaths_relative_to_uk
 
-/* alternate graph: mortality at each age */
-global l lwidth(medthick)
-twoway (line uk_risk age, $l) (line arisk_gbd age, $l) (line arisk_simple age, $l), yscale(log) 
-graphout mort_risk_age
+
+
+drop *rel
 
 /* convert to YLLs */
 gen uk_yll = uk_deaths * (86 - age)
@@ -128,7 +147,7 @@ collapse (sum) india_pop uk_pop *deaths*, by(young)
 foreach v of varlist *death* *pop {
   replace `v' = `v' / 1000000
 }
-list
+list young uk_deaths uk_deaths_age_fixed india_deaths_gbd india_deaths_simple
 
 /* calculate share of deaths under 60 in the UK */
 sort young
@@ -137,5 +156,5 @@ gen india_gbd_young_mort_share = india_deaths_gbd[2] / (india_deaths_gbd[1] + in
 gen india_simple_young_mort_share = india_deaths_simple[2] / (india_deaths_simple[1] + india_deaths_simple[2])
 gen india_full_young_mort_share = india_deaths_full[2] / (india_deaths_full[1] + india_deaths_full[2])
 
-
+d *share, f
 sum *share
