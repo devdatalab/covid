@@ -48,6 +48,9 @@ do $ccode/b/get_case_data
 do $ccode/b/gen_nss_district_key.do
 do $ccode/b/prep_nss75.do
 
+/* process NFHS data */
+// note: this is not executable (sourced from collaborators) but included for reference
+// do $ccode/b/ddl_nfhs_poll_hmis.do
 
 /***********************************************/
 /* PART 2 -- RUNS FROM DATA LINKED IN GIT REPO */
