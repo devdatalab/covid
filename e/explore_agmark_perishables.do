@@ -24,9 +24,9 @@ collapse annual_output_value, by(year doy lgd_state_id lgd_district_id)
 /* save overall data file */
 save $tmp/agmark_data, replace
  
-/**********************/
-/* Explore new trends */
-/**********************/
+/*******************************/
+/* 6/9/20:  Explore new trends */
+/*******************************/
 
 use $tmp/agmark_data, replace
 
@@ -63,9 +63,9 @@ graphout nonperish
 graph combine perish nonperish, ycommon r(1) name(combined, replace)
 graphout combined
 
-
-
-*********************************
+*********************************************
+* 6/10/20: Normalizing by mean output value *
+*********************************************
 
 use $tmp/agmark_data.dta, clear
 
@@ -86,10 +86,82 @@ collapse (sum) qty mean_qty mean_output_value, by (year week item group)
 egen mean_output_value_2018 = max(mean_output_value), by(week item)
 egen mean_qty_2018 = max(mean_qty), by(week item)
 
-
 /* indicate if something is a perishable */
 gen perishable = 1 if (group == 8 | group == 9 | group == 15)
 replace perishable = 0 if mi(perishable)
 
 save $tmp/perishables, replace
 keep if perishable == 1
+
+****************************************************
+* 6/11/20: Convert all volumes to outputs at start *
+****************************************************
+
+/* use agricultural dataset */
+use $tmp/agmark_data.dta, clear
+
+/* fix quantity data */
+replace qty = . if unit == 1
+
+/* adjust formats of identifying variables */
+format date %dM_d,_CY
+tostring lgd_state_id, format("%02.0f") replace
+tostring lgd_district_id, format("%03.0f") replace
+
+/* generate year and day variables  */
+gen year = year(date)
+gen doy = doy(date)
+
+/* generate mean price by item in 2018 */
+egen mean_price_avg = mean(price_avg) if year == 2018, by(year item)
+
+/* add that average to items from every year */
+egen 2018_price_avg = max(mean_price_avg), by(item)
+drop mean_price_avg
+
+/* normalize all volumes of items */
+gen output = (qty * 2018_price_avg)
+
+/* create "perishable good" dummy */
+gen perishable = 1 if (group == 8 | group == 9 | group == 15)
+replace perishable = 0 if mi(perishable)
+drop if mi(group)
+
+/* collapse by normalized output */
+collapse (sum) output, by(year doy)
+
+/* save dataset, since we need to graph twice */
+save $tmp/agmark_data, replace
+
+/* drop nonperishable goods */
+drop if perishable == 0
+
+/* graph perishable good ouput by year */
+twoway (line output doy if year == 2018) ///
+    (line output  doy if year == 2019) ///
+    (line output doy if year == 2020) ///
+    title(perishables) ///
+    name(perish, replace) ///
+    legend(label(1 "2018", 2 "2019", 3 "2020")) xline(83)
+
+/* open temporary dataset again to graph nonperishables */
+use $tmp/agmark_data, replace
+
+/* drop perishable goods */
+drop if perishable == 1
+
+/* graph nonperishable good output by year */
+twoway (line output doy if year == 2018) ///
+    (line output  doy if year == 2019) ///
+    (line output doy if year == 2020) ///
+    title(non-perishables) ///
+    name(nonperish, replace) ///
+    legend(label(1 "2018", 2 "2019", 3 "2020")) xline(83)
+
+/* export graphs */
+graphout perish
+graphout nonperish
+
+/* combine graphs */
+graph combine perish nonperish, ycommon r(1) name(combined, replace)
+graphout combined
