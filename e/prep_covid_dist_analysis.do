@@ -181,3 +181,118 @@ save $iec/output/covid/covid_district_clean, replace
 write_data_dict using $tmp/covid_dist.csv, replace
 
 
+exit
+
+
+
+/* explore */
+use $out/covid_district_clean, clear
+merge 1:1 pc11_state_id pc11_district_id  using $covidpub/migration/pc11/district_migration_pc11, keepusing(outstmigrationshare outstmigrantstotal) keep(master match) nogen
+
+/* calculate average household size */
+merge 1:1 pc11_state_id pc11_district_id using $pc11/pc11_pca_district_clean, keepusing(pc11_pca_no_hh) nogen keep(master match)
+gen hh_size = pc11_pca_tot_p / pc11_pca_no_hh
+
+/* generate migration district data (share in national total*total national migrants) */
+gen outmigrants = outstmigrationshare * outstmigrantstotal
+
+/* gen per capita outmigration rate */
+gen outmigrant_share = outstmigration / pc11_pca_tot_p * 1000000
+
+/* get district names */
+merge 1:1 pc11_state_id pc11_district_id using $keys/pc11_district_key, keepusing(pc11_district_name)
+
+/* create ed vars */
+gen ln_cases = ln(total_cases + 1)
+gen ln_deaths = ln(total_deaths + 1)
+gen ln_pop = ln(pc11_pca_tot_p + 1)
+gen ln_pop_u = ln(pc11u_pca_tot_p + 1)
+gen ln_pop_r = ln(pc11r_pca_tot_p + 1)
+gen ln_density_u = ln(pc11u_pdensity)
+gen ln_density_r = ln(pc11r_pdensity)
+gen sc_share = pc11_pca_p_sc / pc11_pca_tot_p
+
+/* drinking water access */
+gen ln_pop_r_with_water = ln(pc11r_hl_dw_loc_inprem_no + 1)
+gen ln_pop_u_with_water = ln(pc11u_hl_dw_loc_inprem_no + 1)
+
+/* calculate old population */
+egen pop_over_65_r = rowtotal(age_65_r age_70_r age_75_r age_80_r)
+egen pop_over_65_u = rowtotal(age_65_u age_70_u age_75_u age_80_u)
+egen pop_over_65 = rowtotal(age_65_t age_70_t age_75_t age_80_t)
+gen ln_pop_over_65_r = ln(pop_over_65_r + 1)
+gen ln_pop_over_65_u = ln(pop_over_65_u + 1)
+gen ln_pop_over_65 = ln(pop_over_65 + 1)
+
+/* slum share */
+gen slum_share = pc11_slum_tot_p / pc11_pca_tot_p
+
+/* share with clean water */
+gen water_share_r = pc11r_hl_dw_loc_inprem_no / pc11r_pca_tot_p
+gen water_share_u = pc11u_hl_dw_loc_inprem_no / pc11u_pca_tot_p
+gen water_share_t = (pc11u_hl_dw_loc_inprem_no + pc11r_hl_dw_loc_inprem_no) / pc11_pca_tot_p
+/* rescale to 0->1 since a scaling error with these */
+foreach v in r u t {
+  sum water_share_`v'
+  replace water_share_`v' = water_share_`v' / `r(max)'
+}
+
+/* urbanization rate */
+gen urban_share = pc11u_pca_tot_p / pc11_pca_tot_p
+
+/* elderly share */
+gen over65_share_r = pop_over_65_r / pc11r_pca_tot_p
+gen over65_share_u = pop_over_65_u / pc11u_pca_tot_p
+gen over65_share_t = pop_over_65 / pc11_pca_tot_p
+
+/* identify mumbai */
+gen mumbai = inlist(pc11_district_name, "mumbai", "mumbai suburban", "thane")
+
+/* log distance to mumbai */
+gen ln_dist_mumb = ln(dist_mumb + 1)
+replace ln_dist_mumb = 0 if mumbai == 1
+gen ln_dist_delhi = ln(dist_delhi + 1)
+replace ln_dist_delhi = 0 if pc11_district_name == "new delhi"
+
+/* many big cities don't have these distances, so just use means */
+replace ln_dist_mumb = 7 if mi(ln_dist_mumb)
+replace ln_dist_delhi = 6.6 if mi(ln_dist_delhi)
+replace dist_mumb = 1272 if mi(dist_mumb)
+replace dist_delhi = 1019 if mi(dist_delhi)
+
+
+/* label variables */
+label var ln_cases "Log Infections"
+label var ln_pop "Log Population" 
+label var urban_share "Urban pop share"
+label var ln_density_u "Log Urban Pop Density"
+label var slum_share "Share Pop in Slums"
+label var sc_share "Share Scheduled Caste"
+label var over65_share_t "Share Over Age 65"
+label var water_share_t "Share with clean water"
+label var ln_dist_mumb "Log distance to Mumbai"
+label var hh_size "Avg Household Size"
+
+/* run ed regression */
+eststo clear
+eststo: reg ln_cases ln_pop
+eststo: reg ln_cases ln_pop urban_share ln_density_u 
+eststo: reg ln_cases ln_pop urban_share ln_density_u slum_share sc_share over65_share_t water_share_t ln_dist_mumb hh_size 
+
+eststo: reg ln_deaths ln_pop
+eststo: reg ln_deaths ln_pop urban_share ln_density_u 
+eststo: reg ln_deaths ln_pop urban_share ln_density_u slum_share sc_share over65_share_t water_share_t ln_dist_mumb hh_size
+estout_default using $tmp/ed
+
+/* slum binscatters */
+binscatter ln_cases slum_share, xtitle("Pop share in slums") ytitle("# Infections") 
+graphout slum_share
+
+binscatter ln_cases over65_share_t, xtitle("Pop share over age 65") ytitle("# Infections") 
+graphout over65_share
+
+
+
+
+
+

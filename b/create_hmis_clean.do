@@ -119,7 +119,7 @@ ren ev_9_11_3_b_TOTAL v_8_17_6_TOTAL
 /* Child Immunisation */
 
 /* BCG */
-ren ev_10_1_01_TOTAL v_9_1_1_TOTAL
+ren ev_10_1_01_TOTAL v_9_1_2_TOTAL
 
 /* DPT */
 ren ev_10_1_02_TOTAL v_9_1_3_TOTAL
