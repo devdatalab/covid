@@ -58,7 +58,6 @@ rename sector rural
 
 /* label variables */
 // label_from_gdoc, docid("1h6G4vYL3lvy4Bi8DTY3pMT2-5aVWOBoxAm3plx4M7qQ")
-
 save $covidpub/hospitals/ec_hospitals_tv, replace
 cap mkdir $covidpub/hospitals/csv
 export delimited $covidpub/hospitals/csv/ec_hospitals_tv.csv, replace
@@ -79,20 +78,27 @@ drop _merge
 /* see if they match (they better!) */
 count if pc11_state_id != tmp_pc11_state_id & !mi(tmp_pc11_state_id)
 count if pc11_district_id != tmp_pc11_district_id & !mi(tmp_pc11_district_id)
-
 drop tmp*
-
 list *hosp* if mi(pc11_district_id)
 
 /* replace all delhi districts with missing so it all gets collapsed into 1 */
-replace pc11_district_id = "" if ec13_state_id == "07"
+//replace pc11_district_id = "" if ec13_state_id == "07"
+
+/* sum the numbers to pc11 districts */
 collapse (sum) *hosp*, by(pc11_state_id pc11_district_id)
 
 /* prefix all vars with EC prefix */
 ren *hosp* ec_*hosp*
 
+/* drop instances without a state id */
+drop if mi(pc11_state_id)
+
 /* label from the google sheet dictionary */
 // label_from_gdoc, docid("1h6G4vYL3lvy4Bi8DTY3pMT2-5aVWOBoxAm3plx4M7qQ")
+save $covidpub/hospitals/pc11/ec_hospitals_dist_pc11, replace
+export delimited $covidpub/hospitals/csv/ec_hospitals_dist_pc11.csv, replace
+
+/* create LGD version */
+convert_ids, from_ids(pc11_state_id pc11_district_id) to_ids(lgd_state_id lgd_district_id) labels key($keys/lgd_pc11_district_key_weights.dta) weight_var(pc11_lgd_wt_pop) metadata_urls(https://docs.google.com/spreadsheets/d/e/2PACX-1vSq7qkpXS2QFatP_35deNi0ZeHNVgSMr4JHKaxx3pZgefp4cw4iqRMo0GRPMe0-h3n6BEoHPuzQEgmc/pub?gid=1900447643&single=true&output=csv)
 save $covidpub/hospitals/ec_hospitals_dist, replace
-cap mkdir $covidpub/hospitals/csv
 export delimited $covidpub/hospitals/csv/ec_hospitals_dist.csv, replace

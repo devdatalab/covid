@@ -255,12 +255,13 @@ egen hosp_beds_u = rowtotal(*_all_hosp_beds)
 gen docs_hosp_u = pc11_td_all_hosp_doc_pos if urban == 1
 gen docs_hosp_r = pc11_td_all_hosp_doc_pos if urban == 0
 
-save $tmp/precollapse, replace
+/* this gets used by gen_lgd_pc11_demographics.do */
+save $covidpub/intermediate/pc_hosp_precollapse, replace
 
 /*******************************************/
 /* district and subdistrict level collapse */
 /*******************************************/
-use $tmp/precollapse, clear
+use $covidpub/intermediate/pc_hosp_precollapse, clear
 
 /* collapse to sub district level */
 collapse (sum) hosp* pmed_* docs_* clinics_* clinic_beds_u  pc11_pca_tot_p, by(pc11_state_id pc11_district_id pc11_subdistrict_id)
@@ -269,15 +270,18 @@ collapse (sum) hosp* pmed_* docs_* clinics_* clinic_beds_u  pc11_pca_tot_p, by(p
 clean_collapsed_data
 
 /* save subdistrict dataset */
-save $covidpub/hospitals/pc_hospitals_subdist, replace
-cap mkdir $covidpub/hospitals/csv
-export delimited $covidpub/hospitals/csv/pc_hospitals_subdist.csv, replace
+save $covidpub/hospitals/pc/pc_hospitals_subdist_pc11, replace
+export delimited $covidpub/hospitals/csv/pc_hospitals_subdist_pc11.csv, replace
 
 /* REPEAT COLLAPSE AT DISTRICT LEVEL */
-use $tmp/precollapse, clear
+use $covidpub/intermediate/pc_hosp_precollapse, clear
 collapse (sum) hosp* pmed_* docs_* clinics_* clinic_beds_u  pc11_pca_tot_p, by(pc11_state_id pc11_district_id )
 clean_collapsed_data
+save $covidpub/hospitals/pc11/pc_hospitals_dist_pc11, replace
+export delimited $covidpub/hospitals/csv/pc_hospitals_dist_pc11.csv, replace
+
+/* create LGD version */
+convert_ids, from_ids(pc11_state_id pc11_district_id) to_ids(lgd_state_id lgd_district_id) key($keys/lgd_pc11_district_key_weights.dta) weight_var(pc11_lgd_wt_pop) metadata_urls(https://docs.google.com/spreadsheets/d/e/2PACX-1vTpGgFszhHhMlzh-ePv3tRj5Arpv7uyicPPDgkCS7-Ms3nE6OvofQWBFuOxOWBPtELzSmBFttxvLc20/pub?gid=1900447643&single=true&output=csv)
 save $covidpub/hospitals/pc_hospitals_dist, replace
-cap mkdir $covidpub/hospitals/csv
 export delimited $covidpub/hospitals/csv/pc_hospitals_dist.csv, replace
 

@@ -1,0 +1,34 @@
+master,district,state
+y.s.r.,y.s.r kadapa,andhra pradesh
+y.s.r.,ysr kadapa,andhra pradesh
+y.s.r.,y.s.r. kadapa,andhra pradesh
+y.s.r.,y s r,andhra pradesh
+spsr nellore,s.p.s. nellore,andhra pradesh
+spsr nellore,sri potti sriramulu nellore,candhra pradesh
+south salmara mancachar,south salmara mankachar,assam
+aurangabad,aurangabad bihar,bihar
+purbi champaran,purba champaran,bihar
+purbi champaran,west champaran,bihar
+pashchim champaran,east champaran,bihar
+kaimur (bhabua),kaimur,bihar
+kaimur (bhabua),kaimur bhabua,bihar
+madhepura,madhopura,bihar
+bemetara,bametara,chhattisgarh
+bilaspur,bilaspur cg,chhattisgarh
+dantewada,dakshin bastar dantewada,chhattisgarh
+gariyaband,gariaband,chhattisgarh
+janjgir-champa,janjgir champa,chhattisgarh
+kabirdham,kabeerdham,chhattisgarh
+uttar bastar kanker,uttar bastar kanker,chhattisgarh
+new delhi,new delhi,chhattisgarh
+ahmadabad,ahmedabad,gujarat
+dibang valley,upper dibang valley,arunachal pradesh
+west district,west sikkim,sikkim
+east district,east sikkim,sikkim
+north district,north sikkim,sikkim
+south district,south sikkim,sikkim
+bengaluru urban,bengaluru,karnataka
+the nilgiris,nilgiris,tamil nadu
+jayashankar bhupalapally,jayashankar,tamil nadu
+kumuram bheem asifabad,komaram bheem,tamil nadu
+kheri,lakhimpur kheri,uttar pradesh

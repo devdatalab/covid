@@ -20,6 +20,9 @@ ren hv19 illness_type
 ren hv21 symptoms_pertaining_illness
 ren hv23 diagnosed_for
 ren hv02 sl_no
+ren hv91a fasting_blood_glucose_mg_dl
+ren hv91 fasting_blood_glucose
+ren hv25 regular_treatment
 
 /* match variables to format in AHS */
 tostring sl_no, format("%05.0f") replace
@@ -53,12 +56,18 @@ replace age_new = age_comb if mi(age_new) & !mi(age_comb)
 drop age age_calc age_comb
 ren age_new age
 
-/* AGE  */
-drop if age < 18
-
 /* SEX */
 /* use the AHS household sex for observations with no matched CAB observation */
 replace sex = sex_comb if mi(sex) & !mi(sex_comb)
+
+/* drop if missing age or sex */
+drop if mi(age) | mi(sex) | sex == 3
+
+/* drop missing age and those under 18 */
+drop if age < 18
+
+/* replace fasting question with missing if not yes or no */
+replace fasting_blood_glucose = . if (fasting_blood_glucose != 1 & fasting_blood_glucose != 2)
 
 /* SAMPLE */
 /* define a variable to clarify the sample for each variable */
@@ -69,15 +78,13 @@ cap label define sample 1 "1 AHS cab" 2 "2 AHS comb" 3 "3 AHS cab & comb" 4 "4 D
 label values sample sample
 label var sample "DLHS or AHS modules for each observation"
 
-/* USUAL RESIDENCE */
-/* about 20% of the AHS COMB dataset is missing information on residence.  
-   if we drop non-usual residents, then we have to decide whether we keep or drop the missing values */
-replace usual_residance = usual_residance_comb if mi(usual_residance) & !mi(usual_residance_comb)
-keep if usual_residance == 1 | mi(usual_residance)
+/* create new numeric unique identifer */
+gen long uid = _n
+tostring uid, format("%08.0f") replace
 
-/* PREGNANT WOMEN 
-   we do not have pregnant women for AHS comb data, but for all DLHS. we should keep pregnant women and then just 
-   exclude them from the measured comorbidities for both AHS and DLHS */
-/* drop if pregnant == 1 & !mi(pregnant) */
+/* drop some large, unneeded variables */
+drop index prim_key qs* qe* qh* hv*
 
+/* save */
+compress
 save $health/dlhs/data/dlhs_ahs_merged, replace

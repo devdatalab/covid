@@ -25,8 +25,64 @@ def retrieve_covid19india_case_data(url, output_fp):
         # convert the raw data to a dataframe
         df =  pd.DataFrame.from_records(data[key])
 
+    # make date a python object
+    df["date"] = df["dateannounced"].apply(lambda x: datetime.datetime.strptime(x, "%d/%m/%Y"))
+    df = df.sort_values(["date", "detectedstate", "detecteddistrict"]).reset_index(drop=True)
+
+    # get filename
+    fn = os.path.basename(url).replace(".json", ".csv")
+
     # write the dataframe out as a csv
-    df.to_csv(os.path.join(output_fp, f"covid_{key}.csv"))
+    df.to_csv(os.path.join(output_fp, fn))
+
+
+def retrieve_covid19india_district_data(url, output_fp):
+    """
+    """
+    # create empty dataframe to hold all results
+    df = pd.DataFrame()
+    
+    with urllib.request.urlopen(url) as _url:
+    
+        # load the json
+        data = json.loads(_url.read().decode())['districtsDaily']
+
+    # get state list
+    state_list = list(data.keys())
+
+    # cycle through each state
+    for state in state_list:
+
+        # get district list for this state
+        district_list = list(data[state].keys())
+
+        # cycle through districts
+        for dist in district_list:
+
+            # extract district dataframe
+            df_dist = pd.DataFrame.from_records(data[state][dist])
+
+            # set the state and district of this dataframe
+            df_dist["state"] = state
+            df_dist["district"] = dist
+
+            # parse dates
+            df_dist["date_obj"] = df_dist["date"].apply(lambda x: datetime.datetime.strptime(x, "%Y-%m-%d"))
+            df_dist = df_dist.sort_values("date_obj").reset_index(drop=True)
+
+            # count new cases
+            df_dist["cases"] = df_dist["confirmed"].diff()
+
+            # count new deaths
+            df_dist["death"] = df_dist["deceased"].diff()
+
+            # add this data to the master dataframe
+            if df.empty:
+                df = df_dist.copy()
+            else:
+                df = df.append(df_dist, sort=False)
+
+    df.to_csv(os.path.join(output_fp, "covid19india_district_data.csv"))
 
 
 def retrieve_covindia_case_data(url, output_fp):

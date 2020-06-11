@@ -104,9 +104,25 @@ foreach level in subdistrict district {
   rate would be 10x that of South Korea.  */
   order `ids' pc11_pca* `level'_estimated_cfr_*
 
-  save $covidpub/estimates/`level'_age_dist_cfr, replace
-
-  /* export to CSV */
+  /* write dta and csv */
+  save $covidpub/estimates/pc11/`level'_age_dist_cfr_pc11, replace
   cap mkdir $covidpub/estimates/csv
-  export delimited $covidpub/estimates/csv/`level'_age_dist_cfr.csv, replace
+  export delimited $covidpub/estimates/csv/`level'_age_dist_cfr_pc11.csv, replace
+
+  /* district data also gets saved to lgd */
+  if "`level'" == "district" {
+
+    /* first build variable globals to define the aggregation method */
+    foreach type in u r t {
+      global pc11_pca_tot_`type'_ sum
+      forval i = 0(5)80 {
+        global pop_share_`type'_age_`i'_ sum
+      }
+    }
+
+    /* convert to LGD, weighted by population */
+    convert_ids, from_ids(pc11_state_id pc11_district_id) to_ids(lgd_state_id lgd_district_id) key($keys/lgd_pc11_district_key_weights.dta) weight_var(pc11_lgd_wt_pop) 
+    save $covidpub/estimates/`level'_age_dist_cfr, replace
+    export delimited $covidpub/estimates/csv/`level'_age_dist_cfr.csv, replace
+  }
 }

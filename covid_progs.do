@@ -32,7 +32,7 @@ prog def lgd_state_clean
     replace lgd_state_name = "maharashtra" if lgd_state_name == "maharastra"
     replace lgd_state_name = "chhattisgarh" if lgd_state_name == "chattisgarh"
     replace lgd_state_name = "odisha" if lgd_state_name == "orissa"
-    
+
     /* fill down state identifier when missing */
     replace lgd_state_name = lgd_state_name[_n-1] if mi(lgd_state_name)
   }
@@ -128,6 +128,16 @@ prog def lgd_dist_clean
       replace lgd_district_name = "warangal urban" if lgd_district_name == "warangal"    
       drop dups                                                                          
     }
+
+    /* idiosyncratic hmis data changes */
+    if "`0'" == "hmis_district" {
+
+      /*expand warangal into two obs*/
+      expand 2 if lgd_district_name == "warangal", gen(dups)                             
+      replace lgd_district_name = "warangal rural" if dups == 1                          
+      replace lgd_district_name = "warangal urban" if lgd_district_name == "warangal"    
+      drop dups                                                                          
+    }
     
     /* match name spellings to the lgd:pc11 district key to ensure an accurate merge */
     fix_spelling lgd_district_name, src($keys/lgd_pc11_district_key.dta) group(lgd_state_name) replace
@@ -192,6 +202,7 @@ prog def lgd_dist_match
     
     /* merge */
     masala_merge lgd_state_name using $tmp/lgd_fmm, s1(lgd_district_name) idmaster(idm) idusing(idu) minbigram(0.2) minscore(0.6) outfile($tmp/`0'_lgd)
+    save $tmp/lgd_covid_merge_results, replace
     drop lgd_district_name_master
     ren lgd_district_name_using lgd_district_name
 

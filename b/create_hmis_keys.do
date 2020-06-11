@@ -50,7 +50,7 @@ foreach year in `fin_years'{
 	/* merge */
 	lgd_state_match hmis_state
 	lgd_dist_match hmis_district
-	
+
 	/* ren hmis vars */
 	ren (hmis_state_name hmis_district_name) (hmis_state hmis_district)
 
@@ -65,3 +65,4 @@ foreach year in `fin_years'{
 
 /* save matched dataset */
 save $health/hmis/hmis_district_key, replace
+

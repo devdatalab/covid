@@ -34,8 +34,8 @@ us at covid@devdatalab.org.
 
 ## Data Folder Structure and Metadata
 
-Relative paths here refer to paths in the data folder. CSV files are
-in a csv/ subfolder in each path.
+Relative paths here refer to paths in the data folder. Most district-level data are available with both PC11 and LGD identifiers. CSV files are
+in a `csv/` subfolder in each path, while PC11 identified data are in a `pc11/` subfolder.
 
 | Folder      | Description                                                                       | Data Files                                   | Metadata                                                                                                                                         |
 | ----------- | -----------                                                                       | ----------                                   | --------                                                                                                                                         |
@@ -49,6 +49,7 @@ in a csv/ subfolder in each path.
 |             | District- and town/village-level hospital public/private hospital employment (EC) | `hospitals/ec_hospitals_(dist,tv)`           | [Link](https://docs.google.com/spreadsheets/d/e/2PACX-1vTpGgFszhHhMlzh-ePv3tRj5Arpv7uyicPPDgkCS7-Ms3nE6OvofQWBFuOxOWBPtELzSmBFttxvLc20/pubhtml)  |
 | migration/  | District-level temporary and permanent migration data             | `migration/district_migration`             | [Link](https://docs.google.com/spreadsheets/d/e/2PACX-1vTu79uiVKSFv8c1oZvx7WARrWXSfbwfLakiukoezDaH0spMM_MQalkm5fr4bnkBQVNRs2aiU7x41oi3/pubhtml)|
 |             | District-level temporary and permanent migration data (PC11 identified)  | `migration/pc11/district_migration_pc11`           | [Link](https://docs.google.com/spreadsheets/d/e/2PACX-1vTu79uiVKSFv8c1oZvx7WARrWXSfbwfLakiukoezDaH0spMM_MQalkm5fr4bnkBQVNRs2aiU7x41oi3/pubhtml)  |
+| agmark/  | Farm product data reported by different Mandis (Markets) across India.             | `agmark/agmark_clean`             | [Link](https://docs.google.com/spreadsheets/d/e/2PACX-1vSL5i735NyXaopzylr31_UjjS7NRUYWgcdNZi41Kvw8wUuHF1gDkyPKxA-tYMFnGTTOWdB-zPjJT6T3/pubhtml)|
 | keys/       | Correspondences to link different datasets                                        |                                              |                                                                                                                                                  |
 
 ## Data Identified for Inclusion
