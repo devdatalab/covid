@@ -58,6 +58,47 @@ keep if inrange(age, 16, 90)
 order age
 
 /* smooth across age bins */
-lpoly india_pop age, bw(3) gen(india_pop_smooth) at(age) 
+lpoly india_pop age, bw(3) gen(india_pop_smooth) at(age)
+graphout x
 
 save $tmp/india_pop, replace
+
+/*************************/
+/* repeat at state level */
+/*************************/
+
+/* open district data with 5-year age bins */
+use $covidpub/demography/pc11/age_bins_district_t_pc11.dta, clear
+
+/* collapse to state level */
+collapse (sum) age_*_t, by(pc11_state_id)
+
+/* reshape to long on ages */
+ren *_t *
+ren age_* state_pop*
+reshape long state_pop, j(age) i(pc11_state_id)
+format state_pop %10.0f
+
+/* expand to have one row per age */
+expand 5
+ren age agebin
+bys pc11_state_id agebin: egen age = seq()
+replace age = age + agebin - 1
+replace state_pop = state_pop / 5
+
+drop agebin
+keep if inrange(age, 16, 90)
+order pc11_state_id age
+
+/* smooth across age bins */
+gen state_pop_smooth = .
+levelsof pc11_state_id, local(states)
+foreach state in `states' {
+  lpoly state_pop age if pc11_state_id == "`state'", bw(3) gen(tmp) at(age)
+  replace state_pop_smooth = tmp if pc11_state_id == "`state'"
+  drop tmp
+}
+
+ren state_pop state_pop_binned
+ren state_pop_smooth state_pop
+save $tmp/state_pop, replace

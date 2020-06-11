@@ -1,7 +1,7 @@
 /* predict district and subdistrict mortality distribution based on age distribution */
 
 /* NOTE: this global needs to be the same as in gen_age_distribution.do */
-global agebins age_0 age_5 age_10 age_15 age_20 age_25 age_30 age_35 age_40 age_45 age_50 age_55 age_60 age_65 age_70 age_75 age_80
+global agebins age_0 age_5 age_10 age_15 age_20 age_25 age_30 age_35 age_40 age_45 age_50 age_55 age_60 age_65 age_70 age_75 age_80 age_85
 
 /***************************************************/
 /* ESTIMATE p(DEATH | INFECTION) at (SUB)DISTRICT LEVEL */

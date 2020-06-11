@@ -42,12 +42,13 @@ global hr_biomarkers_no_diab bmi_not_obese bmi_obeseI ///
 cap prog drop sc
 prog def sc
 
-  syntax varlist, [name(string) yscale(passthru)]
+  syntax varlist, [name(string) yscale(passthru) ylabel(passthru)]
   tokenize `varlist'
 
   /* set a default yscale */
-  if mi("`yscale'") local yscale yscale(log) ylabel(.125 .25 1 4 16 64)
-
+  if mi("`yscale'") local yscale yscale(log) 
+  if mi("`ylabel'") local ylabel ylabel(.125 .25 1 4 16 64)
+  
   /* set a default name */
   if mi("`name'") local name euripides
   
@@ -58,7 +59,7 @@ prog def sc
     local label : variable label `1'
 
     /* add the line plot for this variable to the twoway command string */
-    local command `command' (line `1' age, `yscale' xtitle("`label'") ytitle("Mortality Hazard Ratio") lwidth(medthick) )
+    local command `command' (line `1' age, `yscale' `ylabel' xtitle("`label'") ytitle("Mortality Hazard Ratio") lwidth(medthick) )
 
     /* get the next variable in the list */
     mac shift
