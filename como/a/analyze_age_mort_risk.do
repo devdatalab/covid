@@ -126,6 +126,18 @@ sc arisk_simple arisk_full arisk_gbd, name(3models)
 /* compare full model to NY OR model */
 sc arisk_full arisk_ny, name(vs_ny)
 
+/* FOR PAPER: agesex vs. full_gbd */
+label var age "Age"
+keep if age <= 84
+sc arisk_simple arisk_gbd, name(figure2) yscale(log) ylabel(.04 0.2 1 5 25)
+
+/* create proportional risk difference */
+gen risk_change = arisk_gbd / arisk_simple
+twoway (line risk_change age, lwidth(medthick)), ///
+    ytitle("Proportional Change in Age-Specific Risk")  ///
+    title("Change in Age-Specific Mortality Risk from Adding Comorbidities to Model (India)")
+graphout risk_diff
+
 /* list the mortality predictions so we can report the expected %
    change in mortality from switching models */
 list age arisk_simple arisk_full arisk_gbd

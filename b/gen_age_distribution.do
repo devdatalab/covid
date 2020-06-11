@@ -3,7 +3,7 @@
 global statelist andamannicobarislands andhrapradesh arunachalpradesh assam bihar chandigarh chhattisgarh dadranagarhaveli damananddiu goa gujarat haryana himachalpradesh jammukashmir jharkhand karnataka madhyapradesh maharashtra manipur meghalaya mizoram nagaland nctofdelhi odisha puducherry punjab rajasthan sikkim tamilnadu telangana tripura uttarakhand uttarpradesh westbengal
 
 /* Note: agebin list needs to be the same in predict_age_cfr.do */
-global agebins age_0 age_5 age_10 age_15 age_20 age_25 age_30 age_35 age_40 age_45 age_50 age_55 age_60 age_65 age_70 age_75 age_80
+global agebins age_0 age_5 age_10 age_15 age_20 age_25 age_30 age_35 age_40 age_45 age_50 age_55 age_60 age_65 age_70 age_75 age_80 age_85
 
 /************************************************/
 /* Calculate Rural and Urban Age Bins from SECC */
@@ -103,10 +103,10 @@ foreach level in district subdistrict {
       /* Age Binning */
       /***************/
       /* create age bins */
-      egen age_bin_`l' = cut(age), at(0(5)85)
+      egen age_bin_`l' = cut(age), at(0(5)90)
 
-      /* fill in the 80+ age bin */
-      replace age_bin_`l' = 80 if age >= 80
+      /* fill in the 85+ age bin */
+      replace age_bin_`l' = 85 if age >= 85
 
       /* drop age */
       drop age
@@ -278,7 +278,7 @@ foreach level in district subdistrict {
     /* first build variable globals to define the aggregation method */
     foreach type in u r t {
       global pc11_pca_tot_`type'_ sum
-      forval i = 0(5)80 {
+      forval i = 0(5)85 {
         global age_`i'_`type'_ sum
         global age_`i'_`type'_share_ mean
       }

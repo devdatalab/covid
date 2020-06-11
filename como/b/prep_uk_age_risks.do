@@ -79,6 +79,9 @@ merge 1:1 age using $tmp/uk_age_predicted_hr, nogen keep(master match)
 /* create continuous uk age-specific risk */
 gen uk_risk = hr_full_age_cts * uk_risk_non_age
 
+/* create uk simple risk -- continuous age * 2.24 HR for males */
+gen uk_risk_simple = hr_age_sex_age_cts * ((2.24 * .5) + .5)
+
 save $tmp/uk_sim_age_fixed, replace
 
 /****************************************************************************/
