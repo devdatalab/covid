@@ -50,8 +50,6 @@ merge m:1 pc11_state_id using $pc11/pc11_pca_state_clean, keepusing(pc11_pca_tot
 save $tmp/sofar, replace
 
 
-exit
-
 /* summarize risk factors at age 50 */
 use $tmp/sofar, clear
 
@@ -72,12 +70,8 @@ foreach v in simple full_biomarkers conditions full_all {
 sort rank_full_all
 list pc11_state_name rank_simple rf_simple rank_full_all rf_full_all 
 
-/* heatmap conditions by state */
-shp2dta using ~/iec/gis/pc11/pc11-state, database($tmp/state_db) coordinates($tmp/state_coord) replace genid(pc11_state_id) 
+save ~/iec/output/pn/test, replace
 
-cap destring pc11_state_id, replace
-spmap rf_conditions using $tmp/state_coord, id(pc11_state_id)
-graphout x
 
 exit
 
