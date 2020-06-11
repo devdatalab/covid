@@ -50,6 +50,7 @@ in a `csv/` subfolder in each path, while PC11 identified data are in a `pc11/` 
 | migration/  | District-level temporary and permanent migration data             | `migration/district_migration`             | [Link](https://docs.google.com/spreadsheets/d/e/2PACX-1vTu79uiVKSFv8c1oZvx7WARrWXSfbwfLakiukoezDaH0spMM_MQalkm5fr4bnkBQVNRs2aiU7x41oi3/pubhtml)|
 |             | District-level temporary and permanent migration data (PC11 identified)  | `migration/pc11/district_migration_pc11`           | [Link](https://docs.google.com/spreadsheets/d/e/2PACX-1vTu79uiVKSFv8c1oZvx7WARrWXSfbwfLakiukoezDaH0spMM_MQalkm5fr4bnkBQVNRs2aiU7x41oi3/pubhtml)  |
 | agmark/  | Farm product data reported by different Mandis (Markets) across India.             | `agmark/agmark_clean`             | [Link](https://docs.google.com/spreadsheets/d/e/2PACX-1vSL5i735NyXaopzylr31_UjjS7NRUYWgcdNZi41Kvw8wUuHF1gDkyPKxA-tYMFnGTTOWdB-zPjJT6T3/pubhtml)|
+| hmis/  | Data on child immunisations, maternal health, hospitalisations and lab testing among others across all years of available data. | `hmis/hmis_dist_clean` | [Link](https://docs.google.com/spreadsheets/d/e/2PACX-1vQ_-B-rhd3u42PU7V4Zc_X_tVYwDKVRgG9m20wgC3hSVYm763dPROMupxfIpBt0lFew57eD0sR9SdVM/pubhtml)|
 | keys/       | Correspondences to link different datasets                                        |                                              |                                                                                                                                                  |
 
 ## Data Identified for Inclusion
