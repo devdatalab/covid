@@ -129,3 +129,88 @@ foreach i in wt nowt {
 
 }
 
+/* 3. Agriculture */
+
+foreach i in wt nowt {
+
+  if "`i'" == "wt" local weight weight_hh
+  if "`i'" == "nowt" local weight no_weight
+  
+  /* price by crop category */
+  cibar agr_prc_change_holi_mean [aw = `weight'], over(agr_crop_cat_prop) barcolor(black sienna sand) graphopts(ytitle("Price changes since holi, by crop category") ylabel(-1 (0.2) 0))
+  graphout prc_crop_`i'
+
+  /* reasons for sales not starting */
+  graph hbar (mean) agr_nosell_notready - agr_nosell_machine [aw = `weight'], ascategory
+  graphout nosell_reason_`i'
+
+  /* selling difficulties for ongoing sales + sales completed within last two weeks  */
+  graph hbar (mean) agr_selldiff_none - agr_selldiff_police [aw = `weight'], ascategory
+  graphout selldiff_reason_`i'
+
+  /* changes in prices, borrowing, planned land, and inputs */
+  graph bar agr*borrow*mean *land*mean *inputs*mean *prc*yr_mean *prc*holi_mean [aw = `weight'], ylabel(-0.10 (0.01) 0.06) 
+  graphout achanges_`i'
+
+}
+
+/* selling status */
+catplot agr_crop_status
+graphout sell_status
+
+/* crop category */
+catplot agr_crop_cat_prop
+graphout crop_cat
+
+/* change in prices, input exp, planned land for kharif cultivation, and borrowing */
+
+/* graph change in prices between this year and last year */
+sum agr_prc_change_yr_mean
+hist agr_prc_change_yr_mean, saving(ap3) xtitle("Ag price yr % change") bin(10) ylabel(0(1)6,grid) xlabel(-1(.5)3) normal xline(`r(mean)')
+
+/* graph change in input expenditure between this and last year */
+sum agr_inputs_change_abs_mean
+hist agr_inputs_change_abs_mean, saving(ac3) xtitle ("Input expend. % change") bin(10) ylabel(0(1)6,grid) xlabel(-1(.5)3) normal xline(`r(mean)')
+
+/* graph change in planned land for cultivation */
+sum agr_land_change_mean
+hist agr_land_change_mean, saving(al3) xtitle("Planned land % change") bin(10) ylabel(0(1)6,grid) xlabel(-1(.5)3) normal xline(`r(mean)')
+
+/* graph change in borrowing */
+sum agr_borrow_change_abs_mean
+hist agr_borrow_change_abs_mean, saving(ab3) xtitle("Borrowed % change") bin(10) ylabel(0(1)6,grid) xlabel(-1(.5)3) normal xline(`r(mean)')
+
+/* combine graphs to show distribution */
+graph combine "ap3" "ac3" "al3" "ab3", ycommon
+graphout achanges
+
+/* 4. collapse dataset at district level */
+
+collapse_save_labels
+collapse (mean) lost_earn lab_earn_change lab_workdayschange_mean agr*holi_mean agr*yr_mean agr*abs_mean agr*change_mean tdist* pc11_pca* ec13* land* con_weekchange_mean mig_wage_change_mean mig_total_ratio [aw = weight_hh], by(pc11_state_id pc11_district_id)
+collapse_apply_labels
+
+/* save district level dataset */
+save $tmp/idi_survey_clean_district, replace
+
+/* change in earnings and land planned for planting change */
+twoway lfitci agr_land_change_mean lab_earn_change if lab_earn_change < 1 & agr_land_change_mean < 1, xtitle("% change in weekly earnings") ytitle("% change in land planned for kharif") ylabel(-.8 (0.2) .8) xlabel(-1 (0.2) 1) yline(0)
+graphout earn_land_wt
+
+/* change in earnings and ag input exp */
+twoway lfitci agr_inputs_change_abs_mean lab_earn_change if lab_earn_change < 1 & agr_land_change_mean < 1, xtitle("% change in weekly earnings") ytitle("% change in input expenditure") ylabel(-.8 (0.2) .8) xlabel(-1 (0.2) 1) yline(0)
+graphout earn_input_wt
+
+/* change in earnings and change in consumption */
+twoway lfitci con_weekchange_mean lab_earn_change if lab_earn_change < 1, xtitle("% change in weekly earnings") ytitle("% change in consumption") ylabel(-.8 (0.2) .8) xlabel(-1 (0.2) 1) yline(0)
+graphout earn_con_wt
+
+/* change in weekly earning and distance */
+twoway lfitci lab_earn_change tdist_100 if lab_earn_change < 1, ytitle("% change in weekly earnings") xtitle("Distance to nearest place with pop > 100k") ylabel(-1 (0.2) 0) yline(0) xlabel(0 (10) 90)
+graphout earn_dist_wt
+
+/* change in weekly earning and employment per capita */
+twoway lfitci lab_earn_change ec13* if lab_earn_change < 1, ytitle("% change in weekly earnings") xtitle("Non-farm jobs per capita") ylabel(-1 (0.2) 0) yline(0) 
+graphout earn_emp
+
+
