@@ -8,7 +8,7 @@
 #############
 
 # set list of folders to be pushed from $covidpub (not all folders will be shared)
-dirs="covid demography estimates hospitals keys migration agmark"
+dirs="covid demography estimates hospitals keys migration agmark hmis"
 
 # send public data from these folders to Dropbox via rclone (rclone must be configured)
 for dir in $dirs; do

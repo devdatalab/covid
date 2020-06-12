@@ -701,4 +701,9 @@ ren ev_* hm_ev_*
 ren v_* hm_v_*
 
 /* Save Data */
+compress
 save $health/hmis/hmis_dist_clean.dta, replace
+
+/* save to covid repo */
+save $covidpub/hmis/hmis_dist_clean.dta, replace
+export delimited $covidpub/hmis/csv/hmis_dist_clean.csv, replace

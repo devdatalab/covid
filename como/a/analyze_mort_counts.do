@@ -5,19 +5,20 @@
 /* create combined UK / India dataset */
 
 /* get fixed and flexible UK age datasets */
-use age uk_risk using $tmp/uk_sim_age_fixed, clear
+use age uk_risk uk_risk_simple using $tmp/uk_sim_age_fixed, clear
 ren uk_risk uk_risk_age_fixed
 merge 1:1 age using $tmp/uk_sim_age_flex, keepusing(age uk_risk) nogen
 
 merge 1:1 age using $tmp/india_models, nogen
 label var uk_risk "Aggregate risk (UK, flex age)"
+label var uk_risk_simple "Aggregate risk (UK, age-sex only)"
 label var uk_risk_age_fixed "Aggregate risk (UK, fixed age)"
 
 save $tmp/combined_risks_india_uk, replace
 use $tmp/combined_risks_india_uk, replace
 
 /* keep age and risk factors only */
-keep age arisk_simple arisk_full arisk_gbd uk_risk uk_risk_age_fixed
+keep age arisk_simple arisk_full arisk_gbd uk_risk uk_risk_age_fixed uk_risk_simple
 
 /* import population in each bin */
 merge 1:1 age using $tmp/india_pop, keep(master match) nogen keepusing(india_pop_smooth)
@@ -56,6 +57,7 @@ gen uk_deaths_age_fixed = uk_risk_age_fixed * $mortrate * uk_pop
 foreach model in full simple gbd {
   gen india_deaths_`model' = arisk_`model' * $mortrate * india_pop
 }
+save $tmp/test, replace
 
 /* plot the number of deaths from each model by age */
 label var uk_deaths "UK age distribution and comorbidities"
@@ -158,3 +160,24 @@ gen india_full_young_mort_share = india_deaths_full[2] / (india_deaths_full[1] +
 
 d *share, f
 sum *share
+
+
+/* how about a density function of deaths under the different models */
+use $tmp/test, clear
+
+foreach v in india_deaths_simple india_deaths_gbd uk_deaths {
+  sum `v'
+  replace `v' = `v' / (`r(mean)' * `r(N)') * 100000
+}
+
+sort age
+label var age "Age"
+twoway ///
+    (line uk_deaths           age, lwidth(medthick))                ///
+    (line india_deaths_simple age, lwidth(medthick))      ///
+    (line india_deaths_gbd    age, lwidth(medthick))      ///
+, title("Modeled distribution of deaths, given UK medical system / infection rate") ytitle("Predicted Deaths" "Normalized population size 100,000")
+graphout mort_density
+
+line india_pop age
+graphout x

@@ -35,73 +35,99 @@ foreach condition in $hr_gbd_vars {
   replace rf_full_all = rf_full_all * ((`condition'_hr_full * `condition') + (1 - `condition'))
 }
   
-/* get state-level total population */
+/* create a risk factor that is health conditions only */
+gen rf_conditions = rf_full_all / rf_full_agesex
+
+/* create non-biomarker and biomarker conditions risk factor */
+gen rf_nonbio_conditions = rf_full_all / rf_full_biomarkers
+gen rf_bio_conditions = rf_full_biomarkers / rf_full_agesex
+
+/* get state-level population */
 merge m:1 pc11_state_id using $pc11/pc11_pca_state_clean, keepusing(pc11_pca_tot_p) keep(master match) nogen
 
 /* get state-level age-specific population */
-//// need to build this
+merge m:1 pc11_state_id age using $tmp/state_pop, keepusing(state_pop) keep(master match) nogen
+ren state_pop state_age_pop
 
 /* assume a mortality rate of 1% for risk factor 1 and calculate deaths */
-// global mortrate 0.01
-// foreach v in simple full_biomarkers full_all {
-//   gen deaths_`v' = rf_`v' * state_age_pop * $mortrate
-// }
+global mortrate 0.01
+foreach v in simple full_biomarkers full_all conditions {
+  gen deaths_`v' = rf_`v' * state_age_pop * $mortrate
+}
 
 save $tmp/sofar, replace
 
 
-exit
-
 /* summarize risk factors at age 50 */
 use $tmp/sofar, clear
 
-/* generate conditions only */
-gen rf_conditions = rf_full_biomarkers / rf_full_agesex
+exit
 
-/* generate each state's rank on each risk factor */
-keep if inrange(age, 40, 65)
-collapse (mean) rf*, by(pc11_state_id pc11_state_name)
-
-list pc11_state_name rf*
-
+/* experiment 1: do risk factors change substantially across states by age? */
+/* rank each state in each age bin */
 foreach v in simple full_biomarkers conditions full_all {
+  bys age: egen rank_age_`v' = rank(rf_`v'), field
+}
+list age rank_age_simple rank_age_conditions if pc11_state_name == "uttar pradesh"
+
+/* experiment 2: who has best/worst risk factors at age 40 */
+drop rank*
+preserve
+keep if age == 40
+foreach v in simple full_biomarkers conditions full_all nonbio_conditions {
+  egen rank_`v' = rank(rf_`v'), field
+}
+sort rank_conditions
+list pc11_state_name rank*
+restore
+
+/* scatter biomarker conditions vs. non-biomarker conditions at age 40 */
+scatter rf_nonbio_conditions rf_bio_conditions if age == 40, mlabel(pc11_state_name) msize(tiny)
+graphout bio_nonbio_40
+
+scatter rf_nonbio_conditions rf_bio_conditions if age == 30, mlabel(pc11_state_name) msize(tiny)
+graphout bio_nonbio_30
+
+scatter rf_nonbio_conditions rf_bio_conditions if age == 60, mlabel(pc11_state_name) msize(tiny)
+graphout bio_nonbio_60
+
+reg rf_nonbio_conditions rf_bio_conditions, absorb(age)
+corr rf_nonbio_conditions rf_bio_conditions if age == 20
+corr rf_nonbio_conditions rf_bio_conditions if age == 40
+corr rf_nonbio_conditions rf_bio_conditions if age == 60
+
+/* collapse to deaths by state according to each measure */
+use $tmp/sofar, clear
+
+/* drop kerala where there is no data */
+drop if pc11_state_name == "kerala"
+
+collapse (sum) deaths* (firstnm) pc11_pca_tot_p, by(pc11_state_id pc11_state_name)
+foreach v of varlist death* {
+  replace `v' = `v' / pc11_pca_tot_p
+}
+
+/* forecast mortality rate across states */
+twoway (scatter deaths_simple deaths_full_all, mlabel(pc11_state_name) msize(tiny)) (line deaths_full_all deaths_full_all) ///
+    , legend(off) ytitle("Age-Sex Only") xtitle("Full Model")
+graphout state_mort_rate
+
+save ~/iec/output/pn/test, replace
+
+/* just show the health condition risk factors by state */
+use $tmp/sofar, clear
+
+collapse (mean) rf_* [aw=state_age_pop], by(pc11_state_name pc11_state_id)
+
+/* calculate ranks */
+foreach v of varlist rf_* {
+  local v = substr("`v'", 4, .)
   egen rank_`v' = rank(rf_`v'), field
 }
 
-/* #1 is the most at risk */
-sort rank_full_all
-list pc11_state_name rank_simple rf_simple rank_full_all rf_full_all 
+/* list risk factors for age, biomarker, and nonbiomarker conditions */
+sort rank_full_agesex
+list pc11_state_name rank_simple rank_bio_conditions rank_nonbio_conditions rank_full_all
 
-/* heatmap conditions by state */
-shp2dta using ~/iec/gis/pc11/pc11-state, database($tmp/state_db) coordinates($tmp/state_coord) replace genid(pc11_state_id) 
-
-cap destring pc11_state_id, replace
-spmap rf_conditions using $tmp/state_coord, id(pc11_state_id)
-graphout x
-
-exit
-
-/* ida's code */
-
-shp2dta using "~/iec1/gis/pc11/pc11_state.shp", database("state_db") coordinates("state_coord") genid(pc11_state_id) replace
-use state_db, clear
-	*** 	Red-Green map, automatically identified quantiles of the var of interest		***			
-grmap rf_condition  using  state_coord, id(pc11_state_id) ///
-	legenda(on) clmethod(quantile) fcolor(RdYlGn) ocolor(white ..) osize(vvthin ..)  ///
-	title("Figure title here", size(*0.8)) 	subtitle("(Subtitle here) ", size(*0.6)) ///
-	legtitle("Legend title here")   legcount  ///
-	legend(size(medium)) legend(pos(6) row(7) ring(1) size(*.75) forcesize /* symx(*.75) symy(*.75) */ )  
-		/* ocolor() sets the color of the polygon border
-		   Legend suboptions:
-				pos() and ring() override the default location of the legend
-					(ring > 0 will place it outside the plot region) 
-				row() identifies the max number of rows in the legend   								*/
-	graph export Maps\Map_1.png, as(png) replace
-		* same options as for normal graph export
-			***		Shades of blue Map, manually set category ranges	***	
-grmap rf_condition  using state_coord, id(pc11_state_id) ///
-	legenda(on) clmethod(custom) clbreaks(0 10000 25000 50000 5000000)  fcolor(Blues) ocolor(black ..) osize(vvthin ..)  ///
-	title("Figure title here", size(*0.8)) 	subtitle("(Subtitle here) ", size(*0.6)) ///
-	legtitle("Legend title here")   legcount  ///
-	legend(size(medium)) legend(pos(6) row(7) ring(1) size(*.75) forcesize /* symx(*.75) symy(*.75) */ )  
-	graph export Maps\Map_2.png, as(png) replace
+format rf* %6.2f
+list pc11_state_name rf_simple rf_bio_conditions rf_nonbio_conditions rf_full_all
