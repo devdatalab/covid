@@ -19,6 +19,9 @@ global hr_gbd_vars asthma_ocs autoimmune_dz haem_malig_1 cancer_non_haem_1    //
 global hr_selfreport_vars chronic_heart_dz stroke_dementia liver_dz kidney_dz autoimmune_dz ///
                       cancer_non_haem_1 haem_malig_1 chronic_resp_dz 
 
+/* define varlist found only in opensafely */
+global hr_os_only_vars asthma_no_ocs cancer_non_haem_1_5 cancer_non_haem_5 diabetes_contr diabetes_no_measure haem_malig_1_5 haem_malig_5 organ_transplant spleen_dz
+
 /* SOME ALTERNATE CONDITION SETS USED BY THE ANALYSIS */
 // global comorbid_vars age18_40 age40_50 age50_60 age60_70 age70_80 age80_ female male bmi_not_obese bmi_obeseI ///
 //                       bmi_obeseII bmi_obeseIII bp_not_high bp_high chronic_heart_dz stroke_dementia liver_dz kidney_dz autoimmune_dz ///
@@ -42,7 +45,7 @@ global hr_biomarkers_no_diab bmi_not_obese bmi_obeseI ///
 cap prog drop sc
 prog def sc
 
-  syntax varlist, [name(string) yscale(passthru) ylabel(passthru)]
+  syntax varlist, [name(string) yscale(passthru) ylabel(passthru) legend(passthru)]
   tokenize `varlist'
 
   /* set a default yscale */
@@ -66,7 +69,7 @@ prog def sc
   }
 
   /* draw the graph */
-  twoway `command'
+  twoway `command', `legend'
   graphout `name'
 end
 /****************** end sc *********************** */
@@ -77,14 +80,13 @@ end
 cap prog drop scp
 prog def scp
 
-  syntax varlist, [name(string) yscale(passthru) yline(passthru)]
+  syntax varlist, [name(string) yscale(passthru) yline(passthru) ytitle(passthru) legend(passthru)]
   tokenize `varlist'
 
-  /* set a default yscale (or not) */
+  /* set defaults */
   if mi("`yscale'") local yscale
-
-  /* set a default name */
   if mi("`name'") local name euripides
+  if mi("`ytitle'") local ytitle ytitle("Prevalence")
   
   /* loop over the outcome vars */
   while (!mi("`1'")) {
@@ -93,14 +95,14 @@ prog def scp
     local label : variable label `1'
 
     /* add the line plot for this variable to the twoway command string */
-    local command `command' (line `1' age, `yscale' xtitle("`label'") ytitle("Prevalence") lwidth(medthick) )
+    local command `command' (line `1' age, `yscale' xtitle("`label'") `ytitle' lwidth(medthick) )
 
     /* get the next variable in the list */
     mac shift
   }
 
   /* draw the graph */
-  twoway `command', `yline' name(`name', replace)
+  twoway `command', `yline' name(`name', replace) `legend'
   graphout `name'
 end
 /****************** end scp *********************** */

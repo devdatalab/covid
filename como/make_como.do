@@ -24,14 +24,14 @@ do $ccode/como/b/prep_india_sim_prevalence.do
 /* prep NY odds ratios of death */
 do $ccode/como/b/prep_ny_mortality.do
 
-/* prep population distributions */
-do $ccode/como/b/prep_populations.do
-
 /* clean state-level GBD for India */
 do $ccode/como/b/clean_gbd_india.do
 
 /* create state-level biomarker variables */
 do $ccode/como/b/collapse_biomarkers_to_state.do
+
+/* prep india and UK sex ratios and populations */
+do $ccode/como/b/prep_pop_sex.do
 
 /************/
 /* analysis */
@@ -43,16 +43,22 @@ do $ccode/como/a/sumstats.do
 /* plot UK / India prevalence of comorbid conditions */
 do $ccode/como/a/compare_uk_india_prevalence.do
 
-/* plot India risk factors under various assumptions*/
-do $ccode/como/a/analyze_age_mort_risk.do
+/* create HR, prevalence, population files all with identical structures */
+do $ccode/como/a/prep_outcomes_generic.do
 
-/* run model in levels with population weighting to predict E(deaths) */
-do $ccode/como/a/analyze_mort_counts.do
+/* run analysis for paper */
+do $ccode/como/a/calc_outcomes_generic.do
 
-/* examine risk factor distribution across states */
-
-
-/* plot relationship between risk and poverty */
-do $ccode/como/a/examine_risk_factors_poverty.do
-
+// /* plot India risk factors under various assumptions*/
+// do $ccode/como/a/analyze_age_mort_risk.do
+// 
+// /* run model in levels with population weighting to predict E(deaths) */
+// do $ccode/como/a/analyze_mort_counts.do
+// 
+// /* examine risk factor distribution across states */
+// 
+// 
+// /* plot relationship between risk and poverty */
+// do $ccode/como/a/examine_risk_factors_poverty.do
+// 
 

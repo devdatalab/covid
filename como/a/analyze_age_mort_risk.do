@@ -71,6 +71,12 @@ merge m:1 age using $health/gbd/gbd_nhs_conditions_india, keep(match master) nog
 /* bring in NY odds ratios */
 merge m:1 age using $tmp/nystate_or, keep(match master) nogen
 
+/* output a csv file with all the prevalences and hazard ratios and age-specific population */
+preserve
+merge 1:1 age using $tmp/india_pop, keep(master match) nogen keepusing(india_pop_smooth)
+export delimited using $out/hrs_prevalences_export.csv, replace
+restore
+
 /* ***** CREATE FULLY-ADJUSTED CONTINUOUS RISK HAZARD MODEL */
 /* assume 47% men for now in both simple and full models */
 gen arisk_full = hr_full_age_cts * (male_hr_full * .47 + .53)
@@ -129,18 +135,38 @@ sc arisk_full arisk_ny, name(vs_ny)
 /* FOR PAPER: agesex vs. full_gbd */
 label var age "Age"
 keep if age <= 84
-sc arisk_simple arisk_gbd, name(figure2) yscale(log) ylabel(.04 0.2 1 5 25)
+twoway ///
+    (line arisk_simple age, lwidth(medthick) lcolor(gs8) lpattern(-)) ///
+    (line arisk_gbd    age, lwidth(medthick) lcolor(black) lpattern(solid)), ///
+    name(figure2, replace) yscale(log) ylabel(.04 0.2 1 5 25) ///
+    xtitle("Age") ytitle("Relative Risk for COVID-19 Mortality") ///
+    legend(region(lcolor(black)) lwidth(medium) rows(2) lab(1 "Simple: Age-Sex Only") lab(2 "Full: Age, Sex, Comorbidities") ring(0) pos(5)) 
+graphout figure2
 
 /* create proportional risk difference */
 gen risk_change = arisk_gbd / arisk_simple
-twoway (line risk_change age, lwidth(medthick)), ///
-    ytitle("Proportional Change in Age-Specific Risk")  ///
-    title("Change in Age-Specific Mortality Risk from Adding Comorbidities to Model (India)")
+twoway (line risk_change age, lcolor(black) lwidth(medthick)), ///
+    ytitle("Proportional Change in Age-Specific Risk")  
 graphout risk_diff
 
 /* list the mortality predictions so we can report the expected %
    change in mortality from switching models */
 list age arisk_simple arisk_full arisk_gbd
+
+/* test: compare with uk risk */
+preserve
+merge 1:1 age using $tmp/uk_sim_age_fixed, keepusing( uk_risk_simple uk_risk) nogen
+ren  uk_risk uk_risk_age_fixed
+merge 1:1 age using $tmp/uk_sim_age_flex, keepusing(age uk_risk) nogen
+sc arisk_simple arisk_gbd uk_risk uk_risk_simple, name(vs_uk)
+
+sc arisk_simple arisk_gbd uk_risk uk_risk_simple uk_risk_age_fixed, name(vs_uk)
+
+gen d = uk_risk / arisk_gbd
+scatter d age
+graphout d
+
+restore
 
 save $tmp/india_models, replace
 

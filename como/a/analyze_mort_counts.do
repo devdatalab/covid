@@ -162,7 +162,7 @@ d *share, f
 sum *share
 
 
-/* how about a density function of deaths under the different models */
+/* Show density function of deaths under the different models */
 use $tmp/test, clear
 
 foreach v in india_deaths_simple india_deaths_gbd uk_deaths {
@@ -173,11 +173,19 @@ foreach v in india_deaths_simple india_deaths_gbd uk_deaths {
 sort age
 label var age "Age"
 twoway ///
-    (line uk_deaths           age, lwidth(medthick))                ///
-    (line india_deaths_simple age, lwidth(medthick))      ///
-    (line india_deaths_gbd    age, lwidth(medthick))      ///
-, title("Modeled distribution of deaths, given UK medical system / infection rate") ytitle("Predicted Deaths" "Normalized population size 100,000")
+    (line uk_deaths           age, lcolor(orange) lwidth(medium) lpattern(.-))     ///
+    (line india_deaths_simple age, lcolor(gs8) lpattern(-) lwidth(medthick))       ///
+    (line india_deaths_gbd    age, lcolor(black) lpattern(solid) lwidth(medthick)) ///
+    , ytitle("Distribution of Deaths" "Normalized population: 100,000") xtitle(Age)  ///
+    legend(lab(1 "United Kingdom (full model)") ///
+    lab(2 "India (simple model)") ///
+    lab(3 "India (full model)") ring(0) pos(5) rows(3) region(lcolor(black))) 
+    
 graphout mort_density
 
-line india_pop age
-graphout x
+/* calculate share of deaths under age X */
+foreach v in uk_deaths india_deaths_simple india_deaths_gbd {
+  qui sum `v' if age < 60
+  di %25s "`v': " %5.1f (`r(N)' * `r(mean)' / 1000)
+}
+
