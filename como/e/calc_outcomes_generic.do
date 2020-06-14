@@ -122,11 +122,13 @@ foreach model in full simple {
   }
 }
 
+global sim_n 1
+
 /* rescale so there are 100,000 deaths in each model */
 foreach model in $modellist {
   local v `model'_deaths
   sum `v'
-  replace `v' = `v' / (`r(mean)' * `r(N)') * 100000
+  replace `v' = `v' / (`r(mean)' * `r(N)') * $sim_n
 }
 
 // /* plot uk vs. india death density, simple */
@@ -155,22 +157,22 @@ capdrop mh_deaths
 gen mh_deaths = 0
 /* total deaths: 356. Total years: 89-18+1=72 */
 /* 18-29: 12 deaths  */
-replace mh_deaths = 100000 * 12/356 / (29 - 18 + 1) if inrange(age, 18, 29)
+replace mh_deaths = $sim_n * 12/356 / (29 - 18 + 1) if inrange(age, 18, 29)
 /* 30-39: 27 */
-replace mh_deaths = 100000 * 27/356 / 10 if inrange(age, 30, 39)
+replace mh_deaths = $sim_n * 27/356 / 10 if inrange(age, 30, 39)
 /* ... */
-replace mh_deaths = 100000 * 63/356  / 10 if inrange(age, 40, 49)
-replace mh_deaths = 100000 * 108/356 / 10 if inrange(age, 50, 59)
-replace mh_deaths = 100000 * 101/356 / 10 if inrange(age, 60, 69)
-replace mh_deaths = 100000 * 34/356  / 10 if inrange(age, 70, 79)
-replace mh_deaths = 100000 * 11/356  / 10 if inrange(age, 80, 89)
+replace mh_deaths = $sim_n * 63/356  / 10 if inrange(age, 40, 49)
+replace mh_deaths = $sim_n * 108/356 / 10 if inrange(age, 50, 59)
+replace mh_deaths = $sim_n * 101/356 / 10 if inrange(age, 60, 69)
+replace mh_deaths = $sim_n * 34/356  / 10 if inrange(age, 70, 79)
+replace mh_deaths = $sim_n * 11/356  / 10 if inrange(age, 80, 89)
 
 /* same graph, full model */
 twoway ///
     (line uk_full_deaths    age, lcolor(gs8) lwidth(medium) lpattern(-))     ///
     (line india_full_deaths age, lcolor(black) lpattern(solid) lwidth(medthick))       ///
     (line mh_deaths         age, lcolor(orange) lwidth(medium) lpattern(.-))     ///
-    , ytitle("Distribution of 100,000 Deaths") xtitle(Age)  ///
+    , ytitle("Density Function of Deaths (%)") xtitle(Age)  ///
     legend(lab(1 "United Kingdom (full)") ///
     lab(2 "India (full)") lab(3 "Maharasthra (May 8)") ///
     ring(0) pos(11) cols(1) region(lcolor(black))) ///
@@ -222,4 +224,18 @@ foreach v in male $hr_biomarker_vars $hr_gbd_vars $hr_os_only_vars {
   local prevd `r(mean)'
   
   di %40s "`v' : " %5.2f `rfd' %10.2f `prevd'
+}
+
+/* calculate aggregate risk factor diffs between india and uk */
+merge 1:1 age using $tmp/india_pop, keep(master match) nogen keepusing(india_pop)
+merge 1:1 age using $tmp/uk_pop, keep(master match) nogen keepusing(uk_pop)
+foreach v in male $hr_biomarker_vars $hr_gbd_vars health {
+  qui sum urf_`v' [aw=uk_pop]
+  local umean = `r(mean)'
+  qui sum irf_`v' [aw=india_pop]
+  local imean = `r(mean)'
+  local perc (`imean'/`umean' - 1) * 100
+  if `perc' > 0 local sign "+"
+  else local sign
+  di %45s "`v' : `sign'" %2.1f (`perc') "%"
 }
