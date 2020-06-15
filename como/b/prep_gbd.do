@@ -25,8 +25,8 @@ replace condition = lower(condition)
 /* expand to ages 20-84 */
 expand 5 if !inlist(agestart, -99, -90)
 
-/* copy 80-84 into 85-89 */
-expand 2 if agestart == 80
+/* copy 80-84 into 85-99 */
+expand 4 if agestart == 80
 bys country agestart condition: egen age = seq()
 replace age = age + agestart - 1
 

@@ -19,16 +19,16 @@ do $ccode/como/b/gen_comorbidity_predictions.do
 do $ccode/como/b/prep_uk_sim_prevalence.do
 
 /* repeat with external india aggregate data (e.g. GBD) */
-do $ccode/como/b/prep_india_sim_prevalence.do
+// do $ccode/como/b/prep_india_sim_prevalence.do
 
 /* prep NY odds ratios of death */
 do $ccode/como/b/prep_ny_mortality.do
 
 /* clean state-level GBD for India */
-do $ccode/como/b/clean_gbd_india.do
+// do $ccode/como/b/clean_gbd_india.do
 
 /* create state-level biomarker variables */
-do $ccode/como/b/collapse_biomarkers_to_state.do
+// do $ccode/como/b/collapse_biomarkers_to_state.do
 
 /* prep india and UK sex ratios and populations */
 do $ccode/como/b/prep_pop_sex.do
@@ -38,9 +38,9 @@ do $ccode/como/b/prep_pop_sex.do
 /************/
 
 /* calculate summary statistics and prevalences */
-do $ccode/como/a/sumstats.do
+// do $ccode/como/a/sumstats.do
 
-/* plot UK / India prevalence of comorbid conditions */
+/* Figure 1: plot UK / India prevalence of comorbid conditions */
 do $ccode/como/a/compare_uk_india_prevalence.do
 
 /* create HR, prevalence, population files all with identical structures */
