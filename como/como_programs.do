@@ -106,3 +106,23 @@ prog def scp
   graphout `name'
 end
 /****************** end scp *********************** */
+
+
+/* full condition list: */
+// male
+// bmi_obeseI
+// bmi_obeseII
+// bmi_obeseIII
+// bp_high
+// diabetes_uncontr
+// asthma_ocs
+// autoimmune_dz
+// haem_malig_1
+// cancer_non_haem_1
+// chronic_heart_dz
+// chronic_resp_dz
+// immuno_other_dz
+// kidney_dz
+// liver_dz
+// neuro_other
+// stroke_dementia

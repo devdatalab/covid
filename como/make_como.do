@@ -28,7 +28,7 @@ do $ccode/como/b/prep_ny_mortality.do
 do $ccode/como/b/clean_gbd_india.do
 
 /* create state-level biomarker variables */
-do $ccode/como/b/collapse_biomarkers_to_state.do
+// do $ccode/como/b/collapse_biomarkers_to_state.do
 
 /* prep india and UK sex ratios and populations */
 do $ccode/como/b/prep_pop_sex.do
