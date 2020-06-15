@@ -51,7 +51,7 @@ label var bmi "Body Mass Index kg/m^2"
 
 /* replace extreme outliers with missing values: q. should we do this based on physical values or stats? */
 replace bmi = . if bmi >= 100 
-replace bmi = . if bmi <10
+replace bmi = . if bmi < 10
 
 /* get bmi categories used in UK paper */
 gen bmi_not_obese = 0
@@ -253,8 +253,6 @@ keep uid pc11* psu htype rcvid supid tsend tsstart person_index hh* *wt survey r
 /* create a combined weight variable */
 /* - assume all AHS weights are 1 (since it's self-weighting) */
 /* - use state weights, not district weights, since we care about national representativeness */
-/* FIX: need to scale dhhwt by district pop / national pop to make nationally representative
-         (https://devdatalab.slack.com/archives/C012P55U163/p1590344336022400?thread_ts=1590343170.011200&cid=C012P55U163)*/
 replace dhhwt = 1 if mi(dhhwt)
 capdrop wt
 gen hhwt = dhhwt

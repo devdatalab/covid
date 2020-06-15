@@ -21,10 +21,12 @@ Outcomes
 local hr full_cts
 local prev india
 
-/* loop over prevalence files */
+/* loop over prevalence files -- cts here actually means age-specific */
+/* uk_cts_matched is the UK one we use for everything. */
 foreach prev in india uk_os uk_cts uk_cts_matched {
 
-  /* loop over hazard ratio sets */
+  /* loop over hazard ratio sets -- cts means age is cts and not in bins */
+  /* full_cts is the main one that we use. */
   foreach hr in simple_dis full_dis simple_cts full_cts {
 
     /* open the hazard ratio file */
@@ -36,6 +38,7 @@ foreach prev in india uk_os uk_cts uk_cts_matched {
     /* calculate the risk factor at each age, multiplying prevalence by hazard ratio */
     gen rf_health = 1
     foreach v in male $hr_biomarker_vars $hr_gbd_vars $hr_os_only_vars {
+      /* rf <-- rf * (prev_X * hr_X + (1 - prev_X) * hr_notX), but hr_notX is always 1 */
       gen rf_`v' = prev_`v' * hr_`v' + (1 - prev_`v')
       replace rf_health = rf_health * rf_`v'
       qui sum rf_health
