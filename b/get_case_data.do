@@ -219,8 +219,8 @@ gen idm = lgd_state_name + "=" + lgd_district_name
 /* run masala merge */
 masala_merge lgd_state_name using $tmp/lgd_fmm, s1(lgd_district_name) idmaster(idm) idusing(idu) minbigram(0.2) minscore(0.6) outfile($tmp/covid19india_lgd_district)
 
-/* keep only master and match data 
-   06/05/2020: still 6 districts unmatched, need to come back and figure out what is going on there */
+/* keep only master and match data */
+/* 4 districts unmatched - these don't exist in the lgd district key */
 keep if match_source < 6
 
 /* save the key */
