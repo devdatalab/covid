@@ -1,7 +1,7 @@
 //global conditionlist hypertension diabetes copd asthma
 
 /* create full condition list */
-global conditionlist diabetes_diagnosed diabetes_biomarker diabetes_both hypertension_diagnosed hypertension_biomarker hypertension_both asthma copd obese overweight
+global conditionlist diabetes_diagnosed diabetes_biomarker diabetes_both hypertension_diagnosed hypertension_biomarker hypertension_both asthma copd 
 
 /* import uk data */
 import delimited using $covidpub/covid/csv/uk_condition_prevalence2.csv, varnames(1) clear
@@ -44,11 +44,17 @@ foreach condition in $conditionlist {
     }
   }
 }
-
-/* drop the original fields and limit to ages with data */
-keep if inrange(age, 16, 90)
-keep age prev*
 drop prevalence
+keep age prev_*
+
+/* get external copd prevalence from better source */
+merge 1:1 age using $covidpub/covid/csv/uk_copd_prevalence, keepusing(prevalence) nogen
+replace prevalence = prevalence / 100000
+drop prev_copd
+ren prevalence prev_copd
+
+/* drop the original fields and limit to ages in study */
+keep if inrange(age, 18, 100)
 
 ren prev* uk_prev*
 

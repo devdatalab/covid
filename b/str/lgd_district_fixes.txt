@@ -32,3 +32,6 @@ barddhaman,bardhaman,west bengal
 gurugram,gurgaon,haryana
 khargone,west nimar,madhya pradesh
 east nimar,khandwa,madhya pradesh
+baleshwar,balasore,odisha
+kachchh,kutch,gujarat
+tuticorin,thoothukkudi,tamil nadu

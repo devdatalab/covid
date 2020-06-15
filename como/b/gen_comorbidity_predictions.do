@@ -445,8 +445,8 @@ winsorize age 18 100, replace
 merge m:1 age using $tmp/uk_age_predicted_hr, gen(_m_cts_age) keep(match master)
 assert _m_cts_age == 3
 
-/* limit to the 18-89 year old sample for the paper */
-keep if inrange(age, 18, 89)
+/* limit to the 18-99 year old sample for the paper */
+keep if inrange(age, 18, 99)
 
 /* save micro dataset with NHS hazard ratios */
 save $tmp/combined, replace
