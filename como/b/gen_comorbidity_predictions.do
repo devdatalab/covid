@@ -1,9 +1,30 @@
-/* open the full dataset */
-use $health/dlhs/data/dlhs_ahs_merged, clear
+/**********************/
+/* POPULATION WEIGHTS */
+/**********************/
+
+/* open the population data */
+use $pc11/pc11_pca_district_clean, clear
+
+/* calculate total state and national population */
+bys pc11_state_id: egen long state_pop = total(pc11_pca_tot_p)
+egen long national_pop = total(pc11_pca_tot_p)
+
+/* create state and district weights */
+gen swt = pc11_pca_tot_p / state_pop
+label var swt "district weight for state-level aggregation"
+gen dwt = pc11_pca_tot_p / national_pop
+label var dwt "district weight for national aggregation"
+
+/* save as a temporary file */
+keep pc11_state_id pc11_district_id pc11_pca_tot_p swt dwt
+save $tmp/pc11_popweights, replace
 
 /************************/
 /* COMORBIDITY MEASURES */
 /************************/
+
+/* open the full dataset */
+use $health/dlhs/data/dlhs_ahs_merged, clear
 
 /* label the diagnosed_for and symptoms variables */
 label var diagnosed_for "self-reported diagnosis in the last 1 year"
@@ -49,7 +70,7 @@ gen bmi = weight_in_kg / (height^2)
 replace bmi = . if pregnant == 1
 label var bmi "Body Mass Index kg/m^2"
 
-/* replace extreme outliers with missing values: q. should we do this based on physical values or stats? */
+/* replace extreme outliers with missing values */
 replace bmi = . if bmi >= 100 
 replace bmi = . if bmi < 10
 
@@ -100,7 +121,7 @@ label var bmi_preobese "WHO-defined preobese bmi"
 gen bp_systolic = (bp_systolic_1_reading + bp_systolic_2_reading) / 2
 label var bp_systolic "systolic BP taken as average of two measures"
 
-/* take the average of two systolic measurements */
+/* take the average of two diastolic measurements */
 gen bp_diastolic = (bp_diastolic_1_reading + bp_diastolic_2_reading) / 2
 label var bp_diastolic "Diastolic BP taken as average of two measures"
 
@@ -114,14 +135,14 @@ label var bp_normal "systolic BP <120 mm Hg and diastolic BP < 80 mm Hg"
 
 /* elevated */
 gen bp_elevated = 0
-replace bp_elevated = 1 if (bp_systolic >= 120 & bp_systolic <= 129) & (bp_diastolic < 80)
+replace bp_elevated = 1 if (bp_systolic >= 120 & bp_systolic < 130) & (bp_diastolic < 80)
 replace bp_elevated = . if mi(bp_systolic) | mi(bp_diastolic)
 replace bp_elevated = . if pregnant == 1
 label var bp_elevated "systolic BP 120-129 and BP diastolic < 80"
 
 /* high stage 1 */
 gen bp_high_stage1 = 0
-replace bp_high_stage1 = 1 if (bp_systolic >= 130 & bp_systolic <= 139) & (bp_diastolic >= 80 & bp_diastolic <=89)
+replace bp_high_stage1 = 1 if (bp_systolic >= 130 & bp_systolic < 140) & (bp_diastolic >= 80 & bp_diastolic < 90)
 replace bp_high_stage1 = . if mi(bp_systolic) | mi(bp_diastolic)
 replace bp_high_stage1 = . if pregnant == 1
 label var bp_high_stage1 "systolic BP 130-139 mm Hg and diastolic BP 80-89"
@@ -149,13 +170,11 @@ replace hypertension_both = 1 if (hypertension_biomarker == 1 | hypertension_dia
 label var hypertension_both "self-reported hypertension and/or measured BP high stage 2"
 
 /* create the inverse of hypertension_both */
-gen hypertension_both_not = 1 if hypertension_both == 0
-replace hypertension_both_not = 0 if hypertension_both == 1
+gen hypertension_both_not = 1 - hypertension_both 
 label var hypertension_both_not "normal blood pressure as defined as not hypertension_both"
 
-/* create the inverse of hypertension_both */
-gen hypertension_biomarker_not = 1 if hypertension_biomarker == 0
-replace hypertension_biomarker_not = 0 if hypertension_biomarker == 1
+/* create the inverse of hypertension_biomarker */
+gen hypertension_biomarker_not = 1 - hypertension_biomarker
 label var hypertension_biomarker_not "normal blood pressure as defined as not hypertension_biomarker"
 
 /* Respiratory Disease */
@@ -257,29 +276,6 @@ replace dhhwt = 1 if mi(dhhwt)
 capdrop wt
 gen hhwt = dhhwt
 
-/* save the full sample to get our best estimates at population prevelance */
-save $tmp/dlhs_ahs_tmp, replace
-
-/* open the population data */
-use $pc11/pc11_pca_district_clean, clear
-
-/* calculate total state and national population */
-bys pc11_state_id: egen long state_pop = total(pc11_pca_tot_p)
-egen long national_pop = total(pc11_pca_tot_p)
-
-/* create state and district weights */
-gen swt = pc11_pca_tot_p / state_pop
-label var swt "district weight for state-level aggregation"
-gen dwt = pc11_pca_tot_p / national_pop
-label var dwt "district weight for national aggregation"
-
-/* save as a temporary file */
-keep pc11_state_id pc11_district_id pc11_pca_tot_p swt dwt
-save $tmp/pc11_popweights, replace
-
-/* re-open the health data */
-use $tmp/dlhs_ahs_tmp, clear
-
 /* merge in population weights */
 merge m:1 pc11_state_id pc11_district_id using $tmp/pc11_popweights, keep(match master)
 drop _merge
@@ -288,7 +284,7 @@ drop _merge
 gen wt = hhwt * dwt
 label var wt "household x district weight for national aggregation"
 
-/* re-save the full dataset */
+/* save the full dataset */
 save $health/dlhs/data/dlhs_ahs_covid_comorbidities_full, replace
 
 /* drop if missing key values from CAB survey - we want to only use observations that have these measureable values */

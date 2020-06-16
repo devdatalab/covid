@@ -48,7 +48,7 @@ drop prevalence
 keep age prev_*
 
 /* get external copd prevalence from better source */
-merge 1:1 age using $covidpub/covid/csv/uk_copd_prevalence, keepusing(prevalence) nogen
+merge 1:1 age using $covidpub/covid/csv/uk_copd_prevalence, keepusing(Prevalence) nogen
 replace prevalence = prevalence / 100000
 drop prev_copd
 ren prevalence prev_copd
