@@ -20,7 +20,7 @@ replace condition = "hypertension_uncontr" if condition == "Hypertension (3b)"
 // replace condition = "hypertension_diagnosis" if condition == "Hypertension (1)" */
 // replace condition = "hypertension_both2" if condition == "Hypertension (2)" */
 // replace condition = "hypertension_biomarker2" if condition == "Hypertension (2a)" */
-replace condition = "obesity_class_1-2" if condition == "Obesity class 1-2"
+replace condition = "obesity_class_1_2" if condition == "Obesity class 1-2"
 replace condition = "obesity_class_3" if condition == "Obesity class 3"
 replace condition = lower(condition)
 

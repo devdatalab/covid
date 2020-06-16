@@ -75,25 +75,30 @@ replace bmi = . if bmi >= 100
 replace bmi = . if bmi < 10
 
 /* get bmi categories used in UK paper */
-gen bmi_not_obese = 0
+gen bmi_not_obese = 0 if !mi(bmi)
 replace bmi_not_obese = 1 if (bmi < 30)
-replace bmi_not_obese = . if mi(bmi)
 label var bmi_not_obese "not obese, bmi < 30"
 
-gen bmi_obeseI = 0
+gen bmi_obeseI = 0 if !mi(bmi)
 replace bmi_obeseI = 1 if (bmi >= 30 & bmi < 35)
-replace bmi_obeseI = . if mi(bmi)
 label var bmi_obeseI "obese class I, bmi 30-<35"
 
-gen bmi_obeseII = 0
+gen bmi_obeseII = 0 if !mi(bmi)
 replace bmi_obeseII = 1 if (bmi >= 35 & bmi < 40)
-replace bmi_obeseII = . if mi(bmi)
 label var bmi_obeseII "obese class II, bmi 35-<40"
 
-gen bmi_obeseIII = 0
+gen bmi_obeseIII = 0 if !mi(bmi)
 replace bmi_obeseIII = 1 if (bmi >= 40)
-replace bmi_obeseIII = . if mi(bmi)
 label var bmi_obeseIII "obese class III, bmi >=40"
+
+/* create obesity classes to match the NHS data */
+gen obesity_class_1_2 = 0 if !mi(bmi)
+replace obesity_class_1_2 = 1 if (bmi >= 30 & bmi < 40)
+label var obesity_class_1_2 "obesity classes 1 and 2"
+
+gen obesity_class_3 = 0 if !mi(bmi)
+replace obesity_class_3 = 1 if (bmi >= 40)
+label var obesity_class_3 "obesity class 3"
 
 /* create additional WHO-defined BMI categories */
 gen bmi_underweight_severe = 0 if !mi(bmi)
