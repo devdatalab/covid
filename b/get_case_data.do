@@ -24,11 +24,13 @@ cd $ddl/covid
 
 /* 1. Retrieve the data from covindia up until April 27 */
 
-/* call python function to retrieve the district-date level covid data */
-shell python -c "from b.retrieve_case_data import retrieve_covindia_case_data; retrieve_covindia_case_data('https://v1.api.covindia.com/covindia-raw-data', '$tmp')"
+/* call python function to retrieve the district-date level covid data 
+   Update 06/15/2020: the API is totally defunct and the data is no longer available. 
+   We have archived the last data pull from May and stroed in $covidpub */
+// shell python -c "from b.retrieve_case_data import retrieve_covindia_case_data; retrieve_covindia_case_data('https://v1.api.covindia.com/covindia-raw-data', '$tmp')"
 
-/* import the data we just pulled */
-import delimited $tmp/covindia-raw-data, clear varn(1)
+/* import the archived data */
+import delimited $covidpub/covid/raw/covindia-raw-data-archive.csv, clear varn(1)
 
 /* label variables - according to data definitions:
    https://covindia-api-docs.readthedocs.io/en/latest/api-reference/ */

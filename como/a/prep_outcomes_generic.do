@@ -152,8 +152,8 @@ ren prev_hypertension_biomarker prev_bp_high
 drop prev_hypert*
 ren prev_asthma prev_asthma_no_ocs
 ren prev_copd prev_chronic_resp_dz
-drop prev_overweight
-ren prev_obese prev_bmi_obeseI
+//drop prev_overweight
+//ren prev_obese prev_bmi_obeseI
 keep if inrange(age, 18, 89)
 replace prev_chronic_resp_dz = 0 if age < 31
 order age

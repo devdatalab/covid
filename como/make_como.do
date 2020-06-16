@@ -4,7 +4,7 @@
 /*********************/
 
 /* get continuous fit to UK age hazard ratios */
-// shell matlab $ccode/como/b/fit_cts_uk_age_hr.m
+//shell matlab $ccode/como/b/fit_cts_uk_age_hr.m
 
 /* combine DLHS and AHS */
 do $ccode/como/b/prep_health_data.do
@@ -61,4 +61,11 @@ do $ccode/como/a/calc_outcomes_generic.do
 // /* plot relationship between risk and poverty */
 // do $ccode/como/a/examine_risk_factors_poverty.do
 // 
+
+/************/
+/* appendix */
+/************/
+
+/* risk factor prevalences by age bin for all places */
+do $ccode/como/a/app_table_age_bin_prev.do
 

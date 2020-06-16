@@ -1,9 +1,30 @@
-/* open the full dataset */
-use $health/dlhs/data/dlhs_ahs_merged, clear
+/**********************/
+/* POPULATION WEIGHTS */
+/**********************/
+
+/* open the population data */
+use $pc11/pc11_pca_district_clean, clear
+
+/* calculate total state and national population */
+bys pc11_state_id: egen long state_pop = total(pc11_pca_tot_p)
+egen long national_pop = total(pc11_pca_tot_p)
+
+/* create state and district weights */
+gen swt = pc11_pca_tot_p / state_pop
+label var swt "district weight for state-level aggregation"
+gen dwt = pc11_pca_tot_p / national_pop
+label var dwt "district weight for national aggregation"
+
+/* save as a temporary file */
+keep pc11_state_id pc11_district_id pc11_pca_tot_p swt dwt
+save $tmp/pc11_popweights, replace
 
 /************************/
 /* COMORBIDITY MEASURES */
 /************************/
+
+/* open the full dataset */
+use $health/dlhs/data/dlhs_ahs_merged, clear
 
 /* label the diagnosed_for and symptoms variables */
 label var diagnosed_for "self-reported diagnosis in the last 1 year"
@@ -49,30 +70,35 @@ gen bmi = weight_in_kg / (height^2)
 replace bmi = . if pregnant == 1
 label var bmi "Body Mass Index kg/m^2"
 
-/* replace extreme outliers with missing values: q. should we do this based on physical values or stats? */
+/* replace extreme outliers with missing values */
 replace bmi = . if bmi >= 100 
 replace bmi = . if bmi < 10
 
 /* get bmi categories used in UK paper */
-gen bmi_not_obese = 0
+gen bmi_not_obese = 0 if !mi(bmi)
 replace bmi_not_obese = 1 if (bmi < 30)
-replace bmi_not_obese = . if mi(bmi)
 label var bmi_not_obese "not obese, bmi < 30"
 
-gen bmi_obeseI = 0
+gen bmi_obeseI = 0 if !mi(bmi)
 replace bmi_obeseI = 1 if (bmi >= 30 & bmi < 35)
-replace bmi_obeseI = . if mi(bmi)
 label var bmi_obeseI "obese class I, bmi 30-<35"
 
-gen bmi_obeseII = 0
+gen bmi_obeseII = 0 if !mi(bmi)
 replace bmi_obeseII = 1 if (bmi >= 35 & bmi < 40)
-replace bmi_obeseII = . if mi(bmi)
 label var bmi_obeseII "obese class II, bmi 35-<40"
 
-gen bmi_obeseIII = 0
+gen bmi_obeseIII = 0 if !mi(bmi)
 replace bmi_obeseIII = 1 if (bmi >= 40)
-replace bmi_obeseIII = . if mi(bmi)
 label var bmi_obeseIII "obese class III, bmi >=40"
+
+/* create obesity classes to match the NHS data */
+gen obesity_class_1_2 = 0 if !mi(bmi)
+replace obesity_class_1_2 = 1 if (bmi >= 30 & bmi < 40)
+label var obesity_class_1_2 "obesity classes 1 and 2"
+
+gen obesity_class_3 = 0 if !mi(bmi)
+replace obesity_class_3 = 1 if (bmi >= 40)
+label var obesity_class_3 "obesity class 3"
 
 /* create additional WHO-defined BMI categories */
 gen bmi_underweight_severe = 0 if !mi(bmi)
@@ -100,7 +126,7 @@ label var bmi_preobese "WHO-defined preobese bmi"
 gen bp_systolic = (bp_systolic_1_reading + bp_systolic_2_reading) / 2
 label var bp_systolic "systolic BP taken as average of two measures"
 
-/* take the average of two systolic measurements */
+/* take the average of two diastolic measurements */
 gen bp_diastolic = (bp_diastolic_1_reading + bp_diastolic_2_reading) / 2
 label var bp_diastolic "Diastolic BP taken as average of two measures"
 
@@ -114,14 +140,14 @@ label var bp_normal "systolic BP <120 mm Hg and diastolic BP < 80 mm Hg"
 
 /* elevated */
 gen bp_elevated = 0
-replace bp_elevated = 1 if (bp_systolic >= 120 & bp_systolic <= 129) & (bp_diastolic < 80)
+replace bp_elevated = 1 if (bp_systolic >= 120 & bp_systolic < 130) & (bp_diastolic < 80)
 replace bp_elevated = . if mi(bp_systolic) | mi(bp_diastolic)
 replace bp_elevated = . if pregnant == 1
 label var bp_elevated "systolic BP 120-129 and BP diastolic < 80"
 
 /* high stage 1 */
 gen bp_high_stage1 = 0
-replace bp_high_stage1 = 1 if (bp_systolic >= 130 & bp_systolic <= 139) & (bp_diastolic >= 80 & bp_diastolic <=89)
+replace bp_high_stage1 = 1 if (bp_systolic >= 130 & bp_systolic < 140) & (bp_diastolic >= 80 & bp_diastolic < 90)
 replace bp_high_stage1 = . if mi(bp_systolic) | mi(bp_diastolic)
 replace bp_high_stage1 = . if pregnant == 1
 label var bp_high_stage1 "systolic BP 130-139 mm Hg and diastolic BP 80-89"
@@ -149,14 +175,17 @@ replace hypertension_both = 1 if (hypertension_biomarker == 1 | hypertension_dia
 label var hypertension_both "self-reported hypertension and/or measured BP high stage 2"
 
 /* create the inverse of hypertension_both */
-gen hypertension_both_not = 1 if hypertension_both == 0
-replace hypertension_both_not = 0 if hypertension_both == 1
+gen hypertension_both_not = 1 - hypertension_both 
 label var hypertension_both_not "normal blood pressure as defined as not hypertension_both"
 
-/* create the inverse of hypertension_both */
-gen hypertension_biomarker_not = 1 if hypertension_biomarker == 0
-replace hypertension_biomarker_not = 0 if hypertension_biomarker == 1
+/* create the inverse of hypertension_biomarker */
+gen hypertension_biomarker_not = 1 - hypertension_biomarker
 label var hypertension_biomarker_not "normal blood pressure as defined as not hypertension_biomarker"
+
+/* controlled hypertension is defined as those diagnosed with BP marker below threshold */
+gen hypertension_contr = hypertension_diagnosis
+replace hypertension_contr = 0 if hypertension_biomarker == 1
+label var hypertension_contr "hypertension diagnosis but normal BP reading"
 
 /* Respiratory Disease */
 gen resp_illness = 0 if sample != 1
@@ -216,6 +245,11 @@ gen diabetes_both = 1 if diabetes_biomarker == 1 | diabetes_diagnosis == 1
 replace diabetes_both = 0 if mi(diabetes_both)
 label var diabetes_both "biomarker or self-reported diabetes diagnosis"
 
+/* controlled diabetes is defined as those diagnosed with diabetes but glucose below threshold */
+gen diabetes_contr = diabetes_diagnosis
+replace diabetes_contr = 0 if diabetes_biomarker == 1
+label var diabetes_contr "diabetes diagnosis but normal glucose reading"
+
 /* Cancer - non-haematological */
 gen cancer_non_haem = 0 if sample != 1
 /* respiratory system, gastrointestinal system, genitourinary system, breast, tumor (any type), skin cancer */
@@ -257,29 +291,6 @@ replace dhhwt = 1 if mi(dhhwt)
 capdrop wt
 gen hhwt = dhhwt
 
-/* save the full sample to get our best estimates at population prevelance */
-save $tmp/dlhs_ahs_tmp, replace
-
-/* open the population data */
-use $pc11/pc11_pca_district_clean, clear
-
-/* calculate total state and national population */
-bys pc11_state_id: egen long state_pop = total(pc11_pca_tot_p)
-egen long national_pop = total(pc11_pca_tot_p)
-
-/* create state and district weights */
-gen swt = pc11_pca_tot_p / state_pop
-label var swt "district weight for state-level aggregation"
-gen dwt = pc11_pca_tot_p / national_pop
-label var dwt "district weight for national aggregation"
-
-/* save as a temporary file */
-keep pc11_state_id pc11_district_id pc11_pca_tot_p swt dwt
-save $tmp/pc11_popweights, replace
-
-/* re-open the health data */
-use $tmp/dlhs_ahs_tmp, clear
-
 /* merge in population weights */
 merge m:1 pc11_state_id pc11_district_id using $tmp/pc11_popweights, keep(match master)
 drop _merge
@@ -288,7 +299,7 @@ drop _merge
 gen wt = hhwt * dwt
 label var wt "household x district weight for national aggregation"
 
-/* re-save the full dataset */
+/* save the full dataset */
 save $health/dlhs/data/dlhs_ahs_covid_comorbidities_full, replace
 
 /* drop if missing key values from CAB survey - we want to only use observations that have these measureable values */
@@ -312,6 +323,7 @@ gen stroke_dementia = stroke
 gen bp_high = hypertension_biomarker
 gen bp_not_high = hypertension_biomarker_not
 gen diabetes_uncontr = diabetes_biomarker
+gen hypertension_uncontr = hypertension_biomarker
 
 label var chronic_resp_dz   "Chronic respiratory disease as matched to NHS"
 label var diabetes_uncontr  "Diabetes as matched to NHS"
@@ -320,6 +332,8 @@ label var haem_malig_1      "Haematological cancer as matched to NHS"
 label var stroke_dementia   "Stroke/dementia as matched to NHS"
 label var bp_high           "Hypertension as matched to NHS"
 label var bp_not_high       "No Hypertension as matched to NHS"
+label var hypertension_uncontr "Hypertension according to BP reading"
+label var diabetes_uncontr "Diabetes according to glucose reading"
 
 /* save limited dataset with only comorbidity data */
 compress
