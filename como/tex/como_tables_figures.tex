@@ -1,0 +1,68 @@
+\documentclass[12pt,letterpaper]{article}
+\setcounter{page}{0}
+
+\usepackage{mathtools} 
+\usepackage{bbm}
+\usepackage[multiple]{footmisc}
+\usepackage{floatpag,amsmath,amsthm,amssymb}
+\newtheorem{proposition}{Proposition}
+\numberwithin{equation}{section}
+\newtheorem{nono-prop}{Proposition}[]
+
+% Figure panel header font
+\newcommand{\panel}{\fontfamily{phv}\selectfont\scriptsize\textbf}
+\usepackage{amsmath} 
+\DeclareMathOperator*{\argmin}{arg\,min}
+\DeclareMathOperator*{\argmax}{arg\,max}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% LOAD LOCAL COMPILATION PATHS
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%% DON'T CHANGE ANY OF THESE PATHS. FOR LOCAL COMPILE, EDIT YOUR
+%%                                            ~/include.tex ONLY
+\newcommand{\HOME}{\string~}
+\input{\HOME/include.tex}
+
+% include standard package
+\input{\includepath/front_matter}
+
+\usepackage{fancyhdr} 
+\pagestyle{fancy}
+\lhead{}
+\chead{}
+\rhead{\thepage}
+\cfoot{} % get rid of the page number 
+\renewcommand{\headrulewidth}{0pt}
+\renewcommand{\footrulewidth}{0pt}
+\setlength{\headsep}{24pt}
+
+% package for color-shared tables
+\usepackage[table]{xcolor}
+
+% disable hyperlinks, which were breaking on appendix references
+\usepackage[options]{nohyperref}
+
+\title{COVID Comorbidity paper} \author{Nobody}
+
+%%%%%%%%%%%%%%%%%%%%%% 
+% NO TITLE PAGE
+%%%%%%%%%%%%%%%%%%%%%% 
+\begin{document}
+\date{June 2020}
+% \maketitle
+
+% \section{Figures and Tables}
+
+\label{sec:figures}
+
+\begin{table}[H]
+  \caption{condition prevalences }
+  \input{\covidpath/app_table_age_bin_prev}
+  
+  \footnotesize{[table note]}
+\end{table}
+
+
+\end{document}
+

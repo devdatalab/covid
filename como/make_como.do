@@ -62,3 +62,10 @@ do $ccode/como/a/calc_outcomes_generic.do
 // do $ccode/como/a/examine_risk_factors_poverty.do
 // 
 
+/************/
+/* appendix */
+/************/
+
+/* risk factor prevalences by age bin for all places */
+do $ccode/como/a/app_table_age_bin_prev.do
+
