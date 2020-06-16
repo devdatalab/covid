@@ -1,10 +1,10 @@
 //global conditionlist hypertension diabetes copd asthma
 
 /* create full condition list */
-global conditionlist diabetes_diagnosed diabetes_biomarker diabetes_both hypertension_diagnosed hypertension_biomarker hypertension_both asthma copd 
+global conditionlist diabetes_contr diabetes_uncontr hypertension_contr hypertension_uncontr hypertension_both asthma copd
 
 /* import uk data */
-import delimited using $covidpub/covid/csv/uk_condition_prevalence2.csv, varnames(1) clear
+import delimited using $covidpub/covid/csv/uk_condition_prevalence.csv, varnames(1) clear
 drop source v*
 
 /* reshape wide on conditions */
@@ -12,20 +12,18 @@ replace condition = condition[_n-1] if mi(condition)
 
 /* replace names */
 // replace condition = "diabetes_diagnosed" if condition == "Diabetes" */
-replace condition = "diabetes_diagnosed" if condition == "Diabetes (2)"
-replace condition = "diabetes_biomarker" if condition == "Diabetes (2a)"
-replace condition = "hypertension_both" if condition == "Hypertension (3)"
-replace condition = "hypertension_biomarker" if condition == "Hypertension (3a)"
-replace condition = "hypertension_diagnosis" if condition == "Hypertension (1)"
-replace condition = "hypertension_both2" if condition == "Hypertension (2)"
-replace condition = "hypertension_biomarker2" if condition == "Hypertension (2a)"
-replace condition = "asthma" if condition == "Asthma"
-replace condition = "copd" if condition == "COPD"
+replace condition = "diabetes_contr" if condition == "Diabetes (2)"
+replace condition = "diabetes_uncontr" if condition == "Diabetes (2a)"
+replace condition = "hypertension_contr" if condition == "Hypertension (3)"
+replace condition = "hypertension_both" if condition == "Hypertension (3a)"
+replace condition = "hypertension_uncontr" if condition == "Hypertension (3b)"
+// replace condition = "hypertension_diagnosis" if condition == "Hypertension (1)" */
+// replace condition = "hypertension_both2" if condition == "Hypertension (2)" */
+// replace condition = "hypertension_biomarker2" if condition == "Hypertension (2a)" */
+replace condition = "obesity_class_1-2" if condition == "Obesity class 1-2"
+replace condition = "obesity_class_3" if condition == "Obesity class 3"
 replace condition = lower(condition)
 
-// drop if condition == "Hypertension (2)"
-// replace condition = "hypertension" if condition == "Hypertension (1)"
-// replace condition = lower(condition)
 
 /* make prevalence numeric */
 // replace prevalence = substr(prevalence, 1, strlen(prevalence) - 1)
@@ -48,7 +46,7 @@ drop prevalence
 keep age prev_*
 
 /* get external copd prevalence from better source */
-merge 1:1 age using $covidpub/covid/csv/uk_copd_prevalence, keepusing(Prevalence) nogen
+merge 1:1 age using $covidpub/covid/csv/uk_copd_prevalence, keepusing(prevalence) nogen
 replace prevalence = prevalence / 100000
 drop prev_copd
 ren prevalence prev_copd
