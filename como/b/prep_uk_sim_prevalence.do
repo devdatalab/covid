@@ -11,8 +11,8 @@ drop source v*
 replace condition = condition[_n-1] if mi(condition)
 
 /* replace names */
-replace condition = "diabetes_diagnosed" if condition == "Diabetes"
-replace condition = "diabetes_both" if condition == "Diabetes (2)"
+// replace condition = "diabetes_diagnosed" if condition == "Diabetes" */
+replace condition = "diabetes_diagnosed" if condition == "Diabetes (2)"
 replace condition = "diabetes_biomarker" if condition == "Diabetes (2a)"
 replace condition = "hypertension_both" if condition == "Hypertension (3)"
 replace condition = "hypertension_biomarker" if condition == "Hypertension (3a)"
