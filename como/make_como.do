@@ -49,7 +49,6 @@ do $ccode/como/b/prep_outcomes_generic.do
 /* Figure 1: plot UK / India prevalence of comorbid conditions */
 do $ccode/como/a/compare_uk_india_prevalence.do
 
-
 /* run analysis for paper */
 do $ccode/como/a/calc_outcomes_generic.do
 

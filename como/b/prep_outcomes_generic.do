@@ -202,8 +202,8 @@ save $tmp/prev_uk_nhs_matched, replace
 
 /* start with DLHS/AHS biomarkers */
 use $health/dlhs/data/dlhs_ahs_covid_comorbidities, clear
-keep wt age $hr_biomarker_vars
-collapse (mean) $hr_biomarker_vars [aw=wt], by(age)
+keep wt age $hr_biomarker_vars hypertension_contr hypertension_uncontr
+collapse (mean) $hr_biomarker_vars hypertension_contr hypertension_uncontr [aw=wt], by(age)
 
 /* bring in GBD measures */
 merge m:1 age using $health/gbd/gbd_nhs_conditions_india, keep(match) nogen
