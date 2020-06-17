@@ -75,25 +75,30 @@ replace bmi = . if bmi >= 100
 replace bmi = . if bmi < 10
 
 /* get bmi categories used in UK paper */
-gen bmi_not_obese = 0
+gen bmi_not_obese = 0 if !mi(bmi)
 replace bmi_not_obese = 1 if (bmi < 30)
-replace bmi_not_obese = . if mi(bmi)
 label var bmi_not_obese "not obese, bmi < 30"
 
-gen bmi_obeseI = 0
+gen bmi_obeseI = 0 if !mi(bmi)
 replace bmi_obeseI = 1 if (bmi >= 30 & bmi < 35)
-replace bmi_obeseI = . if mi(bmi)
 label var bmi_obeseI "obese class I, bmi 30-<35"
 
-gen bmi_obeseII = 0
+gen bmi_obeseII = 0 if !mi(bmi)
 replace bmi_obeseII = 1 if (bmi >= 35 & bmi < 40)
-replace bmi_obeseII = . if mi(bmi)
 label var bmi_obeseII "obese class II, bmi 35-<40"
 
-gen bmi_obeseIII = 0
+gen bmi_obeseIII = 0 if !mi(bmi)
 replace bmi_obeseIII = 1 if (bmi >= 40)
-replace bmi_obeseIII = . if mi(bmi)
 label var bmi_obeseIII "obese class III, bmi >=40"
+
+/* create obesity classes to match the NHS data */
+gen obesity_class_1_2 = 0 if !mi(bmi)
+replace obesity_class_1_2 = 1 if (bmi >= 30 & bmi < 40)
+label var obesity_class_1_2 "obesity classes 1 and 2"
+
+gen obesity_class_3 = 0 if !mi(bmi)
+replace obesity_class_3 = 1 if (bmi >= 40)
+label var obesity_class_3 "obesity class 3"
 
 /* create additional WHO-defined BMI categories */
 gen bmi_underweight_severe = 0 if !mi(bmi)
@@ -177,6 +182,11 @@ label var hypertension_both_not "normal blood pressure as defined as not hyperte
 gen hypertension_biomarker_not = 1 - hypertension_biomarker
 label var hypertension_biomarker_not "normal blood pressure as defined as not hypertension_biomarker"
 
+/* controlled hypertension is defined as those diagnosed with BP marker below threshold */
+gen hypertension_contr = hypertension_diagnosis
+replace hypertension_contr = 0 if hypertension_biomarker == 1
+label var hypertension_contr "hypertension diagnosis but normal BP reading"
+
 /* Respiratory Disease */
 gen resp_illness = 0 if sample != 1
 replace resp_illness = 1 if diagnosed_for == 7
@@ -234,6 +244,11 @@ label var diabetes_diagnosis "self-reported diagnosis of diabetes in the last ye
 gen diabetes_both = 1 if diabetes_biomarker == 1 | diabetes_diagnosis == 1
 replace diabetes_both = 0 if mi(diabetes_both)
 label var diabetes_both "biomarker or self-reported diabetes diagnosis"
+
+/* controlled diabetes is defined as those diagnosed with diabetes but glucose below threshold */
+gen diabetes_contr = diabetes_diagnosis
+replace diabetes_contr = 0 if diabetes_biomarker == 1
+label var diabetes_contr "diabetes diagnosis but normal glucose reading"
 
 /* Cancer - non-haematological */
 gen cancer_non_haem = 0 if sample != 1
@@ -308,6 +323,7 @@ gen stroke_dementia = stroke
 gen bp_high = hypertension_biomarker
 gen bp_not_high = hypertension_biomarker_not
 gen diabetes_uncontr = diabetes_biomarker
+gen hypertension_uncontr = hypertension_biomarker
 
 label var chronic_resp_dz   "Chronic respiratory disease as matched to NHS"
 label var diabetes_uncontr  "Diabetes as matched to NHS"
@@ -316,6 +332,8 @@ label var haem_malig_1      "Haematological cancer as matched to NHS"
 label var stroke_dementia   "Stroke/dementia as matched to NHS"
 label var bp_high           "Hypertension as matched to NHS"
 label var bp_not_high       "No Hypertension as matched to NHS"
+label var hypertension_uncontr "Hypertension according to BP reading"
+label var diabetes_uncontr "Diabetes according to glucose reading"
 
 /* save limited dataset with only comorbidity data */
 compress
