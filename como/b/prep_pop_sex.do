@@ -17,11 +17,13 @@ xtset x age
 gen     p_smooth = (L2.tot_p + L1.tot_p + tot_p + F.tot_p + F2.tot_p) / 5 if !mi(L2.tot_p) & !mi(F2.tot_p)
 replace p_smooth = (L1.tot_p + tot_p + F.tot_p + F2.tot_p) / 4 if mi(L2.tot_p) & !mi(F2.tot_p) & mi(p_smooth)
 replace p_smooth = (L2.tot_p + L1.tot_p + tot_p + F.tot_p) / 4 if mi(F2.tot_p) & !mi(L2.tot_p) & mi(p_smooth)
+replace p_smooth = tot_p if mi(p_smooth)
 
 /* repeat for male population to get smoothed sex ratio */
 gen     m_smooth = (L2.tot_m + L1.tot_m + tot_m + F.tot_m + F2.tot_m) / 5 if !mi(L2.tot_m) & !mi(F2.tot_m)
 replace m_smooth = (L1.tot_m + tot_m + F.tot_m + F2.tot_m) / 4 if mi(L2.tot_m) & !mi(F2.tot_m) & mi(m_smooth)
 replace m_smooth = (L2.tot_m + L1.tot_m + tot_m + F.tot_m) / 4 if mi(F2.tot_m) & !mi(L2.tot_m) & mi(m_smooth)
+replace m_smooth = tot_m if mi(m_smooth)
 
 /* calculate male share */
 gen male = m_smooth / p_smooth

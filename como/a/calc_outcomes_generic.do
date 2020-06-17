@@ -1,3 +1,5 @@
+// global hr_biomarker_vars obese_1_2 obese_3 bp_high diabetes_uncontr diabetes_contr
+
 /* program to calculate generic outcomes given:
 
 1. a set of condition-specific (and possibly age-specific) hazard ratios (i.e. the model)
@@ -29,6 +31,9 @@ foreach prev in india uk_os uk_nhs uk_nhs_matched {
   /* full_cts is the main one that we use. */
   foreach hr in simple_dis full_dis simple_cts full_cts {
 
+    /* show which entry we are on */
+    disp_nice "`prev'-`hr'"
+    
     /* open the hazard ratio file */
     use $tmp/hr_`hr', clear
     
@@ -38,13 +43,20 @@ foreach prev in india uk_os uk_nhs uk_nhs_matched {
     /* calculate the risk factor at each age, multiplying prevalence by hazard ratio */
     gen rf_health = 1
     foreach v in male $hr_biomarker_vars $hr_gbd_vars $hr_os_only_vars {
+
       /* rf <-- rf * (prev_X * hr_X + (1 - prev_X) * hr_notX), but hr_notX is always 1 */
       gen rf_`v' = prev_`v' * hr_`v' + (1 - prev_`v')
-      replace rf_health = rf_health * rf_`v'
+      qui replace rf_health = rf_health * rf_`v'
       qui sum rf_health
-      di "`v': `r(mean)'"
+      di "`v': " %5.2f `r(mean)'
     }
 
+    /* normalize the cts age hazard ratio around age 50 */
+    if strpos("`hr'", "cts") {
+      qui sum hr_age if age == 50
+      qui replace hr_age = hr_age / `r(mean)'
+    }
+    
     /* create another one that has age */
     gen rf_all = rf_health * hr_age
     
@@ -57,7 +69,7 @@ foreach prev in india uk_os uk_nhs uk_nhs_matched {
 
 /* combine the joint risk factors */
 clear
-set obs 72
+set obs 82
 gen age = _n + 17
 foreach prev in india uk_os uk_nhs uk_nhs_matched {
   foreach hr in simple_dis full_dis simple_cts full_cts {
@@ -158,36 +170,36 @@ foreach v in uk_full_deaths india_full_deaths {
 /* add a line representing maharashtra's data in the May 8 report */
 capdrop mh_deaths
 gen mh_deaths = 0
-/* total deaths: 356. Total years: 89-18+1=72 */
+/* total deaths: 540. Total years: 89-18+1=72 */
 /* 18-29: 12 deaths  */
-replace mh_deaths = $sim_n * 12/356 / (29 - 18 + 1) if inrange(age, 18, 29)
+replace mh_deaths = $sim_n * 16/540 / (30 - 18 + 1) if inrange(age, 18, 30)
 /* 30-39: 27 */
-replace mh_deaths = $sim_n * 27/356 / 10 if inrange(age, 30, 39)
+replace mh_deaths = $sim_n * 35/540 / 10 if inrange(age, 31, 40)
 /* ... */
-replace mh_deaths = $sim_n * 63/356  / 10 if inrange(age, 40, 49)
-replace mh_deaths = $sim_n * 108/356 / 10 if inrange(age, 50, 59)
-replace mh_deaths = $sim_n * 101/356 / 10 if inrange(age, 60, 69)
-replace mh_deaths = $sim_n * 34/356  / 10 if inrange(age, 70, 79)
-replace mh_deaths = $sim_n * 11/356  / 10 if inrange(age, 80, 89)
+replace mh_deaths = $sim_n * 92/540  / 10 if inrange(age, 41, 50)
+replace mh_deaths = $sim_n * 166/540 / 10 if inrange(age, 51, 60)
+replace mh_deaths = $sim_n * 146/540 / 10 if inrange(age, 61, 70)
+replace mh_deaths = $sim_n * 68/540  / 10 if inrange(age, 71, 80)
+replace mh_deaths = $sim_n * 17/540  / 20 if inrange(age, 81, 99)
 
 /* same graph, full model */
 twoway ///
-    (line uk_full_deaths    age, lcolor(gs8) lwidth(medium) lpattern(-))     ///
-    (line india_full_deaths age, lcolor(black) lpattern(solid) lwidth(medthick))       ///
-    (line mh_deaths         age, lcolor(orange) lwidth(medium) lpattern(.-))     ///
+    (line uk_full_deaths    age if age <= 89, lcolor(gs8) lwidth(medium) lpattern(-))     ///
+    (line india_full_deaths age if age <= 89, lcolor(black) lpattern(solid) lwidth(medthick))       ///
+    (line mh_deaths         age if age <= 89, lcolor(orange) lwidth(medium) lpattern(.-))     ///
     , ytitle("Density Function of Deaths (%)") xtitle(Age)  ///
     legend(lab(1 "United Kingdom (full)") ///
-    lab(2 "India (full)") lab(3 "Maharasthra (May 8)") ///
+    lab(2 "India (full)") lab(3 "Maharasthra (May 5)") ///
     ring(0) pos(11) cols(1) region(lcolor(black))) ///
-    xscale(range(18 90)) xlabel(20 40 60 80)
+    xscale(range(18 90)) xlabel(20 40 60 80) ylabel(.01 .02 .03 .04 .044)
 graphout mort_density_full
 
 // /* all 4 lines */
 // twoway ///
-//     (line uk_simple_deaths    age, lcolor(orange) lwidth(medium) lpattern(-))     ///
-//     (line india_simple_deaths age, lcolor(gs8) lpattern(-) lwidth(medthick))       ///
-//     (line uk_full_deaths      age, lcolor(orange) lwidth(medium) lpattern(solid))     ///
-//     (line india_full_deaths   age, lcolor(gs8) lpattern(solid) lwidth(medthick))       ///
+//     (line uk_simple_deaths    age, lcolor(orange) lwidth(medium) lpattern(-))        ///
+//     (line india_simple_deaths age, lcolor(gs8) lpattern(-) lwidth(medthick))         ///
+//     (line uk_full_deaths      age, lcolor(orange) lwidth(medium) lpattern(solid))    ///
+//     (line india_full_deaths   age, lcolor(gs8) lpattern(solid) lwidth(medthick))     ///
 //     , ytitle("Distribution of Deaths" "Normalized population: 100,000") xtitle(Age)  ///
 //     legend(lab(1 "United Kingdom (simple)") lab(2 "India (simple)") ///
 //     lab(3 "United Kingdom (full)") lab(4 "India (full)"))
@@ -198,10 +210,8 @@ graphout mort_density_full
 /******************************************/
 foreach model in $modellist {
   qui sum `model'_deaths if age < 60
-  di %25s "`model': " %5.1f (`r(N)' * `r(mean)' / 1000)
+  di %25s "`model': " %5.1f (`r(N)' * `r(mean)' * 100)
 }
-
-
 
 /**********************************************************/
 /* compare UK health conditions and risk factors to India */
@@ -232,13 +242,32 @@ foreach v in male $hr_biomarker_vars $hr_gbd_vars $hr_os_only_vars {
 /* calculate aggregate risk factor diffs between india and uk */
 merge 1:1 age using $tmp/india_pop, keep(master match) nogen keepusing(india_pop)
 merge 1:1 age using $tmp/uk_pop, keep(master match) nogen keepusing(uk_pop)
+
+local t 1
 foreach v in male $hr_biomarker_vars $hr_gbd_vars health {
+
+  /* show title only if it's the first pass thru the loop */
+  if `t' {
+    di %25s " " "  UK    India   India/UK"
+    di %25s " " "------------------------"
+    }
+  local t 0
+  
+  /* UK aggregate risk factor */
   qui sum urf_`v' [aw=uk_pop]
   local umean = `r(mean)'
+  
+  /* India aggregate risk factor */
   qui sum irf_`v' [aw=india_pop]
   local imean = `r(mean)'
+
+  /* percent difference India over UK */
   local perc (`imean'/`umean' - 1) * 100
-  if `perc' > 0 local sign "+"
-  else local sign
-  di %45s "`v' : `sign'" %2.1f (`perc') "%"
+
+  /* Get the sign on the % */
+  if `perc' > 0 local sign " +"
+  else local sign " "
+
+  /* show everything */
+  di %25s "`v': " %5.2f (`umean') "  " %5.2f (`imean') "  `sign'" %2.1f (`perc') "%"
 }
