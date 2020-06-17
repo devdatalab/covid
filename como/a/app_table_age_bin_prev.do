@@ -19,8 +19,6 @@ prog def label_vars
   label var stroke_dementia   "Stroke / Dementia"
 end
 
-
-
 /* write table header */
 cap file close fh
 file open fh using $out/app_table_age_bin_prev.tex, write replace

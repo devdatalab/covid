@@ -41,7 +41,7 @@
 \usepackage[table]{xcolor}
 
 % disable hyperlinks, which were breaking on appendix references
-\usepackage[options]{nohyperref}
+% \usepackage[options]{nohyperref}
 
 \title{COVID Comorbidity paper} \author{Nobody}
 
@@ -50,19 +50,44 @@
 %%%%%%%%%%%%%%%%%%%%%% 
 \begin{document}
 \date{June 2020}
-% \maketitle
+%  \maketitle
 
-% \section{Figures and Tables}
+  \section{Figures and Tables}
+ 
+   \begin{table}[H]
+    \begin{center}
+     \caption{condition prevalences }
+     \input{\covidpath/app_table_age_bin_prev}
+     
+     \footnotesize{[table note]}
+    \end{center}
+   \end{table}
+ 
+  \begin{table}[H]
+    \begin{center}
+    \caption{Prevalence of Conditions in Population and in OpenSAFELY}
+    \input{\covidpath/app_table_os_vs_nhs}
+    
+    \footnotesize{[table note]}
+    \end{center}
+  \end{table}
 
-\label{sec:figures}
+  \clearpage
+  \begin{figure}[H]
+    \begin{center}
+    \caption{Prevalence of Conditions in Population and in OpenSAFELY}
+    \textbf{Age Interpolation: Model with only Age and Sex}
+    
+    \includegraphics[scale=0.5]{\covidpath/age_interpolation_simple.pdf}
 
-\begin{table}[H]
-  \caption{condition prevalences }
-  \input{\covidpath/app_table_age_bin_prev}
-  
-  \footnotesize{[table note]}
-\end{table}
-
+    \newline
+    \textbf{Age Interpolation: Fully-Adjusted Model}
+    
+    \includegraphics[scale=0.5]{\covidpath/age_interpolation_full}
+    
+    \footnotesize{[figure note]}
+    \end{center}
+  \end{figure}
 
 \end{document}
 
