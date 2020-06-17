@@ -1,25 +1,21 @@
 /***********/
 /* TABLE 1 */
 /***********/
+
+/* create csv file */
+cap !rm -f $ddl/covid/como/a/covid_como_sumstats.csv
+do $ddl/covid/como/a/calc_outcomes_generic.do
+
 /* open the data */
 use $health/dlhs/data/dlhs_ahs_covid_comorbidities, clear
 drop if age > 100
 
-/* create csv file */
-cap !rm -f $ddl/covid/como/a/covid_como_sumstats.csv
-
-/* make obesity class 2 and 1 */
-gen bmi_obesity_2_1 = bmi_obeseI + bmi_obeseII
-
 /* get all DLHS India values */
-foreach var in age18_40 age40_50 age50_60 age60_70 age70_80 age80_ male diabetes_uncontr diabetes_contr hypertension_uncontr hypertension_contr bmi_obeseIII bmi_obesity_2_1 {
+foreach var in age18_40 age40_50 age50_60 age60_70 age70_80 age80_ male diabetes_uncontr diabetes_contr hypertension_uncontr hypertension_contr obese_3 obese_1_2 {
   qui sum `var' [aw=wt]
   local mu = `r(mean)'*100
-  qui count if `var' == 1
-  local num = `r(N)'
-  
+
   /* add the count and mean to the csv that will feed the latex table values */
-  insert_into_file using $ddl/covid/como/a/covid_como_sumstats.csv, key(india_`var'_num) value("`num'") format(%12.0fc)
   insert_into_file using $ddl/covid/como/a/covid_como_sumstats.csv, key(india_`var'_mu) value("`mu'") format(%2.1f)
 }
 
@@ -73,11 +69,6 @@ foreach geo in india uk {
   foreach var in gbd_chronic_heart_dz gbd_chronic_resp_dz gbd_kidney_dz gbd_liver_dz gbd_asthma_ocs gbd_cancer_non_haem_1 gbd_haem_malig_1  gbd_autoimmune_dz gbd_immuno_other_dz gbd_stroke_dementia gbd_neuro_other {
     qui sum `var'_granular
     local mu = `r(mean)'*100
-
-    /* add the count and mean to the csv that will feed the latex table values */
-    if "`geo'" == "india" {
-      insert_into_file using $ddl/covid/como/a/covid_como_sumstats.csv, key(`geo'_`var'_num) value("-") format(%12.0fc)
-    }
     insert_into_file using $ddl/covid/como/a/covid_como_sumstats.csv, key(`geo'_`var'_mu) value("`mu'") format(%2.1f)
   }
 }
@@ -88,7 +79,7 @@ use $tmp/uk_prevalences, clear
 drop if age > 90
 merge 1:1 age using $tmp/uk_age_18_plus, nogen
 
-foreach var in uk_prev_diabetes_contr uk_prev_diabetes_uncontr uk_prev_hypertension_contr uk_prev_hypertension_uncontr uk_prev_obesity_class_3 uk_prev_obesity_class_1_2 {
+foreach var in uk_prev_diabetes_contr uk_prev_diabetes_uncontr uk_prev_hypertension_contr uk_prev_hypertension_uncontr uk_prev_obese_3 uk_prev_obese_1_2 {
   qui sum `var' [aw=total]
   local mu = `r(mean)'*100
   insert_into_file using $ddl/covid/como/a/covid_como_sumstats.csv, key(`var') value("`mu'") format(%2.1f)
@@ -97,41 +88,10 @@ foreach var in uk_prev_diabetes_contr uk_prev_diabetes_uncontr uk_prev_hypertens
 /* create the table */
 table_from_tpl, t($ddl/covid/a/covid_como_sumstats_tpl.tex) r($ddl/covid/como/a/covid_como_sumstats.csv) o($tmp/covid_como_sumstats.tex)
 
-
-/***********/
-/* TABLE 2 */
-/***********/
-/* the data output by this file will be the basis of this table */
-do $ddl/covid/como/a/analyze_age_mort_risk.do
-save $tmp/table2_data, replace
-
-/* create csv file */
-cap !rm -f $ddl/covid/como/a/covid_como_sumhr.csv
-
-/* cycle through each model type */
-foreach m in simple full {
-
-  /* cycle through each risk factor */
-  foreach var in age18_40 age40_50 age50_60 age60_70 age70_80 age80_ male {
-    sum pop_risk_`m'_`var'
-    local mu = `r(mean)'
-  
-    /* insert into csv */
-    insert_into_file using $ddl/covid/como/a/covid_como_sumhr.csv, key(`m'_`var') value("`mu'") format(%4.3f)
-  }
-
-  /* if this is the full model, go through the rest of the  */
-  if "`m'" == "full" {
-    foreach var in bmi_obeseI bmi_obeseII bmi_obeseIII bp_high diabetes_uncontr asthma_ocs autoimmune_dz haem_malig_1 cancer_non_haem_1 chronic_heart_dz chronic_resp_dz immuno_other_dz kidney_dz liver_dz neuro_other stroke_dementia {
-      sum pop_risk_`m'_`var'
-      local mu = `r(mean)'
-      
-      /* insert into csv */
-      insert_into_file using $ddl/covid/como/a/covid_como_sumhr.csv, key(`m'_`var') value("`mu'") format(%4.3f)
-    }
-  }
-}
-
-
-/* create the table */
-table_from_tpl, t($ddl/covid/a/covid_como_sumhr_tpl.tex) r($ddl/covid/como/a/covid_como_sumhr.csv) o($tmp/covid_como_sumhr.tex)
+/* isolate risk vars for plot */
+import delimited $ddl/covid/como/a/covid_como_sumstats.csv, clear
+keep if strpos(v1, "ratio") != 0
+drop if v1 == "health_ratio"
+ren v1 variable
+ren v2 coef
+save $tmp/coefs_to_plot, replace
