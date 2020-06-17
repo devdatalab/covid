@@ -8,7 +8,7 @@
 global age_vars age18_40 age40_50 age50_60 age60_70 age70_80 age80_
 
 /* define biomarker variables from DLHS/AHS that match NHS hazard ratio vars */
-global hr_biomarker_vars bmi_obeseI bmi_obeseII bmi_obeseIII bp_high diabetes_uncontr diabetes_contr
+global hr_biomarker_vars obese_1_2 obese_3 bp_high diabetes_uncontr diabetes_contr
 
 /* define non-biomarker GBD variables that match NHS hazard ratio vars */
 global hr_gbd_vars asthma_ocs autoimmune_dz haem_malig_1 cancer_non_haem_1    ///
@@ -111,9 +111,8 @@ end
 // male
 
 // BIOMARKERS (plus diabetes_contr from DLHS/AHS)
-// bmi_obeseI
-// bmi_obeseII
-// bmi_obeseIII
+// obese_1_2
+// obese_3
 // bp_high
 // diabetes_uncontr
 // diabetes_contr
