@@ -191,7 +191,7 @@ ren male prev_male
 save $tmp/prev_uk_nhs, replace
 
 /* A UK version that doesn't have the conditions we couldn't match in India */
-use $tmp/prev_uk_cts, clear
+use $tmp/prev_uk_nhs, clear
 foreach v in $hr_os_only_vars {
   replace prev_`v' = 0
 }
