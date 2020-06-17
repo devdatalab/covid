@@ -32,7 +32,7 @@ gen age = _n
 foreach condition in $conditionlist {
   gen prev_`condition' = .
   forval age = 1/100 {
-    sum prevalence if condition == "`condition'" & inrange(`age', startage, endage)
+    qui sum prevalence if condition == "`condition'" & inrange(`age', startage, endage)
     if `r(N)' > 0 {
       replace prev_`condition' = `r(mean)' if age == `age'
     }
@@ -50,7 +50,13 @@ ren prevalence prev_copd
 /* drop the original fields and limit to ages in study */
 keep if inrange(age, 18, 100)
 
+/* rename these to the variables that match OpenSAFELY */
+gen prev_bp_high = prev_hypertension_both
+ren prev_asthma prev_asthma_no_ocs
+ren prev_copd prev_chronic_resp_dz
+
 ren prev* uk_prev*
+
 
 /* save uk prevalences */
 save $tmp/uk_prevalences, replace

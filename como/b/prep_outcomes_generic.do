@@ -145,17 +145,7 @@ save $tmp/prev_uk_os, replace
 /* start with biomarkers */
 use $tmp/uk_prevalences, clear
 ren uk_prev* prev*
-ren prev_diabetes_biomarker prev_diabetes_uncontr
-ren prev_diabetes_diagnosed prev_diabetes_contr
-drop prev_diabetes_both
-ren prev_hypertension_biomarker prev_bp_high
-drop prev_hypert*
-ren prev_asthma prev_asthma_no_ocs
-ren prev_copd prev_chronic_resp_dz
-//drop prev_overweight
-//ren prev_obese prev_bmi_obeseI
 keep if inrange(age, 18, 99)
-replace prev_chronic_resp_dz = 0 if age < 31
 order age
 save $tmp/uk_biomarkers, replace
 
@@ -173,9 +163,12 @@ foreach v of varlist gbd* {
     ren gbd_`condition' prev_`condition'
   }
 }
+
 /* get remaining vars from OpenSafely as age-invariant */
 ren prev* prevc*
 merge 1:1 age using $tmp/prev_uk_os, nogen
+
+/* loop over OpenSafely vars */
 foreach v of varlist prev_* {
   local condition = substr("`v'", 6, .)
   cap confirm variable prevc_`condition'
@@ -189,31 +182,26 @@ foreach v of varlist prev_* {
 }  
 ren prevc* prev*
 
-/* get male share from Ali's data */
+/* get male share from UK census data */
 drop prev_female prev_male
 merge 1:1 age using $tmp/uk_pop, keep(match) nogen keepusing(male)
 ren male prev_male
 
-/* expand 90 to 91->99 */
-expand 10 if age == 90
-bys age: egen t = seq()
-replace age = age + t - 1
-drop t
-
-save $tmp/prev_uk_cts, replace
+/* save */
+save $tmp/prev_uk_nhs, replace
 
 /* A UK version that doesn't have the conditions we couldn't match in India */
 use $tmp/prev_uk_cts, clear
 foreach v in $hr_os_only_vars {
   replace prev_`v' = 0
 }
-save $tmp/prev_uk_cts_matched, replace
+save $tmp/prev_uk_nhs_matched, replace
 
 /*************/
 /* India     */
 
 /* start with DLHS/AHS biomarkers */
-use $tmp/combined, clear
+use $health/dlhs/data/dlhs_ahs_covid_comorbidities, clear
 keep wt age $hr_biomarker_vars
 collapse (mean) $hr_biomarker_vars [aw=wt], by(age)
 
@@ -223,6 +211,7 @@ drop gbd_diabetes country *upper *lower *granular
 ren gbd_* *
 ren * prev_*
 ren prev_age age
+
 /* set prevalence to zero for the measures we don't have */
 foreach v in $hr_os_only_vars {
   gen prev_`v' = 0

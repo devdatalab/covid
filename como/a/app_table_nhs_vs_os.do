@@ -31,12 +31,6 @@ use $tmp/prev_uk_cts_matched, clear
 /* get age-specific population for weighted collapse */
 merge 1:1 age using $tmp/uk_pop
 
-/* distribute age 90 weight across remaining years, since age 90 is actually 90+ */
-/* this is basically inconsequential since it is very few people and COPD is the
-   only variable that is non-constant from 90-99. */
-sum uk_pop if age == 90
-replace uk_pop = `r(mean)' / 10 if inrange(age, 90, 99)
-
 /* collapse to population prevalence */
 drop male
 ren prev_* *

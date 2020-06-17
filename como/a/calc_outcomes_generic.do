@@ -4,7 +4,7 @@
 $tmp/hr_[full|simple]_[cts|dis]
 
 2. a set of prevalences
-$tmp/prev_india, $tmp/prev_uk_os, $tmp/prev_uk_cts
+$tmp/prev_india, $tmp/prev_uk_os, $tmp/prev_uk_nhs, $tmp/prev_uk_nhs_matched
 
 3. a population distribution
 [later]
@@ -21,9 +21,9 @@ Outcomes
 local hr full_cts
 local prev india
 
-/* loop over prevalence files -- cts here actually means age-specific */
-/* uk_cts_matched is the UK one we use for everything. */
-foreach prev in india uk_os uk_cts uk_cts_matched {
+/* loop over prevalence files -- nhs is age-specific, o/s is just pop means */
+/* uk_nhs_matched is the UK one we use for everything. */
+foreach prev in india uk_os uk_nhs uk_nhs_matched {
 
   /* loop over hazard ratio sets -- cts means age is cts and not in bins */
   /* full_cts is the main one that we use. */
@@ -59,7 +59,7 @@ foreach prev in india uk_os uk_cts uk_cts_matched {
 clear
 set obs 72
 gen age = _n + 17
-foreach prev in india uk_os uk_cts uk_cts_matched {
+foreach prev in india uk_os uk_nhs uk_nhs_matched {
   foreach hr in simple_dis full_dis simple_cts full_cts {
     merge 1:1 age using $tmp/rf_`prev'_`hr', keepusing(rf_all rf_health) nogen
     ren rf_all rf_all_`prev'_`hr'
@@ -78,7 +78,7 @@ save $tmp/como_analysis, replace
 /* compare health condition risk factors */
 /*****************************************/
 /* compare India and UK health condition risk factors */
-// scp rf_h_india_full_cts rf_h_uk_os_full_cts rf_h_uk_cts_matched_full_cts rf_h_uk_cts_full_cts, ///
+// scp rf_h_india_full_cts rf_h_uk_os_full_cts rf_h_uk_nhs_matched_full_cts rf_h_uk_nhs_full_cts, ///
 //     ytitle("Combined Health Risk Factor") ///
 //     legend(lab(1 "India") lab(2 "UK OpenSafely Coefs") lab(3 "UK full matched") lab(4 "UK full full")) name(rf_health_all)
 
@@ -86,7 +86,7 @@ save $tmp/como_analysis, replace
 sort age
 twoway ///
     (line rf_h_india_full_cts age, lwidth(medthick) lcolor(black)) ///
-    (line rf_h_uk_cts_matched_full_cts age, lwidth(medthick) lcolor(gs8) lpattern(-)), ///
+    (line rf_h_uk_nhs_matched_full_cts age, lwidth(medthick) lcolor(gs8) lpattern(-)), ///
     ytitle("Risk Factor from Population Health Conditions") xtitle("Age") ///
     legend(lab(1 "India") lab(2 "United Kingdom") ring(0) pos(5) cols(1) region(lcolor(black))) ///
     name(rf_health, replace)  ylabel(1(.5)4)
@@ -96,15 +96,15 @@ graphout rf_health
 // /* compare age * health risk factors */
 // /*************************************/
 // /* compare three UK models: OS fixed age, full-prevalences, simple */
-// sc rf_all_uk_os_simple_cts rf_all_uk_os_full_cts rf_all_uk_cts_matched_full_cts rf_all_uk_cts_full_cts, ///
+// sc rf_all_uk_os_simple_cts rf_all_uk_os_full_cts rf_all_uk_nhs_matched_full_cts rf_all_uk_nhs_full_cts, ///
 //     legend(lab(1 "Simple") lab(2 "Full O.S. coefs") lab(3 "Full (matched conditions)") lab(4 "Full (all conditions)")) name(rf_uk_compare) yscale(log)
 // 
 // /* full vs. full, India vs. UK */
-// sc rf_all_india_full_cts rf_all_uk_cts_matched_full_cts, ///
+// sc rf_all_india_full_cts rf_all_uk_nhs_matched_full_cts, ///
 //     name(rf_all_full) yscale(log) legend(lab(1 "India") lab(2 "UK"))
 // 
 // /* simple vs. simple, India vs. UK */
-// sc rf_all_india_simple_cts rf_all_uk_cts_simple_cts, ///
+// sc rf_all_india_simple_cts rf_all_uk_nhs_simple_cts, ///
 //     name(rf_all_simple) yscale(log) legend(lab(1 "India") lab(2 "UK"))
 
 /*****************************/
@@ -112,9 +112,9 @@ graphout rf_health
 /*****************************/
 /* rename the models to make life easier */
 ren *india_full_cts* *india_full*
-ren *uk_cts_matched_full_cts* *uk_full*
+ren *uk_nhs_matched_full_cts* *uk_full*
 ren *india_simple_cts* *india_simple*
-ren *uk_cts_simple_cts* *uk_simple*
+ren *uk_nhs_simple_cts* *uk_simple*
 global modellist india_full uk_full india_simple uk_simple
 
 /* Calculate the distribution of deaths in the model */
@@ -209,7 +209,7 @@ foreach model in $modellist {
 use $tmp/rf_india_full_cts, clear
 ren prev* iprev*
 ren rf* irf*
-merge 1:1 age using $tmp/rf_uk_cts_matched_full_cts, nogen
+merge 1:1 age using $tmp/rf_uk_nhs_matched_full_cts, nogen
 ren prev* uprev*
 ren rf* urf*
 
