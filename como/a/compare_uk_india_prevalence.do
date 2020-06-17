@@ -28,13 +28,17 @@ label var chronic_resp_dz "Chronic Respiratory (India)"
 label var obese "Obese (BMI >= 30, India)"
 
 /* label UK summary report vars */
-gen uk_prev_diabetes = uk_prev_diabetes_biomarker
-gen uk_prev_hypertension = uk_prev_hypertension_biomarker
-label var uk_prev_diabetes "Diabetes (UK)"
-label var uk_prev_hypertension "Hypertension (UK)"
+//gen uk_prev_diabetes = uk_prev_diabetes_biomarker
+//gen uk_prev_hypertension = uk_prev_hypertension_biomarker
+//label var uk_prev_diabetes "Diabetes (UK)"
+//label var uk_prev_hypertension "Hypertension (UK)"
+//label var uk_prev_obese "Obese (BMI >= 30, UK)"
+label var uk_prev_diabetes_contr "Diabetes (Controlled, UK)"
+label var uk_prev_diabetes_uncontr "Diabetes (Unontrolled, UK)"
+label var uk_prev_hypertension_contr "Hypertension (Controlled, UK)"
+label var uk_prev_hypertension_uncontr "Hypertension (Unontrolled, UK)"
 label var uk_prev_asthma "Asthma (UK)"
 label var uk_prev_copd "COPD (UK)"
-label var uk_prev_obese "Obese (BMI >= 30, UK)"
 
 /* label GBD vars */
 label var gbd_india_chronic_resp_dz "COPD (GBD-India)"
@@ -63,8 +67,8 @@ sort age
 keep if age < 80
 
 /* biomarker comparisons only */
-scp diabetes_both uk_prev_diabetes, name(diabetes) yline(.088)
-scp bp_high uk_prev_hypertension, name(hypertension) yline(.342)
+scp diabetes_both uk_prev_diabetes_contr uk_prev_diabetes_uncontr, name(diabetes) yline(.088)
+scp bp_high uk_prev_hypertension_contr uk_prev_hypertension_uncontr, name(hypertension) yline(.342)
 scp obese uk_prev_obese, name(obese) yline(.218)
 graph combine diabetes hypertension obese, rows(2)
 graphout biomarker_uk_india
