@@ -73,7 +73,7 @@ merge m:1 age using $tmp/nystate_or, keep(match master) nogen
 
 /* output a csv file with all the prevalences and hazard ratios and age-specific population */
 preserve
-merge 1:1 age using $tmp/india_pop, keep(master match) nogen keepusing(india_pop_smooth)
+merge 1:1 age using $tmp/india_pop, keep(master match) nogen
 export delimited using $out/hrs_prevalences_export.csv, replace
 restore
 
@@ -155,16 +155,16 @@ list age arisk_simple arisk_full arisk_gbd
 
 /* test: compare with uk risk */
 preserve
-merge 1:1 age using $tmp/uk_sim_age_fixed, keepusing( uk_risk_simple uk_risk) nogen
-ren  uk_risk uk_risk_age_fixed
-merge 1:1 age using $tmp/uk_sim_age_flex, keepusing(age uk_risk) nogen
-sc arisk_simple arisk_gbd uk_risk uk_risk_simple, name(vs_uk)
+//merge 1:1 age using $tmp/uk_sim_age_fixed, keepusing( uk_risk_simple uk_risk) nogen
+//ren  uk_risk uk_risk_age_fixed
+//merge 1:1 age using $tmp/uk_sim_age_flex, keepusing(age uk_risk) nogen
+//sc arisk_simple arisk_gbd uk_risk uk_risk_simple, name(vs_uk)
 
-sc arisk_simple arisk_gbd uk_risk uk_risk_simple uk_risk_age_fixed, name(vs_uk)
+//sc arisk_simple arisk_gbd uk_risk uk_risk_simple uk_risk_age_fixed, name(vs_uk)
 
-gen d = uk_risk / arisk_gbd
-scatter d age
-graphout d
+//gen d = uk_risk / arisk_gbd
+//scatter d age
+//graphout d
 
 restore
 
