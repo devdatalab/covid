@@ -39,7 +39,7 @@ Questions
 /* full-continuous */
 use $tmp/uk_nhs_hazard_ratios_flat_hr_full, clear
 drop v1 age*
-expand 72
+expand 82
 gen age = _n + 17
 order age
 merge 1:1 age using $tmp/uk_age_predicted_hr, keep(match) nogen
@@ -51,14 +51,14 @@ save $tmp/hr_full_cts, replace
 /* full-discrete */
 use $tmp/uk_nhs_hazard_ratios_flat_hr_full, clear
 drop v1
-expand 72
+expand 82
 gen age = _n + 17
 gen     hr_age = age18_40 if inrange(age, 18, 40)
 replace hr_age = age40_50 if inrange(age, 41, 50)
 replace hr_age = age50_60 if inrange(age, 51, 60)
 replace hr_age = age60_70 if inrange(age, 61, 70)
 replace hr_age = age70_80 if inrange(age, 71, 80)
-replace hr_age = age80_   if inrange(age, 81, 90)
+replace hr_age = age80_   if inrange(age, 81, 99)
 drop age1* age40 age50 age60 age70 age80
 ren *_hr_full hr_*
 order age
@@ -67,7 +67,7 @@ save $tmp/hr_full_dis, replace
 /* simple continuous */
 use $tmp/uk_nhs_hazard_ratios_flat_hr_age_sex, clear
 drop v1 age*
-expand 72
+expand 82
 gen age = _n + 17
 order age
 merge 1:1 age using $tmp/uk_age_predicted_hr, keep(match) nogen
@@ -85,14 +85,14 @@ save $tmp/hr_simple_cts, replace
 /* simple discrete */
 use $tmp/uk_nhs_hazard_ratios_flat_hr_age_sex, clear
 drop v1
-expand 72
+expand 82
 gen age = _n + 17
 gen     hr_age = age18_40 if inrange(age, 18, 40)
 replace hr_age = age40_50 if inrange(age, 41, 50)
 replace hr_age = age50_60 if inrange(age, 51, 60)
 replace hr_age = age60_70 if inrange(age, 61, 70)
 replace hr_age = age70_80 if inrange(age, 71, 80)
-replace hr_age = age80_   if inrange(age, 81, 90)
+replace hr_age = age80_   if inrange(age, 81, 99)
 drop age1* age40 age50 age60 age70 age80
 ren *_hr_age_sex hr_*
 order age
@@ -106,7 +106,7 @@ save $tmp/hr_simple_dis, replace
 
 /* compare age HRs in all 4 models */
 clear
-set obs 72
+set obs 82
 gen age = _n + 17
 foreach v in full_cts full_dis simple_cts simple_dis {
   merge 1:1 age using $tmp/hr_`v', keepusing(hr_age) nogen
@@ -133,7 +133,7 @@ replace prevalence = prevalence / 100
 reshape wide prevalence, j(condition) i(x) string
 ren prevalence* prev_*
 drop x
-expand 72
+expand 82
 gen age = _n + 17
 /* drop age prevalences-- we're getting these from the UK population */
 drop prev*age*
@@ -154,14 +154,14 @@ ren prev_asthma prev_asthma_no_ocs
 ren prev_copd prev_chronic_resp_dz
 //drop prev_overweight
 //ren prev_obese prev_bmi_obeseI
-keep if inrange(age, 18, 89)
+keep if inrange(age, 18, 99)
 replace prev_chronic_resp_dz = 0 if age < 31
 order age
 save $tmp/uk_biomarkers, replace
 
 /* bring in GBD */
 merge 1:1 age using $health/gbd/gbd_nhs_conditions_uk, nogen
-keep if inrange(age, 18, 89)
+keep if inrange(age, 18, 99)
 drop *upper *lower *granular country
 /* use GBD unless non-GBD var already exists */
 drop gbd_diabetes gbd_chronic_resp_dz
@@ -169,6 +169,7 @@ foreach v of varlist gbd* {
   local condition = substr("`v'", 5, .)
   cap confirm variable prev_`condition'
   if _rc {
+    di "Using GBD for `condition'..."
     ren gbd_`condition' prev_`condition'
   }
 }
@@ -179,6 +180,7 @@ foreach v of varlist prev_* {
   local condition = substr("`v'", 6, .)
   cap confirm variable prevc_`condition'
   if _rc {
+    di "Using OpenSafely age-invariant prevalence for `condition'..."
     ren prev_`condition' prevc_`condition'
   }
   else {
@@ -191,6 +193,13 @@ ren prevc* prev*
 drop prev_female prev_male
 merge 1:1 age using $tmp/uk_pop, keep(match) nogen keepusing(male)
 ren male prev_male
+
+/* expand 90 to 91->99 */
+expand 10 if age == 90
+bys age: egen t = seq()
+replace age = age + t - 1
+drop t
+
 save $tmp/prev_uk_cts, replace
 
 /* A UK version that doesn't have the conditions we couldn't match in India */
