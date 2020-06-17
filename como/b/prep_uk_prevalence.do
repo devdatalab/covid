@@ -1,7 +1,7 @@
 //global conditionlist hypertension diabetes copd asthma
 
 /* create full condition list */
-global conditionlist diabetes_contr diabetes_uncontr hypertension_contr hypertension_uncontr hypertension_both asthma copd obesity_class_1_2 obesity_class_3
+global conditionlist diabetes_contr diabetes_uncontr hypertension_contr hypertension_uncontr hypertension_both asthma copd obese_1_2 obese_3
 
 /* import uk data */
 import delimited using $covidpub/covid/csv/uk_condition_prevalence.csv, varnames(1) clear
@@ -20,8 +20,8 @@ replace condition = "hypertension_uncontr" if condition == "Hypertension (3b)"
 // replace condition = "hypertension_diagnosis" if condition == "Hypertension (1)" */
 // replace condition = "hypertension_both2" if condition == "Hypertension (2)" */
 // replace condition = "hypertension_biomarker2" if condition == "Hypertension (2a)" */
-replace condition = "obesity_class_1_2" if condition == "Obesity class 1-2"
-replace condition = "obesity_class_3" if condition == "Obesity class 3"
+replace condition = "obese_1_2" if condition == "Obesity class 1-2"
+replace condition = "obese_3" if condition == "Obesity class 3"
 replace condition = lower(condition)
 
 
