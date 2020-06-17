@@ -1,6 +1,7 @@
 //global conditionlist hypertension diabetes copd asthma
 
 /* create full condition list */
+
 global conditionlist diabetes_contr diabetes_uncontr hypertension_contr hypertension_uncontr hypertension_both asthma copd obese_1_2 obese_3
 
 /* import uk data */
