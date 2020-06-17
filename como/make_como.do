@@ -69,6 +69,12 @@ do $ccode/como/a/calc_outcomes_generic.do
 /* appendix */
 /************/
 
-/* risk factor prevalences by age bin for all places */
+/* app figure: hr interpolations */
+do $ccode/como/a/app_age_hr_interpolation.do
+
+/* app table: NHS/GBD prevalences vs OpenSAFELY */
+do $ccode/como/a/app_table_nhs_vs_os.do
+
+/* app table: risk factor prevalences by age bin for all places */
 do $ccode/como/a/app_table_age_bin_prev.do
 

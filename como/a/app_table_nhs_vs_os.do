@@ -26,7 +26,7 @@ end
 /* UNITED KINGDOM PREVALENCE TABLE */
 
 /* combine UK prevalence data */
-use $tmp/prev_uk_cts_matched, clear
+use $tmp/prev_uk_nhs_matched, clear
 
 /* get age-specific population for weighted collapse */
 merge 1:1 age using $tmp/uk_pop

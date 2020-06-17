@@ -1,9 +1,11 @@
 /* set variable labels */
 cap prog drop label_vars
 prog def label_vars
-  label var bmi_obeseI        "Obese (class I)"
-  label var bmi_obeseII       "Obese (class II)"
-  label var bmi_obeseIII      "Obese (class III)"
+  cap label var bmi_obeseI        "Obese (class I)"
+  cap label var bmi_obeseII       "Obese (class II)"
+  cap label var bmi_obeseIII      "Obese (class III)"
+  label var obese_1_2           "Obese (class 1 & 2)"
+  label var obese_3  "Obese (class 3)"
   label var bp_high           "Hypertension"
   label var diabetes_uncontr  "Diabetes"
   label var asthma_ocs        "Asthma"
@@ -31,11 +33,8 @@ file write fh " & 18--39 & 40--49 & 50--59 & 60--69 & 70--79 & 80--99 \\ " _n
 file write fh " \textbf{India} &  & & & & \\ " _n
 
 /* INDIA PREVALENCE TABLE */
-use $tmp/combined, clear
-collapse $hr_biomarker_vars [aw=wt], by(age)
-merge 1:1 age using $health/gbd/gbd_nhs_conditions_india, keep(match) nogen
-drop gbd_diabetes country *upper *lower *granular
-ren gbd_* *
+use $tmp/prev_india, clear
+ren prev_* *
 
 /* get india age-specific population to weight GBD year vars */
 merge 1:1 age using $tmp/india_pop, keep(match) nogen 
@@ -71,20 +70,10 @@ file write fh " \textbf{United Kingdom} &  & & & & \\ " _n
 /* UNITED KINGDOM PREVALENCE TABLE */
 
 /* combine UK prevalence data */
-use $tmp/uk_prevalences, clear
-merge 1:1 age using $health/gbd/gbd_nhs_conditions_uk, keep(match) nogen
-ren gbd_* *
-drop *upper *granular *lower country
-ren uk_prev_* *
-ren hypertension_both bp_high
+use $tmp/prev_uk_nhs_matched, clear
+ren prev_* *
 
-/* TEMP: set obesity/overweight which we don't have */
-foreach i in I II III {
-  gen bmi_obese`i' = 0
-}
-ren diabetes diabetes_uncontr
-
-/* get india age-specific population to weight GBD year vars */
+/* get UK age-specific population to weight GBD year vars */
 merge 1:1 age using $tmp/uk_pop, keep(match) nogen 
 
 /* loop over condition list */
