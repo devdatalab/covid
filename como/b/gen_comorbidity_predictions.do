@@ -325,6 +325,10 @@ gen bp_not_high = hypertension_biomarker_not
 gen diabetes_uncontr = diabetes_biomarker
 gen hypertension_uncontr = hypertension_biomarker
 
+/* UK prevalence categories force us to combine obese 1 & 2 */
+gen obese_1_2 = bmi_obeseI | bmi_obeseII
+gen obese_3   = bmi_obeseIII
+
 label var chronic_resp_dz   "Chronic respiratory disease as matched to NHS"
 label var diabetes_uncontr  "Diabetes as matched to NHS"
 label var cancer_non_haem_1 "Non-Haem cancer as matched to NHS"
@@ -333,111 +337,27 @@ label var stroke_dementia   "Stroke/dementia as matched to NHS"
 label var bp_high           "Hypertension as matched to NHS"
 label var bp_not_high       "No Hypertension as matched to NHS"
 label var hypertension_uncontr "Hypertension according to BP reading"
-label var diabetes_uncontr "Diabetes according to glucose reading"
+label var diabetes_uncontr  "Diabetes according to glucose reading"
+label var obese_1_2     "Obese (30 < BMI < 39.9)"
+label var obese_3       "Obese (BMI > 40)"
 
 /* save limited dataset with only comorbidity data */
 compress
 save $health/dlhs/data/dlhs_ahs_covid_comorbidities, replace
 
-/***************************/
-/* Apply the UK Weightings */
-/***************************/
 
-/* define program to apply HR values */
-cap prog drop apply_hr_to_comorbidities
-prog def apply_hr_to_comorbidities
-  syntax, hr(string)
 
-  /* define the matches we want - these are the subjective ones.
-     use NHS name for the local name and point to the AHS/DLHS var */
-  local chronic_resp_dz resp_chronic
-  local diabetes_uncontr diabetes
-  local cancer_non_haem_1 cancer_non_haem
-  local haem_malig_1 haem_malig
-  local stroke_dementia stroke
 
-  /* prep the uk HR data */
-  import delimited $covidpub/covid/csv/uk_nhs_hazard_ratios.csv, clear
 
-  /* label variables */
-  lab var hr_age_sex "hazard ratio age-sex adjusted"
-  lab var hr_age_sex_low "hazard ratio age-sex adjusted lower CI"
-  lab var hr_age_sex_up "hazard ratio age-sex adjusted upper CI"
-  lab var hr_full "hazard ratio fully adjusted"
-  lab var hr_full_low "hazard ratio fully adjusted lower CI"
-  lab var hr_full_up "hazard ratio fully adjusted upper CI"
-  lab var hr_full_ec "hazard ratio fully adjusted early censoring"
-  lab var hr_full_low_ec "hazard ratio fully adjusted early censoring lower CI"
-  lab var hr_full_up_ec "hazard ratio fully adjusted early censoring upper CI"
 
-  /* save as dta file */
-  save $tmp/uk_nhs_hazard_ratios, replace
 
-  /* call a short python funciton to flatten our selected HR value into an array */
-  cd $ddl/covid/como
-  shell python -c "from b.flatten_hr_data import flatten_hr_data; flatten_hr_data('`hr'', '$tmp/uk_nhs_hazard_ratios.dta', '$tmp/uk_nhs_hazard_ratios_flat_`hr'.csv')"
+/*****************************************************************/
+/* PN 6/16/2020 --- I believe everything below this is obsolete. */
+/*****************************************************************/
+exit
+exit
+exit
 
-  /* read in the csv and save as a stata file */
-  import delimited $tmp/uk_nhs_hazard_ratios_flat_`hr'.csv, clear
-
-  /* get list of all variables */
-  qui lookfor bmi_obesei
-  local bmi_vars = "`r(varlist)'"
-
-  /* correct any misimported variables that have true names as values */
-  foreach v in `bmi_vars'  {
-    local x : variable label `v'
-    ren `v' `x'
-  }
-
-  /* save as dta */
-  save $tmp/uk_nhs_hazard_ratios_flat_`hr', replace
-
-  /* open the india data */
-  use $health/dlhs/data/dlhs_ahs_covid_comorbidities, clear
-
-  /* create a dummy index to merge in the HR values */
-  gen v1 = 0
-
-  /* merge in the HR values */
-  merge m:1 v1 using $tmp/uk_nhs_hazard_ratios_flat_`hr'
-  drop _merge v1
-
-  /* save a temporary file with the combined India conditions and the UK HRs */
-  save $tmp/conditions_`hr', replace
-    
-  /* for each condition, store the risk adjustment factor according to whether
-     the condition is present. */
-  /* slightly confusing nomenclature:
-     - diabetes_hr_full is the hazard ratio from the literature
-     - this loop creates hr_full_diabetes, which is the individual-specific multiplier,
-       which will be 1 if the individual does not have the condition, or the HR if they
-       do have it.
-  */
-  foreach var in $age_vars male $hr_biomarker_vars {
-    gen `hr'_`var' = `var'_`hr' if `var' == 1
-    replace `hr'_`var' = 1 if `var' == 0
-    drop `var'_`hr'
-  }
-
-  /* can we save only the risk factors and the individual identifier?
-     Is there an individual identifier? */
-  keep uid `hr'_*
-  save $tmp/individual_risk_factors_`hr', replace
-end
-
-/* call the function for fully adjusted HR */
-apply_hr_to_comorbidities, hr(hr_full)
-
-/* call the function for only age and sex adjusted HR */
-apply_hr_to_comorbidities, hr(hr_age_sex)
-
-/* convert continuous age HRs to stata */
-import delimited $covidpub/covid/csv/uk_age_predicted_hr.csv, clear
-gen hr_age_sex_age_cts = exp(ln_hr_age_sex)
-gen hr_full_age_cts = exp(ln_hr_full)
-drop ln_*
-save $tmp/uk_age_predicted_hr, replace
 
 /* combine the risk factors with the DLHS/AHS */
 use $health/dlhs/data/dlhs_ahs_covid_comorbidities, clear
