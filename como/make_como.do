@@ -16,7 +16,7 @@ do $ccode/como/b/prep_gbd.do
 do $ccode/como/b/gen_comorbidity_predictions.do
 
 /* create an age-level dataset with UK condition prevalence */
-do $ccode/como/b/prep_uk_sim_prevalence.do
+do $ccode/como/b/prep_uk_prevalence.do
 
 /* repeat with external india aggregate data (e.g. GBD) */
 // do $ccode/como/b/prep_india_sim_prevalence.do
