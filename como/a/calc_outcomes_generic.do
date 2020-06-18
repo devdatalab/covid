@@ -306,6 +306,11 @@ foreach v in male $hr_biomarker_vars $hr_gbd_vars $hr_os_only_vars {
 merge 1:1 age using $tmp/india_pop, keep(master match) nogen keepusing(india_pop)
 merge 1:1 age using $tmp/uk_pop, keep(master match) nogen keepusing(uk_pop)
 
+/* Show final results and save to file */
+
+/* create csv file */
+cap !rm -f $ddl/covid/como/a/covid_como_sumstats.csv
+
 local t 1
 foreach v in male $hr_biomarker_vars $hr_gbd_vars health {
 
@@ -325,7 +330,7 @@ foreach v in male $hr_biomarker_vars $hr_gbd_vars health {
   local imean = `r(mean)'
 
   /* percent difference India over UK */
-  local perc (`imean'/`umean' - 1) * 100
+  local perc = (`imean'/`umean' - 1) * 100
 
   /* Get the sign on the % */
   if `perc' > 0 local sign " +"
@@ -333,4 +338,10 @@ foreach v in male $hr_biomarker_vars $hr_gbd_vars health {
 
   /* show everything */
   di %25s "`v': " %5.2f (`umean') "  " %5.2f (`imean') "  `sign'" %2.1f (`perc') "%"
+
+  /* save everying in csv for table */
+  insert_into_file using $ddl/covid/como/a/covid_como_sumstats.csv, key(uk_`v'_risk) value("`umean'") format(%3.2f)  
+  insert_into_file using $ddl/covid/como/a/covid_como_sumstats.csv, key(india_`v'_risk) value("`imean'") format(%3.2f)
+  insert_into_file using $ddl/covid/como/a/covid_como_sumstats.csv, key(`v'_ratio_sign) value("`sign'")
+  insert_into_file using $ddl/covid/como/a/covid_como_sumstats.csv, key(`v'_ratio) value("`perc'") format(%3.2f)  
 }

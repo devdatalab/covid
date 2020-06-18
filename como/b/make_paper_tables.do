@@ -11,7 +11,7 @@ use $health/dlhs/data/dlhs_ahs_covid_comorbidities, clear
 drop if age > 100
 
 /* get all DLHS India values */
-foreach var in age18_40 age40_50 age50_60 age60_70 age70_80 age80_ male diabetes_uncontr diabetes_contr hypertension_uncontr hypertension_contr obese_3 obese_1_2 {
+foreach var in age18_40 age40_50 age50_60 age60_70 age70_80 age80_ male diabetes_uncontr diabetes_contr hypertension_both obese_3 obese_1_2 {
   qui sum `var' [aw=wt]
   local mu = `r(mean)'*100
 
@@ -79,14 +79,17 @@ use $tmp/uk_prevalences, clear
 drop if age > 90
 merge 1:1 age using $tmp/uk_age_18_plus, nogen
 
-foreach var in uk_prev_diabetes_contr uk_prev_diabetes_uncontr uk_prev_hypertension_contr uk_prev_hypertension_uncontr uk_prev_obese_3 uk_prev_obese_1_2 {
+foreach var in uk_prev_diabetes_contr uk_prev_diabetes_uncontr uk_prev_hypertension_both uk_prev_obese_3 uk_prev_obese_1_2 {
   qui sum `var' [aw=total]
   local mu = `r(mean)'*100
   insert_into_file using $ddl/covid/como/a/covid_como_sumstats.csv, key(`var') value("`mu'") format(%2.1f)
 }
 
-/* create the table */
-table_from_tpl, t($ddl/covid/a/covid_como_sumstats_tpl.tex) r($ddl/covid/como/a/covid_como_sumstats.csv) o($tmp/covid_como_sumstats.tex)
+/* create the prevalence table 1 */
+table_from_tpl, t($ddl/covid/como/a/covid_como_sumstats_tpl.tex) r($ddl/covid/como/a/covid_como_sumstats.csv) o($tmp/covid_como_sumstats.tex)
+
+/* create the risk table 2 */
+table_from_tpl, t($ddl/covid/como/a/covid_como_sumhr_tpl.tex) r($ddl/covid/como/a/covid_como_sumstats.csv) o($tmp/covid_como_sumhr.tex)
 
 /* isolate risk vars for plot */
 import delimited $ddl/covid/como/a/covid_como_sumstats.csv, clear
