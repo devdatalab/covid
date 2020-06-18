@@ -121,6 +121,25 @@ twoway ///
     (line hr_age_simple_dis age) 
 graphout hr_ages
 
+/* full continuous, override with NY state conditions */
+use $tmp/hr_full_cts, clear
+drop *bp_high *diabetes_contr *heart* *kidney* *resp*
+merge 1:1 age using $tmp/nystate_hr, nogen
+save $tmp/hr_ny, replace
+
+/* full cts, override with NY-Cummings */
+use $tmp/hr_full_cts, clear
+drop hr_age hr_male hr_bp_high hr_diabetes_contr hr_chronic_heart_dz hr_chronic_resp_dz
+merge 1:1 age using $tmp/nycu_hr, nogen
+
+/* NY-Cummings hr_age is actually 1.31 for every 10 years. Normalize it to 50 */
+sum hr_age
+local hr = `r(mean)'
+replace hr_age = 1 if age == 50
+replace hr_age = `hr' ^ ((age - 50) / 10)
+
+save $tmp/hr_nycu, replace
+
 /**********************/
 /* prep prevalences   */
 /**********************/
