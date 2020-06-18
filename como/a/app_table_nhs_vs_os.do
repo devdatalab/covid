@@ -23,7 +23,7 @@ prog def label_vars
   label var stroke_dementia   "Stroke / Dementia"
 end
 
-/* UNITED KINGDOM PREVALENCE TABLE */
+/* ENGLAND PREVALENCE TABLE */
 
 /* combine UK prevalence data */
 use $tmp/prev_uk_nhs_matched, clear

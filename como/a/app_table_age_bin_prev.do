@@ -65,9 +65,9 @@ foreach condition in $hr_biomarker_vars $hr_gbd_vars {
 
 /* UK HEADER */
 file write fh " & & & & & \\ " _n
-file write fh " \textbf{United Kingdom} &  & & & & \\ " _n
+file write fh " \textbf{England} &  & & & & \\ " _n
 
-/* UNITED KINGDOM PREVALENCE TABLE */
+/* ENGLAND PREVALENCE TABLE */
 
 /* combine UK prevalence data */
 use $tmp/prev_uk_nhs_matched, clear

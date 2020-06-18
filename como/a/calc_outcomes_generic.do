@@ -100,7 +100,7 @@ twoway ///
     (line rf_h_india_full_cts age, lwidth(medthick) lcolor(black)) ///
     (line rf_h_uk_nhs_matched_full_cts age, lwidth(medthick) lcolor(gs8) lpattern(-)), ///
     ytitle("Risk Factor from Population Health Conditions") xtitle("Age") ///
-    legend(lab(1 "India") lab(2 "United Kingdom") ring(0) pos(5) cols(1) region(lcolor(black))) ///
+    legend(lab(1 "India") lab(2 "England") ring(0) pos(5) cols(1) region(lcolor(black))) ///
     name(rf_health, replace)  ylabel(1(.5)4)
 graphout rf_health
 
@@ -153,7 +153,7 @@ foreach model in $modellist {
 //     (line uk_simple_deaths    age, lcolor(orange) lwidth(medium) lpattern(.-))     ///
 //     (line india_simple_deaths age, lcolor(gs8) lpattern(-) lwidth(medthick))       ///
 //     , ytitle("Distribution of Deaths" "Normalized population: 100,000") xtitle(Age)  ///
-//     legend(lab(1 "United Kingdom (simple)") ///
+//     legend(lab(1 "England (simple)") ///
 //     lab(2 "India (simple)"))
 // graphout mort_density_simple
 
@@ -188,7 +188,7 @@ twoway ///
     (line india_full_deaths age if age <= 89, lcolor(black) lpattern(solid) lwidth(medthick))       ///
     (line mh_deaths         age if age <= 89, lcolor(orange) lwidth(medium) lpattern(.-))     ///
     , ytitle("Density Function of Deaths (%)") xtitle(Age)  ///
-    legend(lab(1 "United Kingdom (full)") ///
+    legend(lab(1 "England (full)") ///
     lab(2 "India (full)") lab(3 "Maharasthra (May 5)") ///
     ring(0) pos(11) cols(1) region(lcolor(black))) ///
     xscale(range(18 90)) xlabel(20 40 60 80) ylabel(.01 .02 .03 .04 .044)
@@ -201,8 +201,8 @@ graphout mort_density_full
 //     (line uk_full_deaths      age, lcolor(orange) lwidth(medium) lpattern(solid))    ///
 //     (line india_full_deaths   age, lcolor(gs8) lpattern(solid) lwidth(medthick))     ///
 //     , ytitle("Distribution of Deaths" "Normalized population: 100,000") xtitle(Age)  ///
-//     legend(lab(1 "United Kingdom (simple)") lab(2 "India (simple)") ///
-//     lab(3 "United Kingdom (full)") lab(4 "India (full)"))
+//     legend(lab(1 "England (simple)") lab(2 "India (simple)") ///
+//     lab(3 "England (full)") lab(4 "India (full)"))
 // graphout mort_density_all
 
 /******************************************/
