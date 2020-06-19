@@ -10,7 +10,7 @@ merge m:1 lgd_district_id using $covidpub/migration/district_migration.dta
 drop _merge
 
 /* merge population data */
-merge m:1 lgd_district_id using $covidpub/demography/lgd_pc11_district_capacity.dta
+merge m:1 lgd_district_id using $covidpub/demography/dem_district.dta
 
 /* drop missing values */
 drop if mi(lgd_state_id)
@@ -29,7 +29,7 @@ foreach var in total_cases outltmigration pc11_pca_tot_p outltmigration_pc total
 }
 
 /* keep latest covid data */
-keep if date == 22056
+keep if date == 22081
 
 /* save dataset */
 save $tmp/covid_migration.dta, replace
