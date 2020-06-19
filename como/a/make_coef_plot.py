@@ -20,6 +20,29 @@ homedir = os.path.expanduser("~")
 df = pd.read_stata(os.path.join("/scratch", username, "coefs_to_plot.dta"))
 df['coef'] = df['coef'].astype(float)
 
+sort_vars = {'male_ratio': 1,
+ 'diabetes_contr_ratio': 2,
+ 'diabetes_uncontr_ratio': 3,
+ 'bp_high_ratio': 4,
+ 'obese_1_2_ratio': 5,
+ 'obese_3_ratio': 6,
+ 'chronic_heart_dz_ratio': 7,
+ 'chronic_resp_dz_ratio': 8,
+ 'kidney_dz_ratio': 9,
+ 'liver_dz_ratio': 10,
+ 'asthma_ocs_ratio': 11,
+ 'haem_malig_1_ratio': 12,
+ 'cancer_non_haem_1_ratio': 13,
+ 'stroke_dementia_ratio': 14,
+ 'neuro_other_ratio': 15,
+ 'autoimmune_dz_ratio': 16,
+ 'immuno_other_dz_ratio': 17}
+
+# sort values
+df['sort'] = df['variable'].apply(lambda x: sort_vars[x])
+df = df.sort_values("sort", ascending=False)
+df = df.drop("sort", axis=1)
+
 label_key = {'male_ratio': "Male",
  'obese_1_2_ratio': "Obese (Class 1 \& 2)",
  'obese_3_ratio': "Obese (Class 3)",
@@ -68,3 +91,4 @@ ax.set_title("Percent Change of Contribution to Mortality of each \n Risk Factor
 
 # save figure
 plt.savefig(os.path.join(homedir, "public_html", "png", "coefplot.png"), bbox_inches="tight", dpi=150)
+plt.close("all")

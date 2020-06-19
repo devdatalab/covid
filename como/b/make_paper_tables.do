@@ -85,16 +85,17 @@ foreach var in uk_prev_diabetes_contr uk_prev_diabetes_uncontr uk_prev_hypertens
   insert_into_file using $ddl/covid/como/a/covid_como_sumstats.csv, key(`var') value("`mu'") format(%2.1f)
 }
 
+/* isolate risk vars for plot */
+import delimited $ddl/covid/como/a/covid_como_sumstats.csv, clear
+keep if strpos(v1, "ratio") != 0
+drop if strpos(v1, "sign") != 0
+drop if v1 == "health_ratio"
+ren v1 variable
+ren v2 coef
+save $tmp/coefs_to_plot, replace
+
 /* create the prevalence table 1 */
 table_from_tpl, t($ddl/covid/como/a/covid_como_sumstats_tpl.tex) r($ddl/covid/como/a/covid_como_sumstats.csv) o($tmp/covid_como_sumstats.tex)
 
 /* create the risk table 2 */
 table_from_tpl, t($ddl/covid/como/a/covid_como_sumhr_tpl.tex) r($ddl/covid/como/a/covid_como_sumstats.csv) o($tmp/covid_como_sumhr.tex)
-
-/* isolate risk vars for plot */
-import delimited $ddl/covid/como/a/covid_como_sumstats.csv, clear
-keep if strpos(v1, "ratio") != 0
-drop if v1 == "health_ratio"
-ren v1 variable
-ren v2 coef
-save $tmp/coefs_to_plot, replace
