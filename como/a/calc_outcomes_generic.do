@@ -96,7 +96,7 @@ save $tmp/como_analysis, replace
 sort age
 twoway ///
     (line rf_h_india_full_cts age, lwidth(medthick) lcolor(black)) ///
-    (line rf_h_uk_nhs_matched_full_cts age, lwidth(medthick) lcolor(gs8) lpattern(-)), ///
+    (line rf_h_uk_nhs_matched_full_cts age, lwidth(medthick) lcolor(orange)), ///
     ytitle("Risk Factor from Population Health Conditions") xtitle("Age") ///
     legend(lab(1 "India") lab(2 "England") ring(0) pos(5) cols(1) region(lcolor(black))) ///
     name(rf_health, replace)  ylabel(1(.5)4)
@@ -216,16 +216,15 @@ replace en_deaths = $sim_n * 2941/5683  / 20 if inrange(age, 80, 99)
 
 /* same graph, full model */
 twoway ///
-    (line uk_full_deaths    age if age <= 89, lcolor(gs8) lwidth(medium) lpattern(-))     ///
-    (line india_full_deaths age if age <= 89, lcolor(black) lpattern(solid) lwidth(medthick))       ///
-    (line mh_deaths         age if age <= 89, lcolor(orange) lwidth(medium) lpattern(.-))     ///
-    (line en_deaths         age if age <= 89, lcolor(gs14) lwidth(medium) lpattern(.-))     ///
+    (line uk_full_deaths    age if age <= 89, lcolor(orange) lwidth(thick) lpattern(solid))     ///
+    (line india_full_deaths age if age <= 89, lcolor(black) lpattern(solid) lwidth(thick))       ///
+    (line mh_deaths         age if age <= 89, lcolor(black) lwidth(medium) lpattern(-))     ///
+    (line en_deaths         age if age <= 89, lcolor(orange) lwidth(medium) lpattern(-))     ///
     , ytitle("Density Function of Deaths (%)") xtitle(Age)  ///
     legend(lab(1 "England (model)") ///
     lab(2 "India (model)") lab(3 "Maharasthra (reported)") lab(4 "England (reported)") ///
     ring(0) pos(11) cols(1) region(lcolor(black))) ///
-    xscale(range(18 90)) xlabel(20 40 60 80) ylabel(.01 .02 .03 .04 .044) ///
-    name(density)
+    xscale(range(18 90)) xlabel(20 40 60 80) ylabel(.01 .02 .03 .04 .044) 
 graphout mort_density_full
 
 // /* all 4 lines */
@@ -249,8 +248,7 @@ twoway ///
     title("NY State Age-specific ORs") legend(lab(1 "England (model)") ///
     lab(2 "India (model)") lab(3 "Maharasthra (reported)") lab(4 "England (reported)") ///
     ring(0) pos(11) cols(1) region(lcolor(black))) ///
-    xscale(range(18 90)) xlabel(20 40 60 80) ylabel(.01 .02 .03 .04 .044) ///
-    name(density_ny)
+    xscale(range(18 90)) xlabel(20 40 60 80) ylabel(.01 .02 .03 .04 .044)
 graphout mort_density_ny
 twoway ///
     (line uk_nycu_deaths    age if age <= 89, lcolor(gs8) lwidth(medium) lpattern(-))     ///
@@ -261,8 +259,7 @@ twoway ///
     title("NY (Cummings) HRs") legend(lab(1 "England (model)") ///
     lab(2 "India (model)") lab(3 "Maharasthra (reported)") lab(4 "England (reported)") ///
     ring(0) pos(11) cols(1) region(lcolor(black))) ///
-    xscale(range(18 90)) xlabel(20 40 60 80) ylabel(.01 .02 .03 .04 .044) ///
-    name(density_nycu)
+    xscale(range(18 90)) xlabel(20 40 60 80) ylabel(.01 .02 .03 .04 .044)
 graphout mort_density_nycu
 
 graph combine density density_ny density_nycu, rows(1)
