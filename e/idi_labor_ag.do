@@ -23,37 +23,50 @@ merge m:1 shrid using $shrug/keys/shrug_pc11_district_key, keep(match master) no
 
 /* note: pc11 ids are missing for the 70 obs in idi survey data with no shrid */
 /* pc11 district ids are missing for additional 43 obs (bc shrug-pc11 key has missing pc11_district_ids) */
-
 /* generate march earnings */
+
 sum lab_march_wage, d
-gen lab_march_earn = lab_march_wage * lab_march_freq if !mi(lab_march_wage) & !mi(lab_march_freq) 
+gen lab_march_earn = lab_march_wage * lab_march_freq if !mi(lab_march_wage) & !mi(lab_march_freq) & lab_march_wage < r(p95)
 
 /* generate current earnings */
 sum lab_curr_wage, d
-gen lab_curr_earn = lab_curr_wage * lab_curr_freq if !mi(lab_curr_wage) & !mi(lab_curr_freq)
+gen lab_curr_earn = lab_curr_wage * lab_curr_freq if !mi(lab_curr_wage) & !mi(lab_curr_freq) & lab_curr_wage < r(p95)
 
-/* generate earnings change */
-gen ln_lab_earn_change = ln(lab_curr_earn + 1) - ln(lab_march_earn + 1)
+/* gen percentage change in earnings */
+gen pc_lab_earn_change = (lab_curr_earn/lab_march_earn) - 1 if !mi(lab_curr_earn) & !mi(lab_march_earn)
 
 /* indicator for whether hh has at least one migrant */
 gen mig = 1 if mig_size > 0 & !mi(mig_size)
 replace mig = 0 if mig_size == 0 
 
 /* migrants ratio */
-gen mig_ratio = mig_total_ratio/demo_hh_size
+gen mig_ratio = mig_size/demo_hh_size
 
 /* generate consumption change */
-gen ln_con_change = ln(con_wk) - ln(con_feb/4) if !mi(con_wk) & !mi(con_feb)
+sum con_feb, d
+gen con_feb_wk = con_feb/4 if con_feb < r(p95)
+
+sum con_wk, d
+gen pc_con_change = (con_wk/con_feb_wk) - 1 if con_wk < r(p95)
 
 /* gen labour workdays change */
-gen ln_lab_work_change = ln(lab_curr_freq) - ln(lab_march_freq) if !mi(lab_curr_freq) & !mi(lab_march_freq)
+gen pc_lab_work_change = (lab_curr_freq/lab_march_freq) - 1 if !mi(lab_curr_freq) & !mi(lab_march_freq)
 
 /* generate indicator variable for share of workers whose workdays dropped to 0 */
 gen lab_lost_work = 1 if lab_curr_freq == 0 & lab_march_freq > 0 & !mi(lab_march_freq)
 replace lab_lost_work = 0 if lab_lost_work == .  & !mi(lab_march_freq) & !mi(lab_curr_freq)
 
 /* generate labour wage change */
-gen ln_lab_wage_change = ln(lab_curr_wage) - ln(lab_march_wage) if lab_curr_earn > 0 & lab_march_earn > 0 & !mi(lab_march_earn) & !mi(lab_curr_earn)
+sum lab_curr_wage, d
+local ccap = r(p95)
+
+sum lab_march_wage, d
+local mcap = r(p95)
+
+gen pc_lab_wage_change = (lab_curr_wage/lab_march_wage) - 1 if lab_curr_earn > 0 & lab_march_earn > 0 & lab_march_wage < `mcap' & lab_curr_wage < `ccap'
+
+/* random outlier coming from one observation */
+replace pc_lab_wage_change = . if pc_lab_wage_change == 49
 
 /* generate migration pre and post lockdown daily wage */
 foreach i of var mig_avg_wage mig_daily_wage{
@@ -69,27 +82,40 @@ foreach i of var mig_avg_wage mig_daily_wage{
 
 /* convert monthly to daily wage */
   replace s_`i' = `i'/26 if `unit' == 2
-
 }
 
 /* generate migration wage change */
-gen ln_mig_wage_change = ln(s_mig_daily_wage) - ln(s_mig_avg_wage) if !mi(mig_avg_wage) & !mi(mig_daily_wage)
+sum s_mig_daily_wage, d
+local mccap = r(p95)
+
+sum s_mig_avg_wage, d
+local mmcap = r(p95)
+
+gen pc_mig_wage_change = (s_mig_daily_wage/s_mig_avg_wage) - 1 if lab_curr_earn > 0 & lab_march_earn > 0 & s_mig_avg_wage < `mmcap' & s_mig_daily_wage < `mccap'
 
 /* generate ag inputs change */
-gen ln_agr_input_change = ln(agr_curr_inputs) - ln(agr_monsoon_inputs) if !mi(agr_curr_inputs) & !mi(agr_monsoon_inputs)
+gen pc_ag_input_change = (agr_next_ssn_inputs/agr_monsoon_inputs) - 1  if !mi(agr_next_ssn_inputs) & !mi(agr_monsoon_inputs)
+replace pc_ag_input_change = . if pc_ag_input_change >= 1
 
 /* generate ag borrowing change */
-replace agr_curr_borrow = . if agr_curr_borrow == -888
-gen ln_agr_borrow_change = ln(agr_curr_borrow) - ln(agr_monsoon_borrow) if !mi(agr_curr_borrow) & !mi(agr_monsoon_borrow)
+gen pc_agr_borrow_change = (agr_next_ssn_borrow/agr_monsoon_borrow) - 1 if !mi(agr_next_ssn_borrow) & !mi(agr_monsoon_borrow)
+replace pc_agr_borrow_change = . if pc_agr_borrow_change >= 1
 
 /* generate ag price change - since holi */
-gen ln_agr_prc_change_holi = ln(agr_prc_curr_kg) - ln(agr_prc_holi_kg) if !mi(agr_prc_curr_kg) & !mi(agr_prc_holi_kg)
+gen pc_agr_prc_change_holi = (agr_prc_curr_kg/agr_prc_holi_kg) - 1 if !mi(agr_prc_curr_kg) & !mi(agr_prc_holi_kg)
 
 /* generate ag price change - since last year */
-gen ln_agr_prc_change_yr = ln(agr_prc_curr_kg) - ln(agr_prc_prev_yr_kg) if !mi(agr_prc_curr_kg) & !mi(agr_prc_prev_yr_kg) 
+gen pc_agr_prc_change_yr = (agr_prc_curr_kg/agr_prc_prev_yr_kg) - 1 if !mi(agr_prc_curr_kg) & !mi(agr_prc_prev_yr_kg) 
 
 /* for land change, using ID insight's constructed variable bc */
 /* the units vary by state and I'm not sure of the conversions! */
+gen pc_ag_land_change = agr_land_change_mean if agr_land_change_mean <= 1
+
+/* converting to 100 scale */
+gen pc_borrow = pc_agr_borrow_change * 100
+gen pc_input = pc_ag_input_change * 100
+gen pc_earn = pc_lab_earn_change * 100
+gen pc_work = pc_lab_work_change * 100
 
 /* label variables */
 la var lab_march_earn "Pre-lockdown weekly earning"
@@ -122,135 +148,78 @@ save $tmp/idi_survey_clean, replace
 cd $tmp
 use $tmp/idi_survey_clean, clear
 
-/* 1. Total earnings, wage and days worked loss */
+/* 1. Total earnings and days worked loss */
+graph bar (mean) pc_earn pc_work, yvar(relabel(1 "% change in earnings" 2 "% change in workdays")) bar(1, color(emerald*0.8)) bar(2, color(maroon)) ascategory ylabel(-100 (20) 0)
+graphout earn_work
 
-graph box ln_lab_earn_change, ascategory yline(0) ytitle("Log earnings change") name(trial1, replace)
-graph box ln_lab_wage_change if ln_lab_wage_change > -4, ascategory yline(0) ytitle("Log wage change") name(trial2, replace)
-graph bar lab_lost_work, ascategory yline(0) ytitle("Share with total loss of workdays") name(trial3, replace)
+label define ll 1 "Workdays fell to zero" 0 ">0 workdays post lockdown"
+label values lab_lost_work ll
 
-graph combine trial1 trial2 trial3
-graphout labor_dist
+/* labour lost */
+tab lab_lost_work, gen(l)
+set scheme s1color
+graph pie l1 l2, plabel(_all percent) legend(label(1 "Retained some work") label(2 "Lost all work")) pie(1, color(emerald)) pie(2, color(emerald*0.4) explode)
+graphout laborlost
 
 /* 2. Variation in earnings change by categories */
 
 /* by pre-lockdown occupation category */
-cibar ln_lab_earn_change [aw = weight_hh] if lab_march_occu != 0, over(lab_march_occu) barcolor(black sienna sand maroon) graphopts(ytitle("Log earnings change") ylabel(-6 (1) 0))
+cibar pc_lab_earn_change [aw = weight_hh] if lab_march_occu != 0, over(lab_march_occu) barcolor(black teal emerald dknavy) graphopts(ytitle("% earnings/revenue change") ylabel(-1 (.2) 0))
 graphout earn_worker
 
-/* by education categories, excluding don't know, no responses */
-cibar ln_lab_earn_change if demo_edu > 0 [aw = weight_hh], over(demo_edu) barcolor(black teal green olive sand) graphopts(ytitle("Log earnings change") ylabel(-6 (1) 0))
-graphout earn_edu
+/* losses by caste */
+cibar pc_work if demo_caste > 0 & demo_caste < 99 [aw = weight_hh], over(demo_caste) barcolor(black dknavy emerald dkgreen) graphopts(ytitle("% workdays change", margin(medium)) ylabel(-100 (20) 0))
+graphout work_caste
 
-/* consumption change, by ag status */
-cibar ln_con_change [aw = weight_hh], over(demo_ag_hh) barcolor(black sienna) graphopts(ytitle("Con % change"))
-graphout con_ag
+/* collapse at subdistrict level */
+preserve
 
-/* by state  */
-cibar ln_lab_earn_change [aw = weight_hh] , over(geo_state) barcolor(black pink*0.4 blue*0.6 green*0.4) graphopts(ytitle("Log earnings change") ylabel(-6 (1) 0))
-graphout earn_state
+collapse_save_labels
+collapse (mean) ec13* pc_work lab_lost_work [aw = weight_hh], by(geo_state geo_dist geo_block)
+collapse_apply_labels
 
-/* by whether/not the hh as at least one migrant member */
-cibar ln_lab_earn_change [aw = weight_hh] , over(mig) barcolor(black maroon) graphopts(ytitle("Log earnings change") ylabel(-6 (1) 0))
-graphout earn_mig
+/* graph emp availability and pc_work */
+binscatter lab_lost_work ec13* if ec13_nonfarm_emp_per_capita < .34, ytitle("Share reporting total work loss", margin(medium)) xtitle("Non-farm jobs per capita", margin(medium)) yline(0) ci(model) 
+graphout work_emp
 
-cibar lab_lost_work [aw = weight_hh] , over(mig) barcolor(black maroon) graphopts(ytitle("Lost work") ylabel(0 (0.2) 1))
-graphout work_mig
+restore
 
-cibar ln_con_change [aw = weight_hh] , over(mig) barcolor(black maroon) graphopts(ytitle("con % change") ylabel(-1 (0.2) 0)) 
-graphout con_mig
+/* workdays change and nrega */
+cibar lab_lost_work [aw = weight_hh], over(rel_nrega_unavail_prop) barcolor(black dknavy) graphopts(ytitle("Share reporting unemployment") ylabel(0 (.2) 1, grid) )
+graphout n_lw
 
-cibar ln_agr_borrow_change [aw = weight_hh] , over(mig) barcolor(black maroon) graphopts(ytitle("Ag borrow % change"))
-graphout ag_borrow_mig
-
-/* variance in earnings change by state */
-graph hbar (semean) ln_lab_earn_change [aw = weight_hh], over(geo_state) ytitle("Standard error of mean - log earnings change")
-graphout variance
-
-/* 3. Agriculture */
+cibar pc_work [aw = weight_hh], over(rel_nrega_unavail_prop) barcolor(black dknavy) graphopts(ytitle("% change in workdays") ylabel(-100 (20) 0, grid) )
+graphout n_lw
 
 /* price by crop category */
-cibar ln_agr_prc_change_holi [aw = weight_hh], over(agr_crop_cat_prop) barcolor(black sienna sand) graphopts(ytitle("Price changes since holi, by crop category") ylabel(-1 (0.2) 0))
+gen pc_crop_holi = pc_agr_prc_change_holi*100
+cibar pc_crop_holi [aw = weight_hh] if pc_agr_prc_change_holi < 1, over(agr_crop_cat_prop) barcolor(black dknavy dkgreen) graphopts(ytitle("Price changes since holi, by crop category")ylabel(-100 (20) 0, grid))
 graphout prc_crop_holi
 
 /* price since last year by crop category */
-cibar ln_agr_prc_change_yr [aw = weight_hh], over(agr_crop_cat_prop) barcolor(black sienna sand) graphopts(ytitle("Price changes since last year, by crop category") ylabel(-1 (0.2) 0))
+gen pc_crop_yr = pc_agr_prc_change_yr*100
+cibar pc_crop_yr [aw = weight_hh] if pc_agr_prc_change_yr < 1, over(agr_crop_cat_prop) barcolor(black dknavy dkgreen) graphopts(ytitle("Price changes since last year, by crop category")ylabel(-100 (20) 0, grid))
 graphout prc_crop_yr
 
 /* reasons for sales not starting */
-graph hbar (mean) agr_nosell_notready - agr_nosell_machine [aw = weight_hh], ascategory yvar(relabel(1 "Crops not ready" 2 "Saving for seeds/home" 3 "Crops destroyed" 4 "No demand" 5 "Closed markets" 6 "Prices low" 7 "Lockdown" 8 "Labor shortage" 9 "Transport UA" 10 "Machine UA"))
+graph hbar (mean) agr_nosell_notready - agr_nosell_machine [aw = weight_hh], ascategory yvar(relabel(1 "Crops not ready" 2 "Saving for seeds/home" 3 "Crops destroyed" 4 "No demand" 5 "Closed markets" 6 "Prices low" 7 "Lockdown" 8 "Labor shortage" 9 "Transport Unavail" 10 "Machine Unavail")) ylabel(0 (0.1) 0.6) bar(1, color(dknavy))
 graphout nosell_reason
 
 /* selling difficulties for ongoing sales + sales completed within last two weeks  */
-graph hbar (mean) agr_selldiff_none - agr_selldiff_police [aw = weight_hh], ascategory yvar(relabel(1 "No difficulty" 2 "Labor shortage" 3 "Transport UA" 4 "Markets closed" 5 "No demand" 6 "Travel distance too long" 7 " Police harrassment"))
+graph hbar (mean) agr_selldiff_none - agr_selldiff_police [aw = weight_hh], ascategory yvar(relabel(1 "No difficulty" 2 "Labor shortage" 3 "Transport Unavail" 4 "Markets closed" 5 "No demand" 6 "Travel distance too long" 7 " Police harrassment")) ylabel(0 (0.1) 0.6) bar(1, color(emerald))
 graphout selldiff_reason
 
-/* changes in prices, borrowing, planned land, and inputs */
-graph hbox ln_agr_prc_change_yr ln_agr_prc_change_holi ln_agr*borrow* ln_agr*input* agr*land*change* [aw = weight_hh], yline(0) yvar(relabel(1 "Log price change (yr)" 2 "Log price change (since holi)" 3 "Log borrowing change" 4 "Log ag input change" 5 "IDI land planned change (%) var"))
-graphout achanges
-
-/* selling status */
-catplot agr_crop_status
-graphout sell_status
-
-/* crop category */
-catplot agr_crop_cat_prop
-graphout crop_cat
+graph hbar (mean) pc_input pc_borrow, yvar(relabel(1 "% change in input exp." 2 "% change in borrowing" )) bar(1, color(emerald)) bar(2, color(emerald)) ascategory ylabel(-13 (2) 0, grid)
+graphout ag
 
 /* 4. collapse dataset at district level */
 collapse_save_labels
-collapse (mean) *lost* *nrega* ln* ag*land*mean tdist* pc11_pca* ec13* land* mig_total_ratio *wagechange*[aw = weight_hh], by(pc11_state_id pc11_district_id)
+collapse (mean) *lost* rel*amt *nrega* pc_* ag*land*mean tdist* pc11_pca* ec13* land* mig_total_ratio *wagechange*[aw = weight_hh], by(pc11_state_id pc11_district_id)
 collapse_apply_labels
 
 /* save district level dataset */
 save $tmp/idi_survey_clean_district, replace
 
-/* change in earnings and land planned for planting change */
-binscatter agr_land_change_mean ln_lab_earn_change, xtitle("log change in weekly earnings") ytitle("% change in land planned for kharif") ci(model) yline(0) xlabel(-8 (1) 0)
-graphout earn_land
-
-/* change in earnings and change in consumption */
-binscatter ln_con_change ln_lab_earn_change, xtitle("log change in weekly earnings") ytitle("% change in consumption")  yline(0) xlabel(-8 (1) 0) ci(model)
-graphout earn_con_wt
-
-/* change in weekly earning and employment per capita */
-binscatter lab_lost_work ec13*, ytitle("Share lost work") xtitle("Non-farm jobs per capita") yline(0) ci(model)
-graphout earn_emp
-
-/* Graphs below are for IDI PPT 2.0 */
-
-/* merge with migration data */
-merge 1:1 pc11_state_id pc11_district_id using $iec/covid/migration/pc11/district_migration_pc11
-keep if _merge == 3
-
-gen lab_wagechange_perc = lab_wagechange_mean * 100
-
-/* migration and wage change */
-twoway lfitci lab_wagechange_perc outlt*rate if lab_wagechange_perc < 100, ytitle("% change in wages") xtitle("Long term outmigration rate") yline(0) ylabel(-100 (25) 0, grid)
-graphout outlt
-
-twoway lfitci lab_wagechange_perc outst*rate if lab_wagechange_perc < 100, ytitle("% change in wages") xtitle("Short term outmigration rate") yline(0) ylabel(-100 (25) 0, grid)
-graphout outst
-
-twoway lfitci lab_wagechange_perc inlt*rate if lab_wagechange_perc < 100, ytitle("% change in wages") xtitle("Long term inmigration rate") yline(0) ylabel(-100 (25) 0, grid)
-graphout inlt
-
-twoway lfitci lab_wagechange_perc inst*rate if lab_wagechange_perc < 100, ytitle("% change in wages") xtitle("Short term inmigration rate") yline(0) ylabel(-100 (25) 0, grid)
-graphout inst
-
-/* nrega and remoteness */
-gen nrega_no = rel_nrega_unavail_prop*100
-
-binscatter nrega_no tdist_100, ci(model) ytitle("% hh reporting NREGA unavailable", margin(medium)) xtitle("Distance to nearest place (pop > 100k)")
-graphout nrega_unavail
-
-binscatter nrega_no tdist_500, ci(model) ytitle("% hh reporting NREGA unavailable", margin(medium)) xtitle("Distance to nearest place (pop > 500k)")
-graphout nrega_unavail_500
-
-/* nrega and migrant rates */
-foreach i of var *rate {
-  local label: variable label `i'
-  binscatter nrega_no `i', ci(model) ytitle("% hh reporting NREGA unavailable", margin(medium)) xtitle("`label'")
-  graphout `i'
-}
-
-
+/* haven't included this in op-ed as the result is intuitive but weak! */
+twoway lfitci pc_input pc_earn if pc_earn <= 100, yline(0) ylabel(-30 (10) 40, grid) xlabel(-100 (20) 100, grid)
+graphout trial
