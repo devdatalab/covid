@@ -52,6 +52,12 @@ do $ccode/como/a/compare_uk_india_prevalence.do
 /* run analysis for paper */
 do $ccode/como/a/calc_outcomes_generic.do
 
+/* Figure 3: coefficient plot */
+shell python $ccode/como/a/make_coef_plot.py
+
+/* create tables */
+do $ccode/como/b/make_paper_tables.do
+
 // /* plot India risk factors under various assumptions*/
 // do $ccode/como/a/analyze_age_mort_risk.do
 // 
