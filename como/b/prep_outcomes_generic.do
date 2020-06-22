@@ -81,7 +81,7 @@ foreach v of varlist hr_* {
     replace `v' = 1
   }
 }
-save $tmp/hr_simple_cts, replace
+save $tmp/hr_simp_cts, replace
 
 /* simple discrete */
 use $tmp/uk_nhs_hazard_ratios_flat_hr_simp, clear
@@ -103,13 +103,13 @@ foreach v of varlist hr_* {
     replace `v' = 1
   }
 }
-save $tmp/hr_simple_dis, replace
+save $tmp/hr_simp_dis, replace
 
 /* compare age HRs in all 4 models */
 clear
 set obs 82
 gen age = _n + 17
-foreach v in full_cts full_dis simple_cts simple_dis {
+foreach v in full_cts full_dis simp_cts simp_dis {
   merge 1:1 age using $tmp/hr_`v', keepusing(hr_age) nogen
   ren hr_age hr_age_`v'
   replace hr_age_`v' = ln(hr_age_`v')
@@ -118,8 +118,8 @@ sort age
 twoway ///
     (line hr_age_full_cts   age) ///
     (line hr_age_full_dis   age) ///
-    (line hr_age_simple_cts age) ///
-    (line hr_age_simple_dis age) 
+    (line hr_age_simp_cts age) ///
+    (line hr_age_simp_dis age) 
 graphout hr_ages
 
 /* full continuous, override with NY state conditions */

@@ -1,7 +1,7 @@
 /* program to calculate generic outcomes given:
 
 1. a set of condition-specific (and possibly age-specific) hazard ratios (i.e. the model)
-$tmp/hr_[full|simple]_[cts|dis]
+$tmp/hr_[full|simp]_[cts|dis]
 
 2. a set of prevalences
 $tmp/prev_india, $tmp/prev_uk_os, $tmp/prev_uk_nhs, $tmp/prev_uk_nhs_matched
@@ -27,7 +27,7 @@ foreach prev in india uk_os uk_nhs uk_nhs_matched {
 
   /* loop over hazard ratio sets -- cts means age is cts and not in bins */
   /* full_cts is the main one that we use. */
-  foreach hr in simple_dis full_dis simple_cts full_cts ny nycu {
+  foreach hr in simp_dis full_dis simp_cts full_cts ny nycu {
 
     /* show which entry we are on */
     disp_nice "`prev'-`hr'"
@@ -70,7 +70,7 @@ clear
 set obs 82
 gen age = _n + 17
 foreach prev in india uk_os uk_nhs uk_nhs_matched {
-  foreach hr in simple_dis full_dis simple_cts full_cts ny nycu {
+  foreach hr in simp_dis full_dis simp_cts full_cts ny nycu {
     merge 1:1 age using $tmp/prr_`prev'_`hr', keepusing(prr_all prr_health) nogen
     ren prr_all prr_all_`prev'_`hr'
     ren prr_health prr_h_`prev'_`hr'
@@ -129,17 +129,17 @@ graphout prr_health_nycu
 // /*************************************/
 // /* compare age * health risk factors */
 // /*************************************/
-// /* compare three UK models: OS fixed age, full-prevalences, simple */
-// sc prr_all_uk_os_simple_cts prr_all_uk_os_full_cts prr_all_uk_nhs_matched_full_cts prr_all_uk_nhs_full_cts, ///
-//     legend(lab(1 "Simple") lab(2 "Full O.S. coefs") lab(3 "Full (matched conditions)") lab(4 "Full (all conditions)")) name(prr_uk_compare) yscale(log)
+// /* compare three UK models: OS fixed age, full-prevalences, simp */
+// sc prr_all_uk_os_simp_cts prr_all_uk_os_full_cts prr_all_uk_nhs_matched_full_cts prr_all_uk_nhs_full_cts, ///
+//     legend(lab(1 "Simp") lab(2 "Full O.S. coefs") lab(3 "Full (matched conditions)") lab(4 "Full (all conditions)")) name(prr_uk_compare) yscale(log)
 // 
 // /* full vs. full, India vs. UK */
 // sc prr_all_india_full_cts prr_all_uk_nhs_matched_full_cts, ///
 //     name(prr_all_full) yscale(log) legend(lab(1 "India") lab(2 "UK"))
 // 
-// /* simple vs. simple, India vs. UK */
-// sc prr_all_india_simple_cts prr_all_uk_nhs_simple_cts, ///
-//     name(prr_all_simple) yscale(log) legend(lab(1 "India") lab(2 "UK"))
+// /* simp vs. simp, India vs. UK */
+// sc prr_all_india_simp_cts prr_all_uk_nhs_simp_cts, ///
+//     name(prr_all_simp) yscale(log) legend(lab(1 "India") lab(2 "UK"))
 
 /*****************************/
 /* compare density of deaths */
@@ -148,14 +148,14 @@ graphout prr_health_nycu
 ren *india_full_cts* *india_full*
 ren *uk_nhs_matched_full_cts* *uk_full*
 ren *uk_nhs_matched_ny* *uk_ny*
-ren *india_simple_cts* *india_simple*
-ren *uk_nhs_simple_cts* *uk_simple*
+ren *india_simp_cts* *india_simp*
+ren *uk_nhs_simp_cts* *uk_simp*
 
-global modellist india_full uk_full india_simple uk_simple india_ny uk_ny india_nycu uk_nycu
+global modellist india_full uk_full india_simp uk_simp india_ny uk_ny india_nycu uk_nycu
 
 /* Calculate the distribution of deaths in the model */
 global mortrate 1
-foreach model in full simple ny nycu {
+foreach model in full simp ny nycu {
   foreach country in uk india {
     gen `country'_`model'_deaths = $mortrate * `country'_pop * prr_all_`country'_`model'
   }
@@ -170,16 +170,16 @@ foreach model in $modellist {
   replace `v' = `v' / (`r(mean)' * `r(N)') * $sim_n
 }
 
-// /* plot uk vs. india death density, simple */
+// /* plot uk vs. india death density, simp */
 // sort age
 // label var age "Age"
 // twoway ///
-//     (line uk_simple_deaths    age, lcolor(orange) lwidth(medium) lpattern(.-))     ///
-//     (line india_simple_deaths age, lcolor(gs8) lpattern(-) lwidth(medthick))       ///
+//     (line uk_simp_deaths    age, lcolor(orange) lwidth(medium) lpattern(.-))     ///
+//     (line india_simp_deaths age, lcolor(gs8) lpattern(-) lwidth(medthick))       ///
 //     , ytitle("Distribution of Deaths" "Normalized population: 100,000") xtitle(Age)  ///
-//     legend(lab(1 "England (simple)") ///
-//     lab(2 "India (simple)"))
-// graphout mort_density_simple
+//     legend(lab(1 "England (simp)") ///
+//     lab(2 "India (simp)"))
+// graphout mort_density_simp
 
 /* smooth the deaths series */
 sort age
@@ -255,12 +255,12 @@ graphout mort_density_full
 
 // /* all 4 lines */
 // twoway ///
-//     (line uk_simple_deaths    age, lcolor(orange) lwidth(medium) lpattern(-))        ///
-//     (line india_simple_deaths age, lcolor(gs8) lpattern(-) lwidth(medthick))         ///
+//     (line uk_simp_deaths    age, lcolor(orange) lwidth(medium) lpattern(-))        ///
+//     (line india_simp_deaths age, lcolor(gs8) lpattern(-) lwidth(medthick))         ///
 //     (line uk_full_deaths      age, lcolor(orange) lwidth(medium) lpattern(solid))    ///
 //     (line india_full_deaths   age, lcolor(gs8) lpattern(solid) lwidth(medthick))     ///
 //     , ytitle("Distribution of Deaths" "Normalized population: 100,000") xtitle(Age)  ///
-//     legend(lab(1 "England (simple)") lab(2 "India (simple)") ///
+//     legend(lab(1 "England (simp)") lab(2 "India (simp)") ///
 //     lab(3 "England (full)") lab(4 "India (full)"))
 // graphout mort_density_all
 
@@ -304,10 +304,10 @@ foreach model in $modellist {
 /**********************************************************/
 use $tmp/prr_india_full_cts, clear
 ren prev* iprev*
-ren rf* irf*
+ren prr* iprr*
 merge 1:1 age using $tmp/prr_uk_nhs_matched_full_cts, nogen
 ren prev* uprev*
-ren rf* urf*
+ren prr* uprr*
 
 /* calculate relative difference in prevalence and risk factor for each condition */
 foreach v in male $hr_biomarker_vars $hr_gbd_vars $hr_os_only_vars {
