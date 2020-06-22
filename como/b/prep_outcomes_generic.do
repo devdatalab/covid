@@ -45,6 +45,7 @@ order age
 merge 1:1 age using $tmp/uk_age_predicted_hr, keep(match) nogen
 ren hr_full_age_cts age_hr_full
 ren *_hr_full hr_*
+ren *_hr_lnse hr_lnse_*
 drop hr_simp_age_cts
 save $tmp/hr_full_cts, replace
 

@@ -122,8 +122,8 @@ twoway ///
     name(rf_health_nycu, replace)  ylabel(1(.5)6)
 graphout rf_health_nycu
 
-graph combine rf_health rf_health_ny rf_health_nycu, cols(3) ycommon
-graphout rf_combined
+// graph combine rf_health rf_health_ny rf_health_nycu, cols(3) ycommon
+// graphout rf_combined
 
 
 // /*************************************/
@@ -288,8 +288,8 @@ twoway ///
     xscale(range(18 90)) xlabel(20 40 60 80) ylabel(.01 .02 .03 .04 .044)
 graphout mort_density_nycu
 
-graph combine density density_ny density_nycu, rows(1)
-graphout mort_combined
+// graph combine density density_ny density_nycu, rows(1)
+// graphout mort_combined
 
 /******************************************/
 /* calculate share of deaths under age 60 */
