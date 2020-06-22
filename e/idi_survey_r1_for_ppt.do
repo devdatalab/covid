@@ -224,4 +224,8 @@ foreach x of var pc11_pca_agr_work_share tdist_100 landless_share ec13_nonfarm_e
   }
 }
 
+/* histogram for distance to nearest place */
+sum tdist_100
+hist tdist_100, xtitle("Distance to nearest town (Pop more than 100k)") bin(10) caption("Mean: 40.65 km")
+graphout distance
 

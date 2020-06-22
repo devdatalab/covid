@@ -44,8 +44,8 @@ twoway ///
     legend(size(vsmall) rows(2) ///
     lab(1 "Uncontrolled Diabetes (India)") ///
     lab(2 "Controlled Diabetes (India)") ///
-    lab(3 "Uncontrolled Diabetes (U.K.)") ///
-    lab(4 "Controlled Diabetes (U.K.)"))
+    lab(3 "Uncontrolled Diabetes (Englamd)") ///
+    lab(4 "Controlled Diabetes (England)"))
 graphout diabetes
 
 /* hypertension comparison */
@@ -58,8 +58,8 @@ twoway ///
     legend(size(vsmall) rows(2) ///
     lab(1 "Uncontrolled Hypertension (India)") ///
     lab(2 "Controlled Hypertension (India)") ///
-    lab(3 "Uncontrolled Hypertension (U.K.)") ///
-    lab(4 "Controlled Hypertension (U.K.)"))
+    lab(3 "Uncontrolled Hypertension (England)") ///
+    lab(4 "Controlled Hypertension (England)"))
 graphout hypertension
 
 /* obesity comparison */
@@ -69,7 +69,7 @@ twoway ///
     , name(obese, replace) xtitle("Age") ytitle("Prevalence") ///
     legend(size(vsmall) rows(2) ///
     lab(1 "Obese (India)") ///
-    lab(2 "Obese (U.K.)"))
+    lab(2 "Obese (England)"))
 graphout obese
 
 graph combine diabetes hypertension obese, rows(2)

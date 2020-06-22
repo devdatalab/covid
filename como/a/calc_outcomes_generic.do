@@ -89,7 +89,7 @@ save $tmp/como_analysis, replace
 /*****************************************/
 /* compare India and UK health condition risk factors */
 // scp rf_h_india_full_cts rf_h_uk_os_full_cts rf_h_uk_nhs_matched_full_cts rf_h_uk_nhs_full_cts, ///
-//     ytitle("Combined Health Risk Factor") ///
+//     ytitle("Aggregate Contribution to Mortality from Risk Factors") ///
 //     legend(lab(1 "India") lab(2 "UK OpenSafely Coefs") lab(3 "UK full matched") lab(4 "UK full full")) name(rf_health_all)
 
 /* india vs. uk matched */
@@ -97,9 +97,9 @@ sort age
 twoway ///
     (line rf_h_india_full_cts age, lwidth(medthick) lcolor(black)) ///
     (line rf_h_uk_nhs_matched_full_cts age, lwidth(medthick) lcolor(orange)), ///
-    ytitle("Risk Factor from Population Health Conditions") xtitle("Age") ///
-    legend(lab(1 "India") lab(2 "England") ring(0) pos(5) cols(1) region(lcolor(black))) ///
-    name(rf_health, replace)  ylabel(1(.5)4)
+    ytitle("Aggregate Contribution to Mortality from Risk Factors") xtitle("Age") ///
+    legend(lab(1 "India") lab(2 "England") ring(0) pos(5) cols(1) size(small) symxsize(5) bm(tiny) region(lcolor(black))) ///
+    name(rf_health, replace)  ylabel(1(.5)4) 
 graphout rf_health
 
 /* NY hazard ratios */
@@ -191,6 +191,32 @@ foreach v of varlist *deaths {
   replace `v' = (L2.`v' + L1.`v' + `v' + F.`v') / 4 if mi(F2.`v') & !mi(L2.`v') & !mi(F1.`v')
 }
 
+/* add a line representing india's total deaths as of April 30
+   source: https://pib.gov.in/PressReleaseIframePage.aspx?PRID=1619609 */
+gen in_deaths_old = 0
+/* 18 - 45 year olds */
+replace in_deaths_old = $sim_n * 0.14 / (45 - 18 + 1) if inrange(age, 18, 44)
+/* 45 - 60 year olds */
+replace in_deaths_old = $sim_n * 0.348 / 15 if inrange(age, 45, 59)
+/* 60 - 75 */
+replace in_deaths_old = $sim_n * 0.42 / 15 if inrange(age, 60, 74)
+/* 75 +  */
+replace in_deaths_old = $sim_n * 0.092 / 25 if inrange(age, 75, 99)
+
+/* add a line representing india's total deaths as of May 21
+   source: https://pib.gov.in/PressReleseDetailm.aspx?PRID=1625744 */
+gen in_deaths = 0
+/* 15-30 year olds */
+replace in_deaths = $sim_n * 0.03 / (30 - 18 + 1) if inrange(age, 18, 30)
+/* 30-45 year olds */
+replace in_deaths = $sim_n * 0.114 / 15 if inrange(age, 31, 45)
+/* 45 - 60 */
+replace in_deaths = $sim_n * 0.351 / 15 if inrange(age, 46, 60)
+/* 60 - 75 this age bracket doesn't exist but we used the fraction from the April 30 report of 60-75/60+ */
+replace in_deaths = $sim_n * 0.414 / 15 if inrange(age, 61, 75)
+/* 75 +  */
+replace in_deaths = $sim_n * 0.091 / 25 if inrange(age, 76, 99)
+
 /* add a line representing maharashtra's data in the May 8 report */
 gen mh_deaths = 0
 /* total deaths: 540. Total years: 89-18+1=72 */
@@ -216,14 +242,14 @@ replace en_deaths = $sim_n * 2941/5683  / 20 if inrange(age, 80, 99)
 
 /* same graph, full model */
 twoway ///
-    (line uk_full_deaths    age if age <= 89, lcolor(orange) lwidth(thick) lpattern(solid))     ///
     (line india_full_deaths age if age <= 89, lcolor(black) lpattern(solid) lwidth(thick))       ///
-    (line mh_deaths         age if age <= 89, lcolor(black) lwidth(medium) lpattern(-))     ///
+    (line uk_full_deaths    age if age <= 89, lcolor(orange) lwidth(thick) lpattern(solid))     ///
+    (line in_deaths_old     age if age <= 89, lcolor(black) lwidth(medium) lpattern(-))     ///
     (line en_deaths         age if age <= 89, lcolor(orange) lwidth(medium) lpattern(-))     ///
     , ytitle("Density Function of Deaths (%)") xtitle(Age)  ///
-    legend(lab(1 "England (model)") ///
-    lab(2 "India (model)") lab(3 "Maharasthra (reported)") lab(4 "England (reported)") ///
-    ring(0) pos(11) cols(1) region(lcolor(black))) ///
+    legend(lab(1 "India (model)") ///
+    lab(2 "England (model)") lab(3 "India (reported)") lab(4 "England (reported)") ///
+    ring(0) pos(11) cols(2) region(lcolor(black)) size(small) symxsize(5) bm(tiny)) ///
     xscale(range(18 90)) xlabel(20 40 60 80) ylabel(.01 .02 .03 .04 .044) 
 graphout mort_density_full
 
