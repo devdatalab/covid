@@ -45,7 +45,7 @@ order age
 merge 1:1 age using $tmp/uk_age_predicted_hr, keep(match) nogen
 ren hr_full_age_cts age_hr_full
 ren *_hr_full hr_*
-drop hr_age_sex_age_cts
+drop hr_simp_age_cts
 save $tmp/hr_full_cts, replace
 
 /* full-discrete */
@@ -53,27 +53,27 @@ use $tmp/uk_nhs_hazard_ratios_flat_hr_full, clear
 drop v1
 expand 82
 gen age = _n + 17
-gen     hr_age = age18_40 if inrange(age, 18, 40)
-replace hr_age = age40_50 if inrange(age, 41, 50)
-replace hr_age = age50_60 if inrange(age, 51, 60)
-replace hr_age = age60_70 if inrange(age, 61, 70)
-replace hr_age = age70_80 if inrange(age, 71, 80)
-replace hr_age = age80_   if inrange(age, 81, 99)
-drop age1* age40 age50 age60 age70 age80
+gen     hr_age = age18_40_hr_full if inrange(age, 18, 40)
+replace hr_age = age40_50_hr_full if inrange(age, 41, 50)
+replace hr_age = age50_60_hr_full if inrange(age, 51, 60)
+replace hr_age = age60_70_hr_full if inrange(age, 61, 70)
+replace hr_age = age70_80_hr_full if inrange(age, 71, 80)
+replace hr_age = age80__hr_full   if inrange(age, 81, 99)
+drop age*full
 ren *_hr_full hr_*
 order age
 save $tmp/hr_full_dis, replace
 
 /* simple continuous */
-use $tmp/uk_nhs_hazard_ratios_flat_hr_age_sex, clear
+use $tmp/uk_nhs_hazard_ratios_flat_hr_simp, clear
 drop v1 age*
 expand 82
 gen age = _n + 17
 order age
 merge 1:1 age using $tmp/uk_age_predicted_hr, keep(match) nogen
 drop hr_full_age_cts
-ren hr_age_sex_age_cts age_hr_age_sex
-ren *_hr_age_sex hr_*
+ren hr_simp_age_cts age_hr_simp
+ren *_hr_simp hr_*
 /* set all condition HRs to 1 */
 foreach v of varlist hr_* {
   if !inlist("`v'", "hr_age", "hr_male") {
@@ -83,18 +83,18 @@ foreach v of varlist hr_* {
 save $tmp/hr_simple_cts, replace
 
 /* simple discrete */
-use $tmp/uk_nhs_hazard_ratios_flat_hr_age_sex, clear
+use $tmp/uk_nhs_hazard_ratios_flat_hr_simp, clear
 drop v1
 expand 82
 gen age = _n + 17
-gen     hr_age = age18_40 if inrange(age, 18, 40)
-replace hr_age = age40_50 if inrange(age, 41, 50)
-replace hr_age = age50_60 if inrange(age, 51, 60)
-replace hr_age = age60_70 if inrange(age, 61, 70)
-replace hr_age = age70_80 if inrange(age, 71, 80)
-replace hr_age = age80_   if inrange(age, 81, 99)
-drop age1* age40 age50 age60 age70 age80
-ren *_hr_age_sex hr_*
+gen     hr_age = age18_40_hr_simp if inrange(age, 18, 40)
+replace hr_age = age40_50_hr_simp if inrange(age, 41, 50)
+replace hr_age = age50_60_hr_simp if inrange(age, 51, 60)
+replace hr_age = age60_70_hr_simp if inrange(age, 61, 70)
+replace hr_age = age70_80_hr_simp if inrange(age, 71, 80)
+replace hr_age = age80__hr_simp   if inrange(age, 81, 99)
+drop age*simp
+ren *_hr_simp hr_*
 order age
 /* set all condition HRs to 1 */
 foreach v of varlist hr_* {

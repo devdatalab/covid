@@ -52,18 +52,6 @@ do $ccode/como/a/compare_uk_india_prevalence.do
 /* run analysis for paper */
 do $ccode/como/a/calc_outcomes_generic.do
 
-// /* plot India risk factors under various assumptions*/
-// do $ccode/como/a/analyze_age_mort_risk.do
-// 
-// /* run model in levels with population weighting to predict E(deaths) */
-// do $ccode/como/a/analyze_mort_counts.do
-// 
-// /* examine risk factor distribution across states */
-// 
-// 
-// /* plot relationship between risk and poverty */
-// do $ccode/como/a/examine_risk_factors_poverty.do
-// 
 
 /************/
 /* appendix */

@@ -346,39 +346,3 @@ compress
 save $health/dlhs/data/dlhs_ahs_covid_comorbidities, replace
 
 
-
-
-
-
-
-/*****************************************************************/
-/* PN 6/16/2020 --- I believe everything below this is obsolete. */
-/*****************************************************************/
-exit
-exit
-exit
-
-
-/* combine the risk factors with the DLHS/AHS */
-use $health/dlhs/data/dlhs_ahs_covid_comorbidities, clear
-
-/* shrink by dropping string vars */
-drop tsend tsstart date_survey
-
-merge 1:1 uid using $tmp/individual_risk_factors_hr_full, gen(_m_full)
-assert _m_full == 3
-drop _m_full
-merge 1:1 uid using $tmp/individual_risk_factors_hr_age_sex, gen(_m_agesex)
-assert _m_agesex == 3
-drop _m_agesex
-
-/* bring in continuous age factors */
-winsorize age 18 100, replace
-merge m:1 age using $tmp/uk_age_predicted_hr, gen(_m_cts_age) keep(match master)
-assert _m_cts_age == 3
-
-/* limit to the 18-99 year old sample for the paper */
-keep if inrange(age, 18, 99)
-
-/* save micro dataset with NHS hazard ratios */
-save $tmp/combined, replace
