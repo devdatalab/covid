@@ -26,7 +26,7 @@ gen hypertension_both = hypertension_uncontr + hypertension_contr
 merge 1:1 age using $tmp/india_pop, keep(match) nogen
 
 /* get all the age-specific prevalences for the appendix table */
-foreach var in male diabetes_uncontr diabetes_contr hypertension_both obese_3 obese_1_2 {
+foreach var in male diabetes_uncontr diabetes_contr hypertension_both obese_3 obese_1_2  {
 
   /* 18-40 */
   qui sum `var' [aw=india_pop] if age >=18 & age < 40
