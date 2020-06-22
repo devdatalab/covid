@@ -39,13 +39,13 @@ foreach prev in india uk_os uk_nhs uk_nhs_matched {
     merge 1:1 age using $tmp/prev_`prev', nogen
     
     /* calculate the risk factor at each age, multiplying prevalence by hazard ratio */
-    gen rf_health = 1
+    gen prr_health = 1
     foreach v in male $hr_biomarker_vars $hr_gbd_vars $hr_os_only_vars {
 
       /* rf <-- rf * (prev_X * hr_X + (1 - prev_X) * hr_notX), but hr_notX is always 1 */
-      gen rf_`v' = prev_`v' * hr_`v' + (1 - prev_`v')
-      qui replace rf_health = rf_health * rf_`v'
-      qui sum rf_health
+      gen prr_`v' = prev_`v' * hr_`v' + (1 - prev_`v')
+      qui replace prr_health = prr_health * prr_`v'
+      qui sum prr_health
       di "`v': " %5.2f `r(mean)'
     }
 
@@ -56,12 +56,12 @@ foreach prev in india uk_os uk_nhs uk_nhs_matched {
     }
     
     /* create another one that has age */
-    gen rf_all = rf_health * hr_age
+    gen prr_all = prr_health * hr_age
     
-    save $tmp/rf_`prev'_`hr', replace
+    save $tmp/prr_`prev'_`hr', replace
 
     /* save a version on iec for santosh */
-    export delimited using ~/iec/output/pn/rf_`prev'_`hr'.csv, replace
+    export delimited using ~/iec/output/pn/prr_`prev'_`hr'.csv, replace
   }
 }
 
@@ -71,9 +71,9 @@ set obs 82
 gen age = _n + 17
 foreach prev in india uk_os uk_nhs uk_nhs_matched {
   foreach hr in simple_dis full_dis simple_cts full_cts ny nycu {
-    merge 1:1 age using $tmp/rf_`prev'_`hr', keepusing(rf_all rf_health) nogen
-    ren rf_all rf_all_`prev'_`hr'
-    ren rf_health rf_h_`prev'_`hr'
+    merge 1:1 age using $tmp/prr_`prev'_`hr', keepusing(prr_all prr_health) nogen
+    ren prr_all prr_all_`prev'_`hr'
+    ren prr_health prr_h_`prev'_`hr'
   }
 }
 
@@ -88,58 +88,58 @@ save $tmp/como_analysis, replace
 /* compare health condition risk factors */
 /*****************************************/
 /* compare India and UK health condition risk factors */
-// scp rf_h_india_full_cts rf_h_uk_os_full_cts rf_h_uk_nhs_matched_full_cts rf_h_uk_nhs_full_cts, ///
+// scp prr_h_india_full_cts prr_h_uk_os_full_cts prr_h_uk_nhs_matched_full_cts prr_h_uk_nhs_full_cts, ///
 //     ytitle("Aggregate Contribution to Mortality from Risk Factors") ///
-//     legend(lab(1 "India") lab(2 "UK OpenSafely Coefs") lab(3 "UK full matched") lab(4 "UK full full")) name(rf_health_all)
+//     legend(lab(1 "India") lab(2 "UK OpenSafely Coefs") lab(3 "UK full matched") lab(4 "UK full full")) name(prr_health_all)
 
 /* india vs. uk matched */
 sort age
 twoway ///
-    (line rf_h_india_full_cts age, lwidth(medthick) lcolor(black)) ///
-    (line rf_h_uk_nhs_matched_full_cts age, lwidth(medthick) lcolor(orange)), ///
+    (line prr_h_india_full_cts age, lwidth(medthick) lcolor(black)) ///
+    (line prr_h_uk_nhs_matched_full_cts age, lwidth(medthick) lcolor(orange)), ///
     ytitle("Aggregate Contribution to Mortality from Risk Factors") xtitle("Age") ///
     legend(lab(1 "India") lab(2 "England") ring(0) pos(5) cols(1) size(small) symxsize(5) bm(tiny) region(lcolor(black))) ///
-    name(rf_health, replace)  ylabel(1(.5)4) 
-graphout rf_health
+    name(prr_health, replace)  ylabel(1(.5)4) 
+graphout prr_health
 
 /* NY hazard ratios */
 sort age
 twoway ///
-    (line rf_h_india_ny age, lwidth(medthick) lcolor(black)) ///
-    (line rf_h_uk_nhs_matched_ny age, lwidth(medthick) lcolor(gs8) lpattern(-)), ///
+    (line prr_h_india_ny age, lwidth(medthick) lcolor(black)) ///
+    (line prr_h_uk_nhs_matched_ny age, lwidth(medthick) lcolor(gs8) lpattern(-)), ///
     title("NY State Hazard Ratios") ytitle("Risk Factor from Population Health Conditions") xtitle("Age") ///
     legend(lab(1 "India") lab(2 "England") ring(0) pos(5) cols(1) region(lcolor(black))) ///
-    name(rf_health_ny, replace)  ylabel(1(.5)4)
-graphout rf_health_ny
+    name(prr_health_ny, replace)  ylabel(1(.5)4)
+graphout prr_health_ny
 
 /* NY-Cummings HRs */
 sort age
 twoway ///
-    (line rf_h_india_nycu age, lwidth(medthick) lcolor(black)) ///
-    (line rf_h_uk_nhs_matched_nycu age, lwidth(medthick) lcolor(gs8) lpattern(-)), ///
+    (line prr_h_india_nycu age, lwidth(medthick) lcolor(black)) ///
+    (line prr_h_uk_nhs_matched_nycu age, lwidth(medthick) lcolor(gs8) lpattern(-)), ///
     title("NY (Cummings) Hazard Ratios") ytitle("Risk Factor from Population Health Conditions") xtitle("Age") ///
     legend(lab(1 "India") lab(2 "England") ring(0) pos(5) cols(1) region(lcolor(black))) ///
-    name(rf_health_nycu, replace)  ylabel(1(.5)6)
-graphout rf_health_nycu
+    name(prr_health_nycu, replace)  ylabel(1(.5)6)
+graphout prr_health_nycu
 
-// graph combine rf_health rf_health_ny rf_health_nycu, cols(3) ycommon
-// graphout rf_combined
+// graph combine prr_health prr_health_ny prr_health_nycu, cols(3) ycommon
+// graphout prr_combined
 
 
 // /*************************************/
 // /* compare age * health risk factors */
 // /*************************************/
 // /* compare three UK models: OS fixed age, full-prevalences, simple */
-// sc rf_all_uk_os_simple_cts rf_all_uk_os_full_cts rf_all_uk_nhs_matched_full_cts rf_all_uk_nhs_full_cts, ///
-//     legend(lab(1 "Simple") lab(2 "Full O.S. coefs") lab(3 "Full (matched conditions)") lab(4 "Full (all conditions)")) name(rf_uk_compare) yscale(log)
+// sc prr_all_uk_os_simple_cts prr_all_uk_os_full_cts prr_all_uk_nhs_matched_full_cts prr_all_uk_nhs_full_cts, ///
+//     legend(lab(1 "Simple") lab(2 "Full O.S. coefs") lab(3 "Full (matched conditions)") lab(4 "Full (all conditions)")) name(prr_uk_compare) yscale(log)
 // 
 // /* full vs. full, India vs. UK */
-// sc rf_all_india_full_cts rf_all_uk_nhs_matched_full_cts, ///
-//     name(rf_all_full) yscale(log) legend(lab(1 "India") lab(2 "UK"))
+// sc prr_all_india_full_cts prr_all_uk_nhs_matched_full_cts, ///
+//     name(prr_all_full) yscale(log) legend(lab(1 "India") lab(2 "UK"))
 // 
 // /* simple vs. simple, India vs. UK */
-// sc rf_all_india_simple_cts rf_all_uk_nhs_simple_cts, ///
-//     name(rf_all_simple) yscale(log) legend(lab(1 "India") lab(2 "UK"))
+// sc prr_all_india_simple_cts prr_all_uk_nhs_simple_cts, ///
+//     name(prr_all_simple) yscale(log) legend(lab(1 "India") lab(2 "UK"))
 
 /*****************************/
 /* compare density of deaths */
@@ -157,7 +157,7 @@ global modellist india_full uk_full india_simple uk_simple india_ny uk_ny india_
 global mortrate 1
 foreach model in full simple ny nycu {
   foreach country in uk india {
-    gen `country'_`model'_deaths = $mortrate * `country'_pop * rf_all_`country'_`model'
+    gen `country'_`model'_deaths = $mortrate * `country'_pop * prr_all_`country'_`model'
   }
 }
 
@@ -302,16 +302,16 @@ foreach model in $modellist {
 /**********************************************************/
 /* compare UK health conditions and risk factors to India */
 /**********************************************************/
-use $tmp/rf_india_full_cts, clear
+use $tmp/prr_india_full_cts, clear
 ren prev* iprev*
 ren rf* irf*
-merge 1:1 age using $tmp/rf_uk_nhs_matched_full_cts, nogen
+merge 1:1 age using $tmp/prr_uk_nhs_matched_full_cts, nogen
 ren prev* uprev*
 ren rf* urf*
 
 /* calculate relative difference in prevalence and risk factor for each condition */
 foreach v in male $hr_biomarker_vars $hr_gbd_vars $hr_os_only_vars {
-  gen rfdiff_`v' = irf_`v' / urf_`v'
+  gen rfdiff_`v' = iprr_`v' / uprr_`v'
   gen prevdiff_`v' = iprev_`v' / uprev_`v'
 }
 
@@ -345,11 +345,11 @@ foreach v in male $hr_biomarker_vars $hr_gbd_vars health {
   local t 0
   
   /* UK aggregate risk factor */
-  qui sum urf_`v' [aw=uk_pop]
+  qui sum uprr_`v' [aw=uk_pop]
   local umean = `r(mean)'
   
   /* India aggregate risk factor */
-  qui sum irf_`v' [aw=india_pop]
+  qui sum iprr_`v' [aw=india_pop]
   local imean = `r(mean)'
 
   /* percent difference India over UK */
