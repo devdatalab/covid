@@ -23,8 +23,8 @@ merge m:1 shrid using $shrug/keys/shrug_pc11_district_key, keep(match master) no
 
 /* note: pc11 ids are missing for the 70 obs in idi survey data with no shrid */
 /* pc11 district ids are missing for additional 43 obs (bc shrug-pc11 key has missing pc11_district_ids) */
-/* generate march earnings */
 
+/* generate march earnings */
 sum lab_march_wage, d
 gen lab_march_earn = lab_march_wage * lab_march_freq if !mi(lab_march_wage) & !mi(lab_march_freq) & lab_march_wage < r(p95)
 
@@ -193,12 +193,12 @@ graphout n_lw
 
 /* price by crop category */
 gen pc_crop_holi = pc_agr_prc_change_holi*100
-cibar pc_crop_holi [aw = weight_hh] if pc_agr_prc_change_holi < 1, over(agr_crop_cat_prop) barcolor(black dknavy dkgreen) graphopts(ytitle("Price changes since holi, by crop category")ylabel(-100 (20) 0, grid))
+cibar pc_crop_holi [aw = weight_hh] if pc_agr_prc_change_holi <= 1, over(agr_crop_cat_prop) barcolor(black dknavy dkgreen) graphopts(ytitle("Price changes since holi, by crop category")ylabel(-100 (20) 0, grid))
 graphout prc_crop_holi
 
 /* price since last year by crop category */
 gen pc_crop_yr = pc_agr_prc_change_yr*100
-cibar pc_crop_yr [aw = weight_hh] if pc_agr_prc_change_yr < 1, over(agr_crop_cat_prop) barcolor(black dknavy dkgreen) graphopts(ytitle("Price changes since last year, by crop category")ylabel(-100 (20) 0, grid))
+cibar pc_crop_yr [aw = weight_hh] if pc_agr_prc_change_yr <= 1, over(agr_crop_cat_prop) barcolor(black dknavy dkgreen) graphopts(ytitle("Price changes since last year, by crop category")ylabel(-100 (20) 0, grid))
 graphout prc_crop_yr
 
 /* reasons for sales not starting */
