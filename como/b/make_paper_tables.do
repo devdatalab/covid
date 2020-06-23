@@ -5,6 +5,7 @@
 /* create csv file */
 cap !rm -f $ddl/covid/como/a/covid_como_sumstats.csv
 cap !rm -f $ddl/covid/como/a/covid_como_agerisks.csv
+do $ddl/covid/como/a/calc_outcomes_generic.do
 
 /* First do all data from the DLHS/AHS */
 use $health/dlhs/data/dlhs_ahs_covid_comorbidities, clear
@@ -160,14 +161,14 @@ use $tmp/uk_prevalences, clear
 drop if age > 99
 merge 1:1 age using $tmp/uk_pop, keep(match master) nogen
 
-foreach var in male uk_prev_diabetes_contr uk_prev_diabetes_uncontr uk_prev_hypertension_both uk_prev_obese_3 uk_prev_obese_1_2 {
+foreach var in male uk_prev_diabetes_contr uk_prev_diabetes_uncontr uk_prev_chronic_resp_dz uk_prev_hypertension_both uk_prev_obese_3 uk_prev_obese_1_2 {
   qui sum `var' [aw=uk_pop]
   local mu = `r(mean)'*100
   insert_into_file using $ddl/covid/como/a/covid_como_sumstats.csv, key(`var') value("`mu'") format(%2.1f)
 }
 
 /* get all age-specific prevalences from uk data */
-foreach var in male uk_prev_diabetes_contr uk_prev_diabetes_uncontr uk_prev_hypertension_both uk_prev_obese_3 uk_prev_obese_1_2 {
+foreach var in male uk_prev_chronic_resp_dz uk_prev_diabetes_contr uk_prev_diabetes_uncontr uk_prev_hypertension_both uk_prev_obese_3 uk_prev_obese_1_2 {
 
   /* 18 - 40 */
   qui sum `var' [aw=uk_pop] if age >= 18 & age < 40
