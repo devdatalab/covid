@@ -17,7 +17,7 @@ keep age prev_copd
 save $tmp/copd_uk_prev, replace
 
 /* create full condition list */
-global conditionlist diabetes_contr diabetes_uncontr hypertension_contr hypertension_uncontr hypertension_both asthma copd obese_1_2 obese_3
+global conditionlist diabetes_contr diabetes_uncontr hypertension_contr hypertension_uncontr hypertension_both asthma obese_1_2 obese_3
 
 /* import uk data */
 import delimited using $covidpub/covid/csv/uk_condition_prevalence.csv, varnames(1) clear
@@ -58,7 +58,8 @@ drop prevalence
 keep age prev_*
 
 /* Update 06/22: correct data input of COPD with calculations at the top of this file */
-merge 1:1 age using $tmp/copd_uk_prev, keepusing(prev_copd) nogen
+merge 1:1 age using $tmp/copd_uk_prev, nogen
+replace prev_copd = 0 if mi(prev_copd)
 
 /* old code:
 merge 1:1 age using $covidpub/covid/csv/uk_copd_prevalence, keepusing(prevalence) nogen
