@@ -1,7 +1,22 @@
 //global conditionlist hypertension diabetes copd asthma
+/* first import and calculate COPD rate, this is the only variable coming from its own source */
+import delimited using $iec/covid/covid/csv/copd_mclean_rates.csv, clear
+
+/* calculate the total population */
+gen pop_total = pop_female + pop_male
+
+/* take the weighted average of male and female rates */
+gen prev_copd = rate100k_male*(pop_male / pop_total) + rate100k_female*(pop_female / pop_total)
+
+/* convert the per 100k rate to a prevalence */
+replace prev_copd = prev_copd / 100000
+
+/* keep only 18 - 100 year olds */
+keep if inrange(age, 18, 100)
+keep age prev_copd
+save $tmp/copd_uk_prev, replace
 
 /* create full condition list */
-
 global conditionlist diabetes_contr diabetes_uncontr hypertension_contr hypertension_uncontr hypertension_both asthma copd obese_1_2 obese_3
 
 /* import uk data */
@@ -42,10 +57,13 @@ foreach condition in $conditionlist {
 drop prevalence
 keep age prev_*
 
-/* get external copd prevalence from better source */
+/* Update 06/22: correct data input of COPD with calculations at the top of this file */
+merge 1:1 age using $tmp/copd_uk_prev, keepusing(prev_copd) nogen
+
+/* old code:
 merge 1:1 age using $covidpub/covid/csv/uk_copd_prevalence, keepusing(prevalence) nogen
 drop prev_copd
-ren prevalence prev_copd
+ren prevalence prev_copd */
 
 /* drop the original fields and limit to ages in study */
 keep if inrange(age, 18, 100)
@@ -56,7 +74,6 @@ ren prev_asthma prev_asthma_no_ocs
 ren prev_copd prev_chronic_resp_dz
 
 ren prev* uk_prev*
-
 
 /* save uk prevalences */
 save $tmp/uk_prevalences, replace

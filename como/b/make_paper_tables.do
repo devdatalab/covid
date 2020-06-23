@@ -5,7 +5,6 @@
 /* create csv file */
 cap !rm -f $ddl/covid/como/a/covid_como_sumstats.csv
 cap !rm -f $ddl/covid/como/a/covid_como_agerisks.csv
-do $ddl/covid/como/a/calc_outcomes_generic.do
 
 /* First do all data from the DLHS/AHS */
 use $health/dlhs/data/dlhs_ahs_covid_comorbidities, clear
