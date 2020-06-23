@@ -5,6 +5,8 @@ cap !rm -f $ddl/covid/como/a/covid_como_sumstats.csv
 /**************/
 /* PRR Values */
 /**************/
+use $tmp/prr_result, clear
+
 /* save all india and uk aggregate prr values by comorbidity, and ratio */
 foreach v in male $hr_biomarker_vars $hr_gbd_vars health {
   

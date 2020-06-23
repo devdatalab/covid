@@ -57,7 +57,7 @@ do $ccode/como/a/calc_outcomes_generic.do
 /**********************/
 
 /* create tables for main text and appendix*/
-do $ccode/como/b/make_paper_tables.do
+do $ccode/como/a/make_paper_tables.do
 
 /* create figures */
 do $ccode/como/a/make_paper_figures.do
