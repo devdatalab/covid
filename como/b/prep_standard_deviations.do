@@ -14,8 +14,11 @@ foreach geo in uk india {
     gen `var'_log_diff1 = log10(gbd_`var'_upper) - log10(gbd_`var')
     gen `var'_log_diff2 =  log10(gbd_`var') - log10(gbd_`var'_lower)
 
-    /* take the mean of the standard deviation */
+    /* take the mean of the 95% confidence interval */
     egen logsd_`var' = rmean(`var'_log_diff1 `var'_log_diff2)
+
+    /* calculate standard deviation */
+    replace logsd_`var' = logsd_`var' / 1.96
 
     /* drop unneeded variabels */
     drop `var'_log_diff1 `var'_log_diff2
@@ -56,8 +59,11 @@ foreach var in obese_1_2 obese_3 bp_high {
   gen `var'_log_diff1 = log10(upper_sd_`var') - log10(mean_sd_`var')
   gen `var'_log_diff2 =  log10(mean_sd_`var') - log10(lower_sd_`var')
 
-  /* take the mean of the standard deviation */
+  /* take the mean of the 95% confidence interval */
   egen logsd_`var' = rmean(`var'_log_diff1 `var'_log_diff2)
+
+  /* calculate standard deviation */
+  replace logsd_`var' = logsd_`var' / 1.96
 
   /* drop unneeded variabels */
   drop `var'_log_diff1 `var'_log_diff2
@@ -95,8 +101,11 @@ foreach i in mean lower upper {
 gen copd_log_diff1 = log10(copd_upper) - log10(copd_mean)
 gen copd_log_diff2 =  log10(copd_mean) - log10(copd_lower)
 
-/* take the mean of the standard deviation */
+/* take the mean of the 95% confidence interval */
 egen logsd_chronic_resp_dz = rmean(copd_log_diff1 copd_log_diff2)
+
+/* convert to standard deviation */
+replace logsd_chronic_resp_dz = logsd_chronic_resp_dz / 1.96
 
 /* save */
 keep age logsd_chronic_resp_dz
