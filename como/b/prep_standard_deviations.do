@@ -74,6 +74,45 @@ merge 1:1 age using $tmp/prev_uk_nhs_matched, nogen
 /* save */
 save $tmp/all_uk_sd, replace
 
+/* get the copd data */
+import delimited using $iec/covid/covid/csv/copd_mclean_rates.csv, clear
+
+/* calculate the total population */
+gen pop_total = pop_female + pop_male
+
+/* calculate prevalence, upper, and lower bounds */
+foreach i in mean lower upper {
+
+  /* take the weighted average of male and female rates */
+  gen copd_`i' = rate100k_male_`i'*(pop_male / pop_total) + rate100k_female_`i'*(pop_female / pop_total)
+
+  /* convert the per 100k rate to a prevalence */
+  replace copd_`i' = copd_`i' / 100000
+
+}
+
+/* take the log of each prevalence */
+gen copd_log_diff1 = log10(copd_upper) - log10(copd_mean)
+gen copd_log_diff2 =  log10(copd_mean) - log10(copd_lower)
+
+/* take the mean of the standard deviation */
+egen logsd_chronic_resp_dz = rmean(copd_log_diff1 copd_log_diff2)
+
+/* save */
+keep age logsd_chronic_resp_dz
+save $tmp/uk_copd_sd, replace
+
+/* merge in with the full dat */
+use $tmp/all_uk_sd, clear 
+
+/* merge into the final data */
+merge 1:1 age using $tmp/uk_copd_sd, keepusing(logsd_chronic_resp_dz) nogen
+
+/* keep only 18 - 100 year olds */
+keep if inrange(age, 18, 100)
+
+/* re-save */
+save $tmp/all_uk_sd, replace
 
 /* INDIA */
 use $health/dlhs/data/dlhs_ahs_covid_comorbidities, clear
@@ -81,7 +120,6 @@ use $health/dlhs/data/dlhs_ahs_covid_comorbidities, clear
 /* count the sample size N at each age */
 gen N = 1
 collapse (sum) N [aw=wt], by(age)
-drop if age < 18 | age > 99
 
 /* merge in the prevalences */
 merge 1:1 age using $tmp/prev_india, nogen
@@ -94,6 +132,9 @@ drop N
 
 /* merge in the bgd sd */
 merge 1:1 age using $tmp/gbd_sd_india, nogen
+
+/* keep only 18 - 100 year olds */
+keep if inrange(age, 18, 100)
 
 /* save */
 save $tmp/all_india_sd, replace

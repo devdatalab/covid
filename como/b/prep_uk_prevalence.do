@@ -6,7 +6,7 @@ import delimited using $iec/covid/covid/csv/copd_mclean_rates.csv, clear
 gen pop_total = pop_female + pop_male
 
 /* take the weighted average of male and female rates */
-gen prev_copd = rate100k_male*(pop_male / pop_total) + rate100k_female*(pop_female / pop_total)
+gen prev_copd = rate100k_male_mean*(pop_male / pop_total) + rate100k_female_mean*(pop_female / pop_total)
 
 /* convert the per 100k rate to a prevalence */
 replace prev_copd = prev_copd / 100000
