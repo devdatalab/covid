@@ -84,62 +84,6 @@ merge 1:1 age using $tmp/uk_pop, keep(master match) nogen keepusing(uk_pop)
 /* save an analysis file */
 save $tmp/como_analysis, replace
 
-/*****************************************/
-/* compare health condition risk factors */
-/*****************************************/
-/* compare India and UK health condition risk factors */
-// scp prr_h_india_full_cts prr_h_uk_os_full_cts prr_h_uk_nhs_matched_full_cts prr_h_uk_nhs_full_cts, ///
-//     ytitle("Aggregate Contribution to Mortality from Risk Factors") ///
-//     legend(lab(1 "India") lab(2 "UK OpenSafely Coefs") lab(3 "UK full matched") lab(4 "UK full full")) name(prr_health_all)
-
-/* india vs. uk matched */
-sort age
-twoway ///
-    (line prr_h_india_full_cts age, lwidth(medthick) lcolor(black)) ///
-    (line prr_h_uk_nhs_matched_full_cts age, lwidth(medthick) lcolor(orange)), ///
-    ytitle("Aggregate Contribution to Mortality from Risk Factors") xtitle("Age") ///
-    legend(lab(1 "India") lab(2 "England") ring(0) pos(5) cols(1) size(small) symxsize(5) bm(tiny) region(lcolor(black))) ///
-    name(prr_health, replace)  ylabel(1(.5)4) 
-graphout prr_health
-
-/* NY hazard ratios */
-sort age
-twoway ///
-    (line prr_h_india_ny age, lwidth(medthick) lcolor(black)) ///
-    (line prr_h_uk_nhs_matched_ny age, lwidth(medthick) lcolor(gs8) lpattern(-)), ///
-    title("NY State Hazard Ratios") ytitle("Risk Factor from Population Health Conditions") xtitle("Age") ///
-    legend(lab(1 "India") lab(2 "England") ring(0) pos(5) cols(1) region(lcolor(black))) ///
-    name(prr_health_ny, replace)  ylabel(1(.5)4)
-graphout prr_health_ny
-
-/* NY-Cummings HRs */
-sort age
-twoway ///
-    (line prr_h_india_nycu age, lwidth(medthick) lcolor(black)) ///
-    (line prr_h_uk_nhs_matched_nycu age, lwidth(medthick) lcolor(gs8) lpattern(-)), ///
-    title("NY (Cummings) Hazard Ratios") ytitle("Risk Factor from Population Health Conditions") xtitle("Age") ///
-    legend(lab(1 "India") lab(2 "England") ring(0) pos(5) cols(1) region(lcolor(black))) ///
-    name(prr_health_nycu, replace)  ylabel(1(.5)6)
-graphout prr_health_nycu
-
-// graph combine prr_health prr_health_ny prr_health_nycu, cols(3) ycommon
-// graphout prr_combined
-
-
-// /*************************************/
-// /* compare age * health risk factors */
-// /*************************************/
-// /* compare three UK models: OS fixed age, full-prevalences, simp */
-// sc prr_all_uk_os_simp_cts prr_all_uk_os_full_cts prr_all_uk_nhs_matched_full_cts prr_all_uk_nhs_full_cts, ///
-//     legend(lab(1 "Simp") lab(2 "Full O.S. coefs") lab(3 "Full (matched conditions)") lab(4 "Full (all conditions)")) name(prr_uk_compare) yscale(log)
-// 
-// /* full vs. full, India vs. UK */
-// sc prr_all_india_full_cts prr_all_uk_nhs_matched_full_cts, ///
-//     name(prr_all_full) yscale(log) legend(lab(1 "India") lab(2 "UK"))
-// 
-// /* simp vs. simp, India vs. UK */
-// sc prr_all_india_simp_cts prr_all_uk_nhs_simp_cts, ///
-//     name(prr_all_simp) yscale(log) legend(lab(1 "India") lab(2 "UK"))
 
 /*****************************/
 /* compare density of deaths */
@@ -170,16 +114,8 @@ foreach model in $modellist {
   replace `v' = `v' / (`r(mean)' * `r(N)') * $sim_n
 }
 
-// /* plot uk vs. india death density, simp */
-// sort age
-// label var age "Age"
-// twoway ///
-//     (line uk_simp_deaths    age, lcolor(orange) lwidth(medium) lpattern(.-))     ///
-//     (line india_simp_deaths age, lcolor(gs8) lpattern(-) lwidth(medthick))       ///
-//     , ytitle("Distribution of Deaths" "Normalized population: 100,000") xtitle(Age)  ///
-//     legend(lab(1 "England (simp)") ///
-//     lab(2 "India (simp)"))
-// graphout mort_density_simp
+/* save data file to make figure from */
+save $tmp/mort_density_simp, replace
 
 /* smooth the deaths series */
 sort age
@@ -240,56 +176,8 @@ replace en_deaths = $sim_n * 693/5683 / 10 if inrange(age, 60, 69)
 replace en_deaths = $sim_n * 1560/5683  / 10 if inrange(age, 70, 79)
 replace en_deaths = $sim_n * 2941/5683  / 20 if inrange(age, 80, 99)
 
-/* same graph, full model */
-twoway ///
-    (line india_full_deaths age if age <= 89, lcolor(black) lpattern(solid) lwidth(thick))       ///
-    (line uk_full_deaths    age if age <= 89, lcolor(orange) lwidth(thick) lpattern(solid))     ///
-    (line in_deaths_old     age if age <= 89, lcolor(black) lwidth(medium) lpattern(-))     ///
-    (line en_deaths         age if age <= 89, lcolor(orange) lwidth(medium) lpattern(-))     ///
-    , ytitle("Density Function of Deaths (%)") xtitle(Age)  ///
-    legend(lab(1 "India (model)") ///
-    lab(2 "England (model)") lab(3 "India (reported)") lab(4 "England (reported)") ///
-    ring(0) pos(11) cols(2) region(lcolor(black)) size(small) symxsize(5) bm(tiny)) ///
-    xscale(range(18 90)) xlabel(20 40 60 80) ylabel(.01 .02 .03 .04 .044) 
-graphout mort_density_full
-
-// /* all 4 lines */
-// twoway ///
-//     (line uk_simp_deaths    age, lcolor(orange) lwidth(medium) lpattern(-))        ///
-//     (line india_simp_deaths age, lcolor(gs8) lpattern(-) lwidth(medthick))         ///
-//     (line uk_full_deaths      age, lcolor(orange) lwidth(medium) lpattern(solid))    ///
-//     (line india_full_deaths   age, lcolor(gs8) lpattern(solid) lwidth(medthick))     ///
-//     , ytitle("Distribution of Deaths" "Normalized population: 100,000") xtitle(Age)  ///
-//     legend(lab(1 "England (simp)") lab(2 "India (simp)") ///
-//     lab(3 "England (full)") lab(4 "India (full)"))
-// graphout mort_density_all
-
-/* graph ny and nycu results  */
-twoway ///
-    (line uk_ny_deaths    age if age <= 89, lcolor(gs8) lwidth(medium) lpattern(-))     ///
-    (line india_ny_deaths age if age <= 89, lcolor(black) lpattern(solid) lwidth(medthick))       ///
-    (line mh_deaths         age if age <= 89, lcolor(orange) lwidth(medium) lpattern(.-))     ///
-    (line en_deaths         age if age <= 89, lcolor(gs14) lwidth(medium) lpattern(.-))     ///
-    , ytitle("Density Function of Deaths (%)") xtitle(Age)  ///
-    title("NY State Age-specific ORs") legend(lab(1 "England (model)") ///
-    lab(2 "India (model)") lab(3 "Maharasthra (reported)") lab(4 "England (reported)") ///
-    ring(0) pos(11) cols(1) region(lcolor(black))) ///
-    xscale(range(18 90)) xlabel(20 40 60 80) ylabel(.01 .02 .03 .04 .044)
-graphout mort_density_ny
-twoway ///
-    (line uk_nycu_deaths    age if age <= 89, lcolor(gs8) lwidth(medium) lpattern(-))     ///
-    (line india_nycu_deaths age if age <= 89, lcolor(black) lpattern(solid) lwidth(medthick))       ///
-    (line mh_deaths         age if age <= 89, lcolor(orange) lwidth(medium) lpattern(.-))     ///
-    (line en_deaths         age if age <= 89, lcolor(gs14) lwidth(medium) lpattern(.-))     ///
-    , ytitle("Density Function of Deaths (%)") xtitle(Age)  ///
-    title("NY (Cummings) HRs") legend(lab(1 "England (model)") ///
-    lab(2 "India (model)") lab(3 "Maharasthra (reported)") lab(4 "England (reported)") ///
-    ring(0) pos(11) cols(1) region(lcolor(black))) ///
-    xscale(range(18 90)) xlabel(20 40 60 80) ylabel(.01 .02 .03 .04 .044)
-graphout mort_density_nycu
-
-// graph combine density density_ny density_nycu, rows(1)
-// graphout mort_combined
+/* save a data file for figure generateion */
+save $tmp/mort_density_full, replace
 
 /******************************************/
 /* calculate share of deaths under age 60 */
@@ -329,7 +217,8 @@ foreach v in male $hr_biomarker_vars $hr_gbd_vars $hr_os_only_vars {
 merge 1:1 age using $tmp/india_pop, keep(master match) nogen keepusing(india_pop)
 merge 1:1 age using $tmp/uk_pop, keep(master match) nogen keepusing(uk_pop)
 
-/* Show final results and save to file */
+/* save results to file */
+save $tmp/prr_result, replace
 
 /* create csv file */
 cap !rm -f $ddl/covid/como/a/covid_como_sumstats.csv
@@ -362,9 +251,4 @@ foreach v in male $hr_biomarker_vars $hr_gbd_vars health {
   /* show everything */
   di %25s "`v': " %5.2f (`umean') "  " %5.2f (`imean') "  `sign'" %2.1f (`perc') "%"
 
-  /* save everying in csv for table */
-  insert_into_file using $ddl/covid/como/a/covid_como_sumstats.csv, key(uk_`v'_risk) value("`umean'") format(%3.2f)  
-  insert_into_file using $ddl/covid/como/a/covid_como_sumstats.csv, key(india_`v'_risk) value("`imean'") format(%3.2f)
-  insert_into_file using $ddl/covid/como/a/covid_como_sumstats.csv, key(`v'_ratio_sign) value("`sign'")
-  insert_into_file using $ddl/covid/como/a/covid_como_sumstats.csv, key(`v'_ratio) value("`perc'") format(%3.2f)  
 }

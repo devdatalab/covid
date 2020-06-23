@@ -46,17 +46,21 @@ do $ccode/como/b/prep_outcomes_generic.do
 /* calculate summary statistics and prevalences */
 // do $ccode/como/a/sumstats.do
 
-/* Figure 1: plot UK / India prevalence of comorbid conditions */
+/* compare England / India prevalence of comorbid conditions */
 do $ccode/como/a/compare_uk_india_prevalence.do
 
 /* run analysis for paper */
 do $ccode/como/a/calc_outcomes_generic.do
 
-/* create tables */
+/**********************/
+/* figures and tables */
+/**********************/
+
+/* create tables for main text and appendix*/
 do $ccode/como/b/make_paper_tables.do
 
-/* Figure 3: coefficient plot */
-shell python $ccode/como/a/make_coef_plot.py
+/* create figures */
+do $ccode/como/a/make_paper_figures.do
 
 
 /************/
@@ -67,8 +71,8 @@ shell python $ccode/como/a/make_coef_plot.py
 do $ccode/como/a/app_age_hr_interpolation.do
 
 /* app table: NHS/GBD prevalences vs OpenSAFELY */
-do $ccode/como/a/app_table_nhs_vs_os.do
+// do $ccode/como/a/app_table_nhs_vs_os.do
 
 /* app table: risk factor prevalences by age bin for all places */
-do $ccode/como/a/app_table_age_bin_prev.do
+// do $ccode/como/a/app_table_age_bin_prev.do
 

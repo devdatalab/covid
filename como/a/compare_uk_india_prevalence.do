@@ -34,46 +34,5 @@ keep if age < 90
 
 drop *diabetes_no_measure *hypertension_both
 
-/* diabetes comparison */
-twoway ///
-    (line i_diabetes_uncontr age, lwidth(medthick) lcolor(gs2) lpattern(solid)) ///
-    (line i_diabetes_contr   age, lwidth(medthick) lcolor(gs2) lpattern(-))     ///
-    (line u_diabetes_uncontr age, lwidth(medthick) lcolor(orange) lpattern(solid)) ///
-    (line u_diabetes_contr   age, lwidth(medthick) lcolor(orange) lpattern(-))     ///
-    , name(diabetes, replace) xtitle("Age") ytitle("Prevalence") ///
-    legend(size(vsmall) rows(2) ///
-    lab(1 "Uncontrolled Diabetes (India)") ///
-    lab(2 "Controlled Diabetes (India)") ///
-    lab(3 "Uncontrolled Diabetes (Englamd)") ///
-    lab(4 "Controlled Diabetes (England)"))
-graphout diabetes
-
-/* hypertension comparison */
-twoway ///
-    (line i_hypertension_uncontr age, lwidth(medthick) lcolor(gs2) lpattern(solid)) ///
-    (line i_hypertension_contr   age, lwidth(medthick) lcolor(gs2) lpattern(-))     ///
-    (line u_hypertension_uncontr age, lwidth(medthick) lcolor(orange) lpattern(solid)) ///
-    (line u_hypertension_contr   age, lwidth(medthick) lcolor(orange) lpattern(-))     ///
-    , name(hypertension, replace) xtitle("Age") ytitle("Prevalence") ///
-    legend(size(vsmall) rows(2) ///
-    lab(1 "Uncontrolled Hypertension (India)") ///
-    lab(2 "Controlled Hypertension (India)") ///
-    lab(3 "Uncontrolled Hypertension (England)") ///
-    lab(4 "Controlled Hypertension (England)"))
-graphout hypertension
-
-/* obesity comparison */
-twoway ///
-    (line i_obese age, lwidth(medthick) lcolor(gs2) lpattern(solid)) ///
-    (line u_obese age, lwidth(medthick) lcolor(orange) lpattern(solid)) ///
-    , name(obese, replace) xtitle("Age") ytitle("Prevalence") ///
-    legend(size(vsmall) rows(2) ///
-    lab(1 "Obese (India)") ///
-    lab(2 "Obese (England)"))
-graphout obese
-
-graph combine diabetes hypertension obese, rows(2)
-graphout biomarker_uk_india
-
-
-
+/* save file for figure generation */
+save $tmp/prev_compare, replace
