@@ -22,12 +22,12 @@ foreach geo in uk india {
   }
 
   keep age *logsd*
-  save $tmp/gbd_se_`geo', replace
+  save $tmp/gbd_sd_`geo', replace
 }
 
 /* ENGLAND */
 /* import the non-gbd prevalences */
-import delimited $covidpub/covid/csv/uk_condition_se.csv, clear
+import delimited $covidpub/covid/csv/uk_condition_sd.csv, clear
 
 /* reshape wide on conditions */
 replace condition = condition[_n-1] if mi(condition)
@@ -36,7 +36,7 @@ replace condition = condition[_n-1] if mi(condition)
 set obs 100
 gen age = _n
 
-foreach condition in se_obese_1_2 se_obese_3 se_bp_high {
+foreach condition in sd_obese_1_2 sd_obese_3 sd_bp_high {
   foreach i in lower upper mean {
     gen `i'_`condition' = .
     forval age = 1/100 {
@@ -47,14 +47,14 @@ foreach condition in se_obese_1_2 se_obese_3 se_bp_high {
     }
   }
 }
-keep age *se*
+keep age *sd*
 
 /* for each risk factor calculate the standard deviation */
 foreach var in obese_1_2 obese_3 bp_high {
 
   /* take the log of each prevalence */
-  gen `var'_log_diff1 = log10(upper_se_`var') - log10(mean_se_`var')
-  gen `var'_log_diff2 =  log10(mean_se_`var') - log10(lower_se_`var')
+  gen `var'_log_diff1 = log10(upper_sd_`var') - log10(mean_sd_`var')
+  gen `var'_log_diff2 =  log10(mean_sd_`var') - log10(lower_sd_`var')
 
   /* take the mean of the standard deviation */
   egen logsd_`var' = rmean(`var'_log_diff1 `var'_log_diff2)
@@ -65,7 +65,7 @@ foreach var in obese_1_2 obese_3 bp_high {
 drop *lower* *upper* *mean*
 
 /* merge in the gbd data */
-merge 1:1 age using $tmp/gbd_se_uk, nogen
+merge 1:1 age using $tmp/gbd_sd_uk, nogen
 drop if age < 18 | age > 99
 
 /* append to uk prevalence file */
@@ -93,7 +93,7 @@ foreach var in $hr_biomarker_vars {
 drop N
 
 /* merge in the bgd sd */
-merge 1:1 age using $tmp/gbd_se_india, nogen
+merge 1:1 age using $tmp/gbd_sd_india, nogen
 
 /* save */
 save $tmp/all_india_sd, replace
