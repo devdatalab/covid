@@ -79,6 +79,9 @@ do $ccode/como/a/calc_hr_sensitivity.do
 /* run sensitivity tests for sampling error in prevalences */
 do $ccode/como/a/calc_prev_sensitivity.do
 
+/* sensitivity to joint conditions */
+do $ccode/como/a/app_joint_condition.do
+
 
 /* app table: NHS/GBD prevalences vs OpenSAFELY */
 // do $ccode/como/a/app_table_nhs_vs_os.do
