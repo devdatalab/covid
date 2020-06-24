@@ -138,6 +138,19 @@ twoway ///
     xscale(range(18 90)) xlabel(20 40 60 80) ylabel(.01 .02 .03 .04 .044) 
 graphout mort_density_full
 
+/* graph with hybrid india population * england health conditions */
+twoway ///
+    (line india_full_deaths age if age <= 89, lcolor(black) lpattern(solid) lwidth(medthick))       ///
+    (line uk_full_deaths    age if age <= 89, lcolor(orange) lwidth(medthick) lpattern(solid))     ///
+    (line ipop_ehealth_deaths age if age <= 89, lcolor(red) lwidth(medthick) lpattern(solid))     ///
+    , ytitle("Density Function of Deaths (%)") xtitle(Age)  ///
+    legend(lab(1 "India") ///
+    lab(2 "England") lab(3 "India pop, England age-specific health") ///
+    ring(0) pos(11) cols(2) region(lcolor(black)) size(small) symxsize(5) bm(tiny)) ///
+    xscale(range(18 90)) xlabel(20 40 60 80) ylabel(.01 .02 .03 .04 .044) 
+graphout mort_density_new
+
+
 // /* all 4 lines */
 // twoway ///
 //     (line uk_simp_deaths    age, lcolor(orange) lwidth(medium) lpattern(-))        ///

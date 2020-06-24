@@ -71,7 +71,7 @@ set obs 82
 gen age = _n + 17
 foreach prev in india uk_os uk_nhs uk_nhs_matched {
   foreach hr in simp_dis full_dis simp_cts full_cts ny nycu {
-    merge 1:1 age using $tmp/prr_`prev'_`hr', keepusing(prr_all prr_health) nogen
+    merge 1:1 age using $tmp/prr_`prev'_`hr', keepusing(prr_all prr_health hr_age) nogen
     ren prr_all prr_all_`prev'_`hr'
     ren prr_health prr_h_`prev'_`hr'
   }
@@ -95,7 +95,7 @@ ren *uk_nhs_matched_ny* *uk_ny*
 ren *india_simp_cts* *india_simp*
 ren *uk_nhs_simp_cts* *uk_simp*
 
-global modellist india_full uk_full india_simp uk_simp india_ny uk_ny india_nycu uk_nycu
+global modellist india_full uk_full india_simp uk_simp ipop_ehealth
 
 /* Calculate the distribution of deaths in the model */
 global mortrate 1
@@ -105,17 +105,17 @@ foreach model in full simp ny nycu {
   }
 }
 
+/* simulate a country with India's age distribution but England's health risks */
+gen ipop_ehealth_deaths = $mortrate * india_pop * prr_all_uk_full
+
 global sim_n 1
 
 /* rescale so there are 100,000 deaths in each model */
-foreach model in $modellist {
+foreach model in $modellist  {
   local v `model'_deaths
   sum `v'
   replace `v' = `v' / (`r(mean)' * `r(N)') * $sim_n
 }
-
-/* save data file to make figure from */
-save $tmp/mort_density_simp, replace
 
 /* smooth the deaths series */
 sort age
