@@ -116,6 +116,18 @@ save $tmp/uk_copd_se, replace
 use $tmp/all_uk_se, clear 
 merge 1:1 age using $tmp/uk_copd_se, keepusing(logse_chronic_resp_dz) nogen
 
+/* add the diabetes se using sample size counts from data */
+local diabetes_N_16_44 = 1617
+local diabetes_N_45_64 = 1126
+local diabetes_N_65 = 756
+
+/* calcualte standard error */
+foreach d in diabetes_contr diabetes_uncontr {
+  gen se_`d' = sqrt((prev_`d' * (1 - prev_`d')) / `diabetes_N_16_44') if inrange(age, 16, 44)
+  replace se_`d' = sqrt((prev_`d' * (1 - prev_`d')) / `diabetes_N_45_64') if inrange(age, 45, 64)
+  replace se_`d' = sqrt((prev_`d' * (1 - prev_`d')) / `diabetes_N_65') if inrange(age, 65, 100)
+}
+
 /* keep only 18-99 year olds */
 keep if inrange(age, 18, 99)
 
