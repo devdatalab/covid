@@ -25,18 +25,18 @@ keep if inrange(age, 18, 89)
 sort age
 twoway ///
     (line ln_hr_full         age, lwidth(medthick) lpattern(solid) lcolor(black)) ///
-    (line ln_hr_full_age_dis age, lwidth(medthick) lpattern(-) lcolor(gs8)) ///
+    (line ln_hr_full_age_dis age, lwidth(medthick) lpattern(-) lcolor(blue)) ///
     , xscale(range(15 90)) xlabel(20(10)90) xtitle(Age) ytitle("Log Hazard Ratio") ///
     legend(region(lcolor(black)) rows(2) ring(0) pos(5) lab(1 "Interpolated Age Hazard Ratio") lab(2 "Discrete Age Hazard Ratio") size(small) symxsize(5) bm(tiny)) 
 
 graphout age_interpolation_full, pdf
 
-twoway ///
-    (line ln_hr_simple         age, lwidth(medthick) lpattern(-) lcolor(gs8)) ///
-    (line ln_hr_simple_age_dis age, lwidth(medthick) lpattern(solid) lcolor(black)) ///
-    , xscale(range(15 90)) xlabel(20(10)90) xtitle(Age) ytitle("Log Hazard Ratio") ///
-    legend(region(lcolor(black)) rows(2) ring(0) pos(5) lab(1 "Discrete Age Hazard Ratio") lab(2 "Interpolated Hazard Ratio") size(small) symxsize(5) bm(tiny)) 
-
-graphout age_interpolation_simple, pdf
+// twoway ///
+//     (line ln_hr_simple         age, lwidth(medthick) lpattern(-) lcolor(gs8)) ///
+//     (line ln_hr_simple_age_dis age, lwidth(medthick) lpattern(solid) lcolor(black)) ///
+//     , xscale(range(15 90)) xlabel(20(10)90) xtitle(Age) ytitle("Log Hazard Ratio") ///
+//     legend(region(lcolor(black)) rows(2) ring(0) pos(5) lab(1 "Discrete Age Hazard Ratio") lab(2 "Interpolated Hazard Ratio") size(small) symxsize(5) bm(tiny)) 
+// 
+// graphout age_interpolation_simple, pdf
 
 
