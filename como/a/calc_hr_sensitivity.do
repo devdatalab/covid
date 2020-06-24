@@ -132,18 +132,19 @@ forval b = 1/1000 {
 
 /* plot PRR bootstrap distribution */
 import delimited using $tmp/prrs_hr_b.csv, clear
-sum prr_ratio, d
-kdensity prr_ratio, xline(`r(mean)')
-graphout prr_ratio_hr_bootstrap
+sum prr_ratio
+twoway kdensity prr_ratio, xline(`r(mean)')
+graphout hr_sens_prr_ratio, pdf
 
 /* plot deaths under 60 bootstrap distribution */
 import delimited using $tmp/deaths_hr_b.csv, clear
 bys country: sum death_share, d
-twoway ///
-    (kdensity death_share if country == "england") ///
-    (kdensity death_share if country == "india") ///
-    , legend(lab(1 "England") lab(2 "India")) title("Share of deaths under 60")
-graphout deaths_hr_bootstrap
+sum death_share if country == "england"
+twoway kdensity death_share if country == "england", xline(`r(mean)')
+graphout hr_sens_deaths_e, pdf
+sum death_share if country == "india"
+twoway kdensity death_share if country == "india", xline(`r(mean)')
+graphout hr_sens_deaths_i, pdf
 
 
 exit

@@ -33,7 +33,6 @@ forval b = 1/1000 {
         local draw = rnormal()
 
         /* if this is a log10 se, calculate a draw in logs */
-        noi disp_nice "`prev'"
         cap confirm variable logse_`v'
         if !_rc {
           replace prev_`v' = 10 ^ (log10(prev_`v') + `draw' * logse_`v')
@@ -143,18 +142,21 @@ forval b = 1/1000 {
 
 /* plot PRR bootstrap distribution */
 import delimited using $tmp/prrs_prev_b.csv, clear
-sum prr_ratio, d
-kdensity prr_ratio, xline(`r(mean)')
-graphout prr_ratio_prev_bootstrap
+sum prr_ratio
+twoway kdensity prr_ratio, xline(`r(mean)')
+graphout prev_sens_prr_ratio, pdf
 
 /* plot deaths under 60 bootstrap distribution */
 import delimited using $tmp/deaths_prev_b.csv, clear
 bys country: sum death_share, d
-twoway ///
-    (kdensity death_share if country == "england") ///
-    (kdensity death_share if country == "india") ///
-    , legend(lab(1 "England") lab(2 "India")) title("Share of deaths under 60")
-graphout deaths_prev_bootstrap
+sum death_share if country == "england"
+twoway kdensity death_share if country == "england", xline(`r(mean)')
+graphout prev_sens_deaths_e, pdf
+sum death_share if country == "india"
+twoway kdensity death_share if country == "india", xline(`r(mean)')
+graphout prev_sens_deaths_i, pdf
+
+
 
 
 exit

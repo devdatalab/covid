@@ -40,7 +40,7 @@ do $ccode/como/b/prep_pop_sex.do
 do $ccode/como/b/prep_outcomes_generic.do
 
 /* create prevalence standard errors for bootstraps */
-do $ccode/como/b/prep_prev_standard_errors.do
+do $ccode/como/b/prep_standard_errors.do
 
 /************/
 /* analysis */
