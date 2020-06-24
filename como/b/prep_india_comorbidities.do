@@ -56,7 +56,7 @@ replace female = . if (mi(sex) | sex == 3)
 
 gen male = 0
 replace male = 1 if sex == 1
-replace male =. if (mi(sex) |sex == 3)
+replace male =. if (mi(sex) | sex == 3)
 
 /* BMI */
 /* convert height to meters */

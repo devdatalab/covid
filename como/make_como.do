@@ -13,47 +13,38 @@ do $ccode/como/b/prep_health_data.do
 do $ccode/como/b/prep_gbd.do
 
 /* calculate risk factors */
-do $ccode/como/b/gen_comorbidity_predictions.do
+do $ccode/como/b/prep_india_comorbidities.do
 
-/* create an age-level dataset with UK condition prevalence */
-do $ccode/como/b/prep_uk_prevalence.do
+/* create an age-level dataset with England condition prevalence */
+do $ccode/como/b/prep_england_prevalence.do
 
 /* create a clean set of files with relative risks */
 do $ccode/como/b/prep_hrs.do
 
-/* repeat with external india aggregate data (e.g. GBD) */
-// do $ccode/como/b/prep_india_sim_prevalence.do
-
 /* prep NY odds ratios of death */
-do $ccode/como/b/prep_ny_mortality.do
-
-/* clean state-level GBD for India */
-// do $ccode/como/b/clean_gbd_india.do
-
-/* create state-level biomarker variables */
-// do $ccode/como/b/collapse_biomarkers_to_state.do
+// do $ccode/como/b/prep_ny_mortality.do
 
 /* prep india and UK sex ratios and populations */
 do $ccode/como/b/prep_pop_sex.do
 
-/* create HR, prevalence, population files all with identical structures */
-do $ccode/como/b/prep_outcomes_generic.do
+/* create age-level datasets for HR, prevalence, population, all with identical structures */
+do $ccode/como/b/prep_age_level_data.do
 
 /* create prevalence standard errors for bootstraps */
 do $ccode/como/b/prep_standard_errors.do
+
+/* calculate population relative risks and death distributions for england / india */
+do $ccode/como/a/calc_prrs.do
 
 /************/
 /* analysis */
 /************/
 
+/* prepare data for England / India prevalence comparison */
+do $ccode/como/a/prep_eng_india_prev_compare.do
+
 /* calculate summary statistics and prevalences */
 // do $ccode/como/a/sumstats.do
-
-/* compare England / India prevalence of comorbid conditions */
-do $ccode/como/a/compare_uk_india_prevalence.do
-
-/* run analysis for paper */
-do $ccode/como/a/calc_outcomes_generic.do
 
 /**********************/
 /* figures and tables */
