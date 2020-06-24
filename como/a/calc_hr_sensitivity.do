@@ -77,7 +77,7 @@ forval b = 1/1000 {
     gen india_prr = `r(mean)'
     qui sum prr_h_uk_nhs_matched_full_cts [aw=uk_pop]
     gen uk_prr = `r(mean)'
-    gen prr_ratio = uk_prr / india_prr
+    gen prr_ratio = india_prr / uk_prr
     
     /* write the prr_ratio to a file */
     qui sum prr_ratio
@@ -130,82 +130,34 @@ forval b = 1/1000 {
   }
 }
 
+/* get the aggregate PRR England/India difference used in the paper */
+use $tmp/prr_result, clear
+qui sum uprr_health [aw=uk_pop]
+local umean = `r(mean)'
+qui sum iprr_health [aw=india_pop]
+local imean = `r(mean)'
+global prr_paper = ((((`imean'/`umean' - 1) * 100) + 100) / 100)
+
+/* get the aggregate death share under 60 for each country used in the paper */
+use $tmp/mort_density_full, clear
+qui sum india_full_deaths if age < 60
+global ideaths = (`r(N)' * `r(mean)' * 100)
+qui sum uk_full_deaths if age < 60
+global edeaths = (`r(N)' * `r(mean)' * 100)
+
 /* plot PRR bootstrap distribution */
 import delimited using $tmp/prrs_hr_b.csv, clear
-sum prr_ratio
-twoway kdensity prr_ratio, xline(`r(mean)')
+sum prr_ratio, d
+histogram prr_ratio, xline($prr_paper, lwidth(thick)) xtitle("") percent ytitle("Percent of draws (N=1000)")  ylabel(0(2)12)
 graphout hr_sens_prr_ratio, pdf
 
 /* plot deaths under 60 bootstrap distribution */
 import delimited using $tmp/deaths_hr_b.csv, clear
-bys country: sum death_share, d
 sum death_share if country == "england"
-twoway kdensity death_share if country == "england", xline(`r(mean)')
+histogram death_share if country == "england", xline($edeaths, lwidth(thick)) xtitle("") percent ytitle("Percent of draws (N=1000)") ylabel(0(2)12)
 graphout hr_sens_deaths_e, pdf
+
 sum death_share if country == "india"
-twoway kdensity death_share if country == "india", xline(`r(mean)')
+histogram death_share if country == "india", xline($ideaths, lwidth(thick)) xtitle("") percent ytitle("Percent of draws (N=1000)") ylabel(0(2)12)
 graphout hr_sens_deaths_i, pdf
 
-
-exit
-
-/**********************************************************/
-/* compare UK health conditions and risk factors to India */
-/**********************************************************/
-use $tmp/prr_india_full_cts, clear
-ren prev* iprev*
-ren rf* irf*
-merge 1:1 age using $tmp/prr_uk_nhs_matched_full_cts, nogen
-ren prev* uprev*
-ren rf* urf*
-
-/* calculate relative difference in prevalence and risk factor for each condition */
-foreach v in male $hr_biomarker_vars $hr_gbd_vars $hr_os_only_vars {
-  gen rfdiff_`v' = iprr_`v' / uprr_`v'
-  gen prevdiff_`v' = iprev_`v' / uprev_`v'
-}
-
-/* report */
-foreach v in male $hr_biomarker_vars $hr_gbd_vars $hr_os_only_vars {
-  qui sum rfdiff_`v' if age == 50
-  local rfd `r(mean)'
-  qui sum prevdiff_`v' if age == 50
-  local prevd `r(mean)'
-  
-  di %40s "`v' : " %5.2f `rfd' %10.2f `prevd'
-}
-
-/* calculate aggregate risk factor diffs between india and uk */
-merge 1:1 age using $tmp/india_pop, keep(master match) nogen keepusing(india_pop)
-merge 1:1 age using $tmp/uk_pop, keep(master match) nogen keepusing(uk_pop)
-
-/* Show final results and save to file */
-
-local t 1
-foreach v in male $hr_biomarker_vars $hr_gbd_vars health {
-
-  /* show title only if it's the first pass thru the loop */
-  if `t' {
-    di %25s " " "  UK    India   India/UK"
-    di %25s " " "------------------------"
-    }
-  local t 0
-  
-  /* UK aggregate risk factor */
-  qui sum uprr_`v' [aw=uk_pop]
-  local umean = `r(mean)'
-  
-  /* India aggregate risk factor */
-  qui sum iprr_`v' [aw=india_pop]
-  local imean = `r(mean)'
-
-  /* percent difference India over UK */
-  local perc = (`imean'/`umean' - 1) * 100
-
-  /* Get the sign on the % */
-  if `perc' > 0 local sign " +"
-  else local sign " "
-
-  /* show everything */
-  di %25s "`v': " %5.2f (`umean') "  " %5.2f (`imean') "  `sign'" %2.1f (`perc') "%"
-}

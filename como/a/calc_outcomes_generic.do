@@ -220,9 +220,6 @@ merge 1:1 age using $tmp/uk_pop, keep(master match) nogen keepusing(uk_pop)
 /* save results to file */
 save $tmp/prr_result, replace
 
-/* create csv file */
-cap !rm -f $ddl/covid/como/a/covid_como_sumstats.csv
-
 local t 1
 foreach v in male $hr_biomarker_vars $hr_gbd_vars health {
 

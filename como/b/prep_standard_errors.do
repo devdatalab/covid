@@ -21,6 +21,9 @@ foreach geo in uk india {
     egen logse_`var' = rowmean(`var'_log_diff1 `var'_log_diff2)
     replace logse_`var' = logse_`var' / 1.96
 
+    /* set to zero if missing, implies bounds and prevalence are at zero  */
+    replace logse_`var' = 0 if mi(logse_`var')
+    
     /* drop unneeded variabels */
     drop `var'_log_diff1 `var'_log_diff2
   }
