@@ -1,31 +1,32 @@
+/* get standard error into all prevalence datasets */
+
 /* GBD */
 /* do GBD for both countries */
 foreach geo in uk india {
-  /* calculate standard errors from teh GBD data */
+  
+  /* calculate standard errors from the GBD data */
   use $health/gbd/gbd_nhs_conditions_`geo', clear
 
-  /* drop all ages and age standardized */
+  /* drop "all ages" and "age-standardized" */
   drop if age < 0
 
-  /* for each risk factor calculate the standard deviation */
+  /* for each risk factor calculate the standard error */
   foreach var in $hr_gbd_vars {
 
-    /* take the log of each prevalence */
+    /* upper/lower bounds are symmetric in log-base-10, so calc diffs that way */
     gen `var'_log_diff1 = log10(gbd_`var'_upper) - log10(gbd_`var')
     gen `var'_log_diff2 =  log10(gbd_`var') - log10(gbd_`var'_lower)
 
     /* take the mean of the 95% confidence interval */
-    egen logsd_`var' = rmean(`var'_log_diff1 `var'_log_diff2)
-
-    /* calculate standard deviation */
-    replace logsd_`var' = logsd_`var' / 1.96
+    egen logse_`var' = rowmean(`var'_log_diff1 `var'_log_diff2)
+    replace logse_`var' = logse_`var' / 1.96
 
     /* drop unneeded variabels */
     drop `var'_log_diff1 `var'_log_diff2
   }
 
-  keep age *logsd*
-  save $tmp/gbd_sd_`geo', replace
+  keep age *logse*
+  save $tmp/gbd_se_`geo', replace
 }
 
 /* ENGLAND */
@@ -52,7 +53,7 @@ foreach condition in sd_obese_1_2 sd_obese_3 sd_bp_high {
 }
 keep age *sd*
 
-/* for each risk factor calculate the standard deviation */
+/* for each risk factor calculate the standard error from the 95% CI */
 foreach var in obese_1_2 obese_3 bp_high {
 
   /* take the log of each prevalence */
@@ -60,10 +61,10 @@ foreach var in obese_1_2 obese_3 bp_high {
   gen `var'_log_diff2 =  log10(mean_sd_`var') - log10(lower_sd_`var')
 
   /* take the mean of the 95% confidence interval */
-  egen logsd_`var' = rmean(`var'_log_diff1 `var'_log_diff2)
+  egen logse_`var' = rmean(`var'_log_diff1 `var'_log_diff2)
 
-  /* calculate standard deviation */
-  replace logsd_`var' = logsd_`var' / 1.96
+  /* calculate standard error */
+  replace logse_`var' = logse_`var' / 1.96
 
   /* drop unneeded variabels */
   drop `var'_log_diff1 `var'_log_diff2
@@ -71,14 +72,14 @@ foreach var in obese_1_2 obese_3 bp_high {
 drop *lower* *upper* *mean*
 
 /* merge in the gbd data */
-merge 1:1 age using $tmp/gbd_sd_uk, nogen
+merge 1:1 age using $tmp/gbd_se_uk, nogen
 drop if age < 18 | age > 99
 
 /* append to uk prevalence file */
 merge 1:1 age using $tmp/prev_uk_nhs_matched, nogen
 
 /* save */
-save $tmp/all_uk_sd, replace
+save $tmp/all_uk_se, replace
 
 /* get the copd data */
 import delimited using $iec/covid/covid/csv/copd_mclean_rates.csv, clear
@@ -90,7 +91,7 @@ gen pop_total = pop_female + pop_male
 foreach i in mean lower upper {
 
   /* take the weighted average of male and female rates */
-  gen copd_`i' = rate100k_male_`i'*(pop_male / pop_total) + rate100k_female_`i'*(pop_female / pop_total)
+  gen copd_`i' = rate100k_male_`i' * (pop_male / pop_total) + rate100k_female_`i' * (pop_female / pop_total)
 
   /* convert the per 100k rate to a prevalence */
   replace copd_`i' = copd_`i' / 100000
@@ -102,48 +103,48 @@ gen copd_log_diff1 = log10(copd_upper) - log10(copd_mean)
 gen copd_log_diff2 =  log10(copd_mean) - log10(copd_lower)
 
 /* take the mean of the 95% confidence interval */
-egen logsd_chronic_resp_dz = rmean(copd_log_diff1 copd_log_diff2)
+egen logse_chronic_resp_dz = rmean(copd_log_diff1 copd_log_diff2)
 
-/* convert to standard deviation */
-replace logsd_chronic_resp_dz = logsd_chronic_resp_dz / 1.96
+/* convert to standard error */
+replace logse_chronic_resp_dz = logse_chronic_resp_dz / 1.96
 
 /* save */
-keep age logsd_chronic_resp_dz
-save $tmp/uk_copd_sd, replace
+keep age logse_chronic_resp_dz
+save $tmp/uk_copd_se, replace
 
-/* merge in with the full dat */
-use $tmp/all_uk_sd, clear 
+/* merge in with the full data */
+use $tmp/all_uk_se, clear 
+merge 1:1 age using $tmp/uk_copd_se, keepusing(logse_chronic_resp_dz) nogen
 
-/* merge into the final data */
-merge 1:1 age using $tmp/uk_copd_sd, keepusing(logsd_chronic_resp_dz) nogen
-
-/* keep only 18 - 100 year olds */
-keep if inrange(age, 18, 100)
+/* keep only 18-99 year olds */
+keep if inrange(age, 18, 99)
 
 /* re-save */
-save $tmp/all_uk_sd, replace
+save $tmp/prev_se_uk_nhs_matched, replace
 
 /* INDIA */
 use $health/dlhs/data/dlhs_ahs_covid_comorbidities, clear
 
 /* count the sample size N at each age */
 gen N = 1
-collapse (sum) N [aw=wt], by(age)
+collapse (sum) N (mean) $hr_biomarker_vars [aw=wt], by(age)
 
 /* merge in the prevalences */
 merge 1:1 age using $tmp/prev_india, nogen
 
-/* calculate standard deviation for each biomarker variable */
+/* calculate standard error of the log prevalence for each biomarker variable */
 foreach var in $hr_biomarker_vars {
-  gen  sd_`var' = sqrt((prev_`var' * (1 - prev_`var')) / N)
+
+  /* calculate log SE of the prevalence */
+  gen  se_`var' = sqrt((prev_`var' * (1 - prev_`var')) / N)
 }
 drop N
 
-/* merge in the bgd sd */
-merge 1:1 age using $tmp/gbd_sd_india, nogen
+/* merge in the gbd standard errors */
+merge 1:1 age using $tmp/gbd_se_india, nogen
 
-/* keep only 18 - 100 year olds */
-keep if inrange(age, 18, 100)
+/* keep ages 18-99 */
+keep if inrange(age, 18, 99)
 
 /* save */
-save $tmp/all_india_sd, replace
+save $tmp/prev_se_india, replace

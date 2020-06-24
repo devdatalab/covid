@@ -1,15 +1,15 @@
 /*
-Alternate form of main analysis that bootstraps hazard ratios.
+Alternate form of main analysis that bootstraps prevalences.
 
 */
 
 /* set a randomization seed so results can replicate, using the auspicious year 2020 */
 set seed 2020
 
-cap erase $tmp/prrs_hr_b.csv
-append_to_file using $tmp/prrs_hr_b.csv, s(prr_ratio)
-cap erase $tmp/deaths_hr_b.csv
-append_to_file using $tmp/deaths_hr_b.csv, s(country,death_share)
+cap erase $tmp/prrs_prev_b.csv
+append_to_file using $tmp/prrs_prev_b.csv, s(prr_ratio)
+cap erase $tmp/deaths_prev_b.csv
+append_to_file using $tmp/deaths_prev_b.csv, s(country,death_share)
 
 /* run 1000 boostraps */
 forval b = 1/1000 {
@@ -19,21 +19,31 @@ forval b = 1/1000 {
     uk_nhs_matched and india. */
   qui foreach prev in india uk_nhs_matched {
   
-    /* use fully adjusted HRs */
+    /* use the fully adjusted HRs */
     foreach hr in full_cts {
   
       /* open the hazard ratio file */
       use $tmp/hr_`hr', clear
 
-      /* replace each hazard ratio with a draw from the distribution */
-      /* loop over all conditions */
-      foreach v in male $hr_biomarker_vars $hr_gbd_vars {
-        local draw = rnormal()
-        replace hr_`v' = exp(ln(hr_`v') + `draw' * hr_lnse_`v')
-      }
-      
       /* merge the prevalence file */
-      merge 1:1 age using $tmp/prev_`prev', nogen
+      merge 1:1 age using $tmp/prev_se_`prev', nogen
+
+      /* loop over all conditions and replace prevalence with a draw from the distribution */
+      foreach v in $hr_biomarker_vars $hr_gbd_vars {
+        local draw = rnormal()
+
+        /* if this is a log10 se, calculate a draw in logs */
+        noi disp_nice "`prev'"
+        cap confirm variable logse_`v'
+        if !_rc {
+          replace prev_`v' = 10 ^ (log10(prev_`v') + `draw' * logse_`v')
+        }
+
+        /* if this is a straight SE, take a draw in levels */
+        else {
+          replace prev_`v' = prev_`v' + `draw' * se_`v'
+        }
+      }
       
       /* calculate the all-comorbidity population relative risk at each age, multiplying prevalence by hazard ratio */
       gen prr_health = 1
@@ -68,6 +78,7 @@ forval b = 1/1000 {
         ren prr_health prr_h_`prev'_`hr'
       }
     }
+    
     /* bring in population shares */
     merge 1:1 age using $tmp/india_pop, keep(master match) nogen keepusing(india_pop)
     merge 1:1 age using $tmp/uk_pop, keep(master match) nogen keepusing(uk_pop)
@@ -81,7 +92,7 @@ forval b = 1/1000 {
     
     /* write the prr_ratio to a file */
     qui sum prr_ratio
-    append_to_file using $tmp/prrs_hr_b.csv, s(`r(mean)')
+    append_to_file using $tmp/prrs_prev_b.csv, s(`r(mean)')
   }
   
   /*********************************/
@@ -123,27 +134,27 @@ forval b = 1/1000 {
     /* store share of deaths under age 60 for india and england */
     sum india_full_deaths if age < 60
     local share = (`r(N)' * `r(mean)' * 100)
-    append_to_file using $tmp/deaths_hr_b.csv, s(india,`share')
+    append_to_file using $tmp/deaths_prev_b.csv, s(india,`share')
     sum uk_full_deaths if age < 60
     local share = (`r(N)' * `r(mean)' * 100)
-    append_to_file using $tmp/deaths_hr_b.csv, s(england,`share')
+    append_to_file using $tmp/deaths_prev_b.csv, s(england,`share')
   }
 }
 
 /* plot PRR bootstrap distribution */
-import delimited using $tmp/prrs_hr_b.csv, clear
+import delimited using $tmp/prrs_prev_b.csv, clear
 sum prr_ratio, d
 kdensity prr_ratio, xline(`r(mean)')
-graphout prr_ratio_hr_bootstrap
+graphout prr_ratio_prev_bootstrap
 
 /* plot deaths under 60 bootstrap distribution */
-import delimited using $tmp/deaths_hr_b.csv, clear
+import delimited using $tmp/deaths_prev_b.csv, clear
 bys country: sum death_share, d
 twoway ///
     (kdensity death_share if country == "england") ///
     (kdensity death_share if country == "india") ///
     , legend(lab(1 "England") lab(2 "India")) title("Share of deaths under 60")
-graphout deaths_hr_bootstrap
+graphout deaths_prev_bootstrap
 
 
 exit

@@ -39,6 +39,9 @@ do $ccode/como/b/prep_pop_sex.do
 /* create HR, prevalence, population files all with identical structures */
 do $ccode/como/b/prep_outcomes_generic.do
 
+/* create prevalence standard errors for bootstraps */
+do $ccode/como/b/prep_prev_standard_errors.do
+
 /************/
 /* analysis */
 /************/
@@ -69,6 +72,13 @@ do $ccode/como/a/make_paper_figures.do
 
 /* app figure: hr interpolations */
 do $ccode/como/a/app_age_hr_interpolation.do
+
+/* run sensitivity tests for sampling error in HRs */
+do $ccode/como/a/calc_hr_sensitivity.do
+
+/* run sensitivity tests for sampling error in prevalences */
+do $ccode/como/a/calc_prev_sensitivity.do
+
 
 /* app table: NHS/GBD prevalences vs OpenSAFELY */
 // do $ccode/como/a/app_table_nhs_vs_os.do
