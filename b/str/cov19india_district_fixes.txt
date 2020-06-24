@@ -20,7 +20,6 @@ gariyaband,gariaband,chhattisgarh
 janjgir-champa,janjgir champa,chhattisgarh
 kabirdham,kabeerdham,chhattisgarh
 uttar bastar kanker,uttar bastar kanker,chhattisgarh
-new delhi,new delhi,chhattisgarh
 ahmadabad,ahmedabad,gujarat
 dibang valley,upper dibang valley,arunachal pradesh
 west district,west sikkim,sikkim

@@ -177,7 +177,7 @@ twoway ///
     (line india_deaths_simple age, lcolor(gs8) lpattern(-) lwidth(medthick))       ///
     (line india_deaths_gbd    age, lcolor(black) lpattern(solid) lwidth(medthick)) ///
     , ytitle("Distribution of Deaths" "Normalized population: 100,000") xtitle(Age)  ///
-    legend(lab(1 "United Kingdom (full model)") ///
+    legend(lab(1 "England (full model)") ///
     lab(2 "India (simple model)") ///
     lab(3 "India (full model)") ring(0) pos(5) rows(3) region(lcolor(black))) 
     
