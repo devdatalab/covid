@@ -232,14 +232,14 @@ foreach var in male uk_prev_chronic_resp_dz uk_prev_diabetes_contr uk_prev_diabe
 }
 
 /* create the prevalence table 1 */
-table_from_tpl, t($ddl/covid/como/a/covid_como_sumstats_tpl.tex) r($ddl/covid/como/a/covid_como_sumstats.csv) o($tmp/covid_como_sumstats.tex)
+table_from_tpl, t($ddl/covid/como/a/covid_como_sumstats_tpl.tex) r($ddl/covid/como/a/covid_como_sumstats.csv) o($out/covid_como_sumstats.tex)
 
 /* create the risk table 2 */
-table_from_tpl, t($ddl/covid/como/a/covid_como_sumhr_tpl.tex) r($ddl/covid/como/a/covid_como_sumstats.csv) o($tmp/covid_como_sumhr.tex)
+table_from_tpl, t($ddl/covid/como/a/covid_como_sumhr_tpl.tex) r($ddl/covid/como/a/covid_como_sumstats.csv) o($out/covid_como_sumhr.tex)
 
 /* create the age-specific prevalence appendix table */
-table_from_tpl, t($ddl/covid/como/a/covid_como_agerisks_tpl.tex) r($ddl/covid/como/a/covid_como_agerisks.csv) o($tmp/covid_como_agerisks.tex)
+table_from_tpl, t($ddl/covid/como/a/covid_como_agerisks_tpl.tex) r($ddl/covid/como/a/covid_como_agerisks.csv) o($out/covid_como_agerisks.tex)
 
 /* create the o/s vs. england  prevalence appendix table */
-table_from_tpl, t($ddl/covid/como/a/covid_como_oscompare_tpl.tex) r($ddl/covid/como/a/covid_como_sumstats.csv) o($tmp/covid_como_oscompare.tex)
+table_from_tpl, t($ddl/covid/como/a/covid_como_oscompare_tpl.tex) r($ddl/covid/como/a/covid_como_sumstats.csv) o($out/covid_como_oscompare.tex)
 
