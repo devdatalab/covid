@@ -6,7 +6,7 @@ ren ln_hr_age_sex ln_hr_simple
 merge 1:1 age using $tmp/hr_full_dis, nogen keepusing(hr_age)
 ren hr_age hr_full_age
 
-merge 1:1 age using $tmp/hr_simple_dis, nogen keepusing(hr_age)
+merge 1:1 age using $tmp/hr_simp_dis, nogen keepusing(hr_age)
 ren hr_age hr_simple_age
 
 /* expand opensafely data to decimal ages */
