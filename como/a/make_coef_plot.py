@@ -119,5 +119,7 @@ ax.annotate("England", (-9,17), color="#e38800", fontsize=14)
 ax.set_title("Percent Change of Population Relative Risk for each \n Health Condition in India Relative to England", fontsize=16, color="#383838")
 
 # save figure
+plt.savefig(os.path.join(homedir, "iec", "output", "covid", "coefplot.pdf"), bbox_inches="tight", dpi=150)
 plt.savefig(os.path.join(homedir, "public_html", "png", "coefplot.png"), bbox_inches="tight", dpi=150)
+
 plt.close("all")
