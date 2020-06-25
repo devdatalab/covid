@@ -52,70 +52,61 @@
 \date{June 2020}
 %  \maketitle
 
-  \section{Figures}
+\section{Figures}
 
-  \begin{figure}[H]
-    \begin{center}
-      \caption{Prevalences}
-      
-      \textbf{Diabetes}
-      
-      \includegraphics[scale=0.5]{\covidpath/diabetes.pdf}
+\begin{figure}[H]
+  \begin{center}
+    \caption{Prevalences}
+    
+    \textbf{Diabetes}
+    
+    \includegraphics[scale=0.5]{\covidpath/diabetes.pdf}
 
-      \textbf{Hypertension}
-      
-      \includegraphics[scale=0.5]{\covidpath/hypertension.pdf}
+    \textbf{Hypertension}
+    
+    \includegraphics[scale=0.5]{\covidpath/hypertension.pdf}
 
-      \textbf{Obese}
-      
-      \includegraphics[scale=0.5]{\covidpath/obese.pdf}
+    \textbf{Obese}
     
-    \end{center}
-  \end{figure}
-  
-  \begin{figure}[H]
-    \begin{center}
-      \caption{Age-Specific Population Relative Risk of All Health Conditions}
-      
-      \includegraphics[scale=0.5]{\covidpath/prr_health.pdf}
+    \includegraphics[scale=0.5]{\covidpath/obese.pdf}
     
-    \end{center}
-  \end{figure}
-  
-   \begin{table}[H]
-    \begin{center}
-     \caption{condition prevalences }
-     \input{\covidpath/app_table_age_bin_prev}
-     
-     \footnotesize{[table note]}
-    \end{center}
-   \end{table}
- 
-  \begin{table}[H]
-    \begin{center}
-    \caption{Prevalence of Conditions in Population and in OpenSAFELY}
-    \input{\covidpath/app_table_os_vs_nhs}
-    
-    \footnotesize{[table note]}
-    \end{center}
-  \end{table}
+  \end{center}
+\end{figure}
 
-  \clearpage
-  \begin{figure}[H]
-    \begin{center}
-    \caption{Prevalence of Conditions in Population and in OpenSAFELY}
-    \textbf{Age Interpolation: Model with only Age and Sex}
-    
-    \includegraphics[scale=0.5]{\covidpath/age_interpolation_simple.pdf}
+\begin{figure}[H]
+  \begin{center}
+    \caption{Age-Specific Population Relative Risk of All Health Conditions}
+    \includegraphics[scale=0.5]{\covidpath/prr_health.pdf}
+  \end{center}
+\end{figure}
 
-    \newline
-    \textbf{Age Interpolation: Fully-Adjusted Model}
-    
-    \includegraphics[scale=0.5]{\covidpath/age_interpolation_full}
-    
-    \footnotesize{[figure note]}
-    \end{center}
-  \end{figure}
+\begin{figure}[H]
+  \begin{center}
+    \caption{Coefplot}
+    % \includegraphics[scale=0.5]{\covidpath/coefplot.pdf}
+  \end{center}
+\end{figure}
+
+\begin{figure}[H]
+  \begin{center}
+    \caption{Distribution of Mortality}
+    \includegraphics[scale=0.5]{\covidpath/mort_density_full.pdf}
+  \end{center}
+\end{figure}
+
+\begin{table}[H]
+  \begin{center}
+    \caption{}
+    \input{\covidpath/covid_como_sumstats}
+  \end{center}
+\end{table}
+
+\begin{table}[H]
+  \begin{center}
+    \caption{}
+    \input{\covidpath/covid_como_sumhr}
+  \end{center}
+\end{table}
 
 \end{document}
 
