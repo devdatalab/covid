@@ -1,6 +1,7 @@
 \documentclass[10pt,letterpaper]{article}
 \setcounter{page}{0}
 
+\usepackage{lscape} 
 \usepackage{mathptmx}
 \usepackage{mathtools} 
 \usepackage{bbm}
@@ -65,6 +66,8 @@ The DLHS-4 and AHS surveys both used the same data collection methods for biomar
 
 All prevalence estimates from the DLHS-4 and AHS were weighted with a sample weight. Sample weights determined by the survey design of the DLHS-4 were provided in the publicly available data. These weights were multiplied by a district population weight, defined as the percentage of the national population in each district, to obtain the final sample weight. Due to a different survey design, the AHS does not have a sample weight in the data and so the sample weight was defined only by the district population weight.
 
+\clearpage
+\begin{landscape}
     \begin{table}[H]
     \begin{center}
      \caption{Health Condition Prevalences}
@@ -73,11 +76,12 @@ All prevalence estimates from the DLHS-4 and AHS were weighted with a sample wei
      \footnotesize{[Prevalence of health conditions by age group in England and India]}
     \end{center}
    \end{table}
+\end{landscape}
 
 \subsection{Prevalence of health conditions in England and the OpenSAFELY study population}
 We obtained estimated COVID-19 mortality hazard ratios for risk factors from the OpenSAFELY study \cite{williamson_opensafely_2020}. The study sample includes adults 18 years or older enrolled with The Phoenix Partnership general practice system in England and covers 40\% of the English population. In order to calculate population risk for England for this study, we obtained national age, sex, and risk factor prevalence for the entire English population from a combination of population health surveys and the GBD. In Table X we present characteristics of the OpenSAFELY study sample against those of the entire English population. Age, sex, and prevalence of most risk factors are very similar in the two. Hypertension prevalence in the OpenSAFELY sample is higher than in the English population (34.2\% vs 28.1\%) and asthma and class I obesity are lower (1.7\% vs 9.2\% and 19.1\% vs 24.8\%).
 
-   
+
   \begin{table}[H]
     \begin{center}
     \caption{Prevalence of Conditions in Population and in OpenSAFELY}
@@ -99,7 +103,7 @@ We obtained estimated COVID-19 mortality hazard ratios for risk factors from the
     \end{center}
   \end{figure}
   
- \bibliography{/ddl/covid/como/tex/covid-como}
+ \bibliography{\HOME/ddl/covid/como/tex/covid-como}
  \bibliographystyle{vancouver}
 
 \end{document}
