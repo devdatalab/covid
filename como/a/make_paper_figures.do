@@ -15,7 +15,7 @@ twoway ///
     lab(2 "Controlled Diabetes (India)") ///
     lab(3 "Uncontrolled Diabetes (England)") ///
     lab(4 "Controlled Diabetes (England)"))
-graphout diabetes
+graphout diabetes, pdf
 
 /* hypertension comparison */
 twoway ///
@@ -29,7 +29,7 @@ twoway ///
     lab(2 "Controlled Hypertension (India)") ///
     lab(3 "Uncontrolled Hypertension (England)") ///
     lab(4 "Controlled Hypertension (England)"))
-graphout hypertension
+graphout hypertension, pdf
 
 /* obesity comparison */
 twoway ///
@@ -39,7 +39,7 @@ twoway ///
     legend(size(vsmall) rows(2) ///
     lab(1 "Obese (India)") ///
     lab(2 "Obese (England)"))
-graphout obese
+graphout obese, pdf
 
 graph combine diabetes hypertension obese, rows(2)
 graphout biomarker_uk_india
@@ -59,7 +59,7 @@ twoway ///
     ytitle("Aggregate Contribution to Mortality from Population Health") xtitle("Age") ///
     legend(lab(1 "India") lab(2 "England") ring(0) pos(5) cols(1) size(small) symxsize(5) bm(tiny) region(lcolor(black))) ///
     name(prr_health, replace)  ylabel(1(.5)3) 
-graphout prr_health
+graphout prr_health, pdf
 
 /********************/
 /* Coefficient Plot */
@@ -73,6 +73,7 @@ ren v1 variable
 ren v2 coef
 save $tmp/coefs_to_plot, replace
 shell python $ccode/como/a/make_coef_plot.py
+cp ~/public_html/png/coefplot.png $out/, replace
 
 /*******************************/
 /* plot distribution of deaths */
@@ -91,6 +92,4 @@ twoway ///
     lab(2 "England") lab(3 "India demographics, England age-specific health") ///
     ring(0) pos(11) cols(1) region(lcolor(black)) size(small) symxsize(5) bm(tiny)) ///
     xscale(range(18 90)) xlabel(20 40 60 80) ylabel(.01 .02 .03 .04 .044) 
-graphout mort_density_full
-
-
+graphout mort_density_full, pdf

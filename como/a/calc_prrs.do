@@ -54,9 +54,12 @@ foreach prev in india uk_os uk_nhs uk_nhs_matched {
       qui sum hr_age if age == 50
       qui replace hr_age = hr_age / `r(mean)'
     }
+
+    /* create a prr for male gender */
+    gen prr_male = (prev_male * hr_male + (1 - prev_male))
     
-    /* create another one that has age and gender */
-    gen prr_all = prr_health * hr_age * (prev_male * hr_male + (1 - prev_male))
+    /* create prr for combined health, age and gender */
+    gen prr_all = prr_health * hr_age * prr_male
     
     save $tmp/prr_`prev'_`hr', replace
 
