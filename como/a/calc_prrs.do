@@ -40,7 +40,7 @@ foreach prev in india uk_os uk_nhs uk_nhs_matched {
     
     /* calculate the risk factor at each age, multiplying prevalence by hazard ratio */
     gen prr_health = 1
-    foreach v in male $hr_biomarker_vars $hr_gbd_vars $hr_os_only_vars {
+    foreach v in $hr_biomarker_vars $hr_gbd_vars $hr_os_only_vars {
 
       /* rf <-- rf * (prev_X * hr_X + (1 - prev_X) * hr_notX), but hr_notX is always 1 */
       gen prr_`v' = prev_`v' * hr_`v' + (1 - prev_`v')
@@ -55,8 +55,8 @@ foreach prev in india uk_os uk_nhs uk_nhs_matched {
       qui replace hr_age = hr_age / `r(mean)'
     }
     
-    /* create another one that has age */
-    gen prr_all = prr_health * hr_age
+    /* create another one that has age and gender */
+    gen prr_all = prr_health * hr_age * (prev_male * hr_male + (1 - prev_male))
     
     save $tmp/prr_`prev'_`hr', replace
 
@@ -83,7 +83,6 @@ merge 1:1 age using $tmp/uk_pop, keep(master match) nogen keepusing(uk_pop)
 
 /* save an analysis file */
 save $tmp/como_analysis, replace
-
 
 /*****************************/
 /* compare density of deaths */
@@ -198,13 +197,13 @@ ren prev* uprev*
 ren prr* uprr*
 
 /* calculate relative difference in prevalence and risk factor for each condition */
-foreach v in male $hr_biomarker_vars $hr_gbd_vars $hr_os_only_vars {
+foreach v in $hr_biomarker_vars $hr_gbd_vars $hr_os_only_vars {
   gen rfdiff_`v' = iprr_`v' / uprr_`v'
   gen prevdiff_`v' = iprev_`v' / uprev_`v'
 }
 
 /* report */
-foreach v in male $hr_biomarker_vars $hr_gbd_vars $hr_os_only_vars {
+foreach v in $hr_biomarker_vars $hr_gbd_vars $hr_os_only_vars {
   qui sum rfdiff_`v' if age == 50
   local rfd `r(mean)'
   qui sum prevdiff_`v' if age == 50
@@ -247,5 +246,4 @@ foreach v in male $hr_biomarker_vars $hr_gbd_vars health {
 
   /* show everything */
   di %25s "`v': " %5.2f (`umean') "  " %5.2f (`imean') "  `sign'" %2.1f (`perc') "%"
-
 }

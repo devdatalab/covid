@@ -44,150 +44,22 @@ graphout obese
 graph combine diabetes hypertension obese, rows(2)
 graphout biomarker_uk_india
 
-/*****************************************/
-/* compare health condition risk factors */
-/*****************************************/
+/***********************************************/
+/* plot combined risk of all health conditions */
+/***********************************************/
 
 /* open analysis file */
 use $tmp/como_analysis, clear
+
+/* plot comparison of PRR(age,all health conditions) in india vs. UK matched */
 sort age
-
-/* compare India and UK health condition risk factors */
-// scp prr_h_india_full_cts prr_h_uk_os_full_cts prr_h_uk_nhs_matched_full_cts prr_h_uk_nhs_full_cts, ///
-//     ytitle("Aggregate Contribution to Mortality from Risk Factors") ///
-//     legend(lab(1 "India") lab(2 "UK OpenSafely Coefs") lab(3 "UK full matched") lab(4 "UK full full")) name(prr_health_all)
-
-/* india vs. uk matched */
-
 twoway ///
     (line prr_h_india_full_cts age, lwidth(medthick) lcolor(black)) ///
     (line prr_h_uk_nhs_matched_full_cts age, lwidth(medthick) lcolor(orange)), ///
-    ytitle("Aggregate Contribution to Mortality from Risk Factors") xtitle("Age") ///
+    ytitle("Aggregate Contribution to Mortality from Population Health") xtitle("Age") ///
     legend(lab(1 "India") lab(2 "England") ring(0) pos(5) cols(1) size(small) symxsize(5) bm(tiny) region(lcolor(black))) ///
-    name(prr_health, replace)  ylabel(1(.5)4) 
+    name(prr_health, replace)  ylabel(1(.5)3) 
 graphout prr_health
-
-// /* NY hazard ratios */
-// twoway ///
-//     (line prr_h_india_ny age, lwidth(medthick) lcolor(black)) ///
-//     (line prr_h_uk_nhs_matched_ny age, lwidth(medthick) lcolor(gs8) lpattern(-)), ///
-//     title("NY State Hazard Ratios") ytitle("Risk Factor from Population Health Conditions") xtitle("Age") ///
-//     legend(lab(1 "India") lab(2 "England") ring(0) pos(5) cols(1) region(lcolor(black))) ///
-//     name(prr_health_ny, replace)  ylabel(1(.5)4)
-// graphout prr_health_ny
-// 
-// /* NY-Cummings HRs */
-// twoway ///
-//     (line prr_h_india_nycu age, lwidth(medthick) lcolor(black)) ///
-//     (line prr_h_uk_nhs_matched_nycu age, lwidth(medthick) lcolor(gs8) lpattern(-)), ///
-//     title("NY (Cummings) Hazard Ratios") ytitle("Risk Factor from Population Health Conditions") xtitle("Age") ///
-//     legend(lab(1 "India") lab(2 "England") ring(0) pos(5) cols(1) region(lcolor(black))) ///
-//     name(prr_health_nycu, replace)  ylabel(1(.5)6)
-// graphout prr_health_nycu
-
-// graph combine prr_health prr_health_ny prr_health_nycu, cols(3) ycommon
-// graphout prr_combined
-
-
-// /*************************************/
-// /* compare age * health risk factors */
-// /*************************************/
-// /* compare three UK models: OS fixed age, full-prevalences, simp */
-// sc prr_all_uk_os_simp_cts prr_all_uk_os_full_cts prr_all_uk_nhs_matched_full_cts prr_all_uk_nhs_full_cts, ///
-//     legend(lab(1 "Simp") lab(2 "Full O.S. coefs") lab(3 "Full (matched conditions)") lab(4 "Full (all conditions)")) name(prr_uk_compare) yscale(log)
-// 
-// /* full vs. full, India vs. UK */
-// sc prr_all_india_full_cts prr_all_uk_nhs_matched_full_cts, ///
-//     name(prr_all_full) yscale(log) legend(lab(1 "India") lab(2 "UK"))
-// 
-// /* simp vs. simp, India vs. UK */
-// sc prr_all_india_simp_cts prr_all_uk_nhs_simp_cts, ///
-//     name(prr_all_simp) yscale(log) legend(lab(1 "India") lab(2 "UK"))
-
-
-/*********************/
-/* Mortality Density */
-/*********************/
-/* open the simple data */
-// use $tmp/mort_density_simp, clear
-
-// /* plot uk vs. india death density, simp */
-// sort age
-// label var age "Age"
-// twoway ///
-//     (line uk_simp_deaths    age, lcolor(orange) lwidth(medium) lpattern(.-))     ///
-//     (line india_simp_deaths age, lcolor(gs8) lpattern(-) lwidth(medthick))       ///
-//     , ytitle("Distribution of Deaths" "Normalized population: 100,000") xtitle(Age)  ///
-//     legend(lab(1 "England (simp)") ///
-//     lab(2 "India (simp)"))
-// graphout mort_density_simp
-
-/* open the full data */
-use $tmp/mort_density_full, clear
-
-/* same graph, full model */
-twoway ///
-    (line india_full_deaths age if age <= 89, lcolor(black) lpattern(solid) lwidth(thick))       ///
-    (line uk_full_deaths    age if age <= 89, lcolor(orange) lwidth(thick) lpattern(solid))     ///
-    (line in_deaths_old     age if age <= 89, lcolor(black) lwidth(medium) lpattern(-))     ///
-    (line en_deaths         age if age <= 89, lcolor(orange) lwidth(medium) lpattern(-))     ///
-    , ytitle("Density Function of Deaths (%)") xtitle(Age)  ///
-    legend(lab(1 "India (model)") ///
-    lab(2 "England (model)") lab(3 "India (reported)") lab(4 "England (reported)") ///
-    ring(0) pos(11) cols(2) region(lcolor(black)) size(small) symxsize(5) bm(tiny)) ///
-    xscale(range(18 90)) xlabel(20 40 60 80) ylabel(.01 .02 .03 .04 .044) 
-graphout mort_density_full
-
-/* graph with hybrid india population * england health conditions */
-twoway ///
-    (line india_full_deaths age if age <= 89, lcolor(black) lpattern(solid) lwidth(medthick))       ///
-    (line uk_full_deaths    age if age <= 89, lcolor(orange) lwidth(medthick) lpattern(solid))     ///
-    (line ipop_ehealth_deaths age if age <= 89, lcolor(red) lwidth(medthick) lpattern(solid))     ///
-    , ytitle("Density Function of Deaths (%)") xtitle(Age)  ///
-    legend(lab(1 "India") ///
-    lab(2 "England") lab(3 "India pop, England age-specific health") ///
-    ring(0) pos(11) cols(2) region(lcolor(black)) size(small) symxsize(5) bm(tiny)) ///
-    xscale(range(18 90)) xlabel(20 40 60 80) ylabel(.01 .02 .03 .04 .044) 
-graphout mort_density_new
-
-
-// /* all 4 lines */
-// twoway ///
-//     (line uk_simp_deaths    age, lcolor(orange) lwidth(medium) lpattern(-))        ///
-//     (line india_simp_deaths age, lcolor(gs8) lpattern(-) lwidth(medthick))         ///
-//     (line uk_full_deaths      age, lcolor(orange) lwidth(medium) lpattern(solid))    ///
-//     (line india_full_deaths   age, lcolor(gs8) lpattern(solid) lwidth(medthick))     ///
-//     , ytitle("Distribution of Deaths" "Normalized population: 100,000") xtitle(Age)  ///
-//     legend(lab(1 "England (simp)") lab(2 "India (simp)") ///
-//     lab(3 "England (full)") lab(4 "India (full)"))
-// graphout mort_density_all
-// 
-// /* graph ny and nycu results  */
-// twoway ///
-//     (line uk_ny_deaths    age if age <= 89, lcolor(gs8) lwidth(medium) lpattern(-))     ///
-//     (line india_ny_deaths age if age <= 89, lcolor(black) lpattern(solid) lwidth(medthick))       ///
-//     (line mh_deaths         age if age <= 89, lcolor(orange) lwidth(medium) lpattern(.-))     ///
-//     (line en_deaths         age if age <= 89, lcolor(gs14) lwidth(medium) lpattern(.-))     ///
-//     , ytitle("Density Function of Deaths (%)") xtitle(Age)  ///
-//     title("NY State Age-specific ORs") legend(lab(1 "England (model)") ///
-//     lab(2 "India (model)") lab(3 "Maharasthra (reported)") lab(4 "England (reported)") ///
-//     ring(0) pos(11) cols(1) region(lcolor(black))) ///
-//     xscale(range(18 90)) xlabel(20 40 60 80) ylabel(.01 .02 .03 .04 .044)
-// graphout mort_density_ny
-// twoway ///
-//     (line uk_nycu_deaths    age if age <= 89, lcolor(gs8) lwidth(medium) lpattern(-))     ///
-//     (line india_nycu_deaths age if age <= 89, lcolor(black) lpattern(solid) lwidth(medthick))       ///
-//     (line mh_deaths         age if age <= 89, lcolor(orange) lwidth(medium) lpattern(.-))     ///
-//     (line en_deaths         age if age <= 89, lcolor(gs14) lwidth(medium) lpattern(.-))     ///
-//     , ytitle("Density Function of Deaths (%)") xtitle(Age)  ///
-//     title("NY (Cummings) HRs") legend(lab(1 "England (model)") ///
-//     lab(2 "India (model)") lab(3 "Maharasthra (reported)") lab(4 "England (reported)") ///
-//     ring(0) pos(11) cols(1) region(lcolor(black))) ///
-//     xscale(range(18 90)) xlabel(20 40 60 80) ylabel(.01 .02 .03 .04 .044)
-// graphout mort_density_nycu
-// 
-// graph combine density density_ny density_nycu, rows(1)
-// graphout mort_combined
 
 /********************/
 /* Coefficient Plot */
@@ -201,3 +73,24 @@ ren v1 variable
 ren v2 coef
 save $tmp/coefs_to_plot, replace
 shell python $ccode/como/a/make_coef_plot.py
+
+/*******************************/
+/* plot distribution of deaths */
+/*******************************/
+
+/* open the full data */
+use $tmp/mort_density_full, clear
+
+/* graph with hybrid india population * england health conditions */
+twoway ///
+    (line india_full_deaths age if age <= 89, lcolor(black) lpattern(solid) lwidth(medthick))       ///
+    (line uk_full_deaths    age if age <= 89, lcolor(orange) lwidth(medthick) lpattern(solid))     ///
+    (line ipop_ehealth_deaths age if age <= 89, lcolor("33 173 191") lwidth(medium) lpattern(dash))     ///
+    , ytitle("Share of Deaths at each Age (%)") xtitle(Age)  ///
+    legend(lab(1 "India") ///
+    lab(2 "England") lab(3 "India demographics, England age-specific health") ///
+    ring(0) pos(11) cols(1) region(lcolor(black)) size(small) symxsize(5) bm(tiny)) ///
+    xscale(range(18 90)) xlabel(20 40 60 80) ylabel(.01 .02 .03 .04 .044) 
+graphout mort_density_full
+
+

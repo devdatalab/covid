@@ -1,10 +1,10 @@
 /* create csv files */
-cap !rm -f $ddl/covid/como/a/covid_como_agerisks.csv
+cap !rm -f $out/covid_como_agerisks.csv
 cap !rm -f $ddl/covid/como/a/covid_como_sumstats.csv
 
-/**************/
-/* PRR Values */
-/**************/
+/**********************************************************************************************/
+/* Store England PRRs relative to India for each health condition for tex tables and coefplot */
+/**********************************************************************************************/
 use $tmp/prr_result, clear
 
 /* save all india and uk aggregate prr values by comorbidity, and ratio */
@@ -32,9 +32,9 @@ foreach v in male $hr_biomarker_vars $hr_gbd_vars health {
   insert_into_file using $ddl/covid/como/a/covid_como_sumstats.csv, key(`v'_ratio) value("`perc'") format(%3.2f)  
 }
 
-/***************/
-/* Prevalences */
-/***************/
+/**************************************************/
+/* Store prevalences into a CSV for a latex table */
+/**************************************************/
 /* get prevalences from DLHS/AHS */
 use $health/dlhs/data/dlhs_ahs_covid_comorbidities, clear
 drop if age > 100
@@ -48,7 +48,7 @@ foreach var in age18_40 age40_50 age50_60 age60_70 age70_80 age80_ male diabetes
   insert_into_file using $ddl/covid/como/a/covid_como_sumstats.csv, key(india_`var'_mu) value("`mu'") format(%2.1f)
 }
 
-/* get age-bracketed prevalences */
+/* age-specific prevalences for India */
 use $tmp/prev_india, clear
 ren prev_* *
 gen hypertension_both = hypertension_uncontr + hypertension_contr
@@ -60,33 +60,32 @@ foreach var in male diabetes_uncontr diabetes_contr hypertension_both obese_3 ob
   /* 18-40 */
   qui sum `var' [aw=india_pop] if age >=18 & age < 40
   local mu = `r(mean)'*100
-  insert_into_file using $ddl/covid/como/a/covid_como_agerisks.csv, key(india_`var'_18_40) value("`mu'") format(%2.1f)
+  insert_into_file using $out/covid_como_agerisks.csv, key(india_`var'_18_40) value("`mu'") format(%2.1f)
   
   /* 40-49 */
   qui sum `var' [aw=india_pop] if age >=40 & age < 50
   local mu = `r(mean)'*100
-  insert_into_file using $ddl/covid/como/a/covid_como_agerisks.csv, key(india_`var'_40_50) value("`mu'") format(%2.1f)
+  insert_into_file using $out/covid_como_agerisks.csv, key(india_`var'_40_50) value("`mu'") format(%2.1f)
 
   /* 50-60 */
   qui sum `var' [aw=india_pop] if age >=50 & age < 60
   local mu = `r(mean)'*100
-  insert_into_file using $ddl/covid/como/a/covid_como_agerisks.csv, key(india_`var'_50_60) value("`mu'") format(%2.1f)
+  insert_into_file using $out/covid_como_agerisks.csv, key(india_`var'_50_60) value("`mu'") format(%2.1f)
 
   /* 60-70 */
   qui sum `var' [aw=india_pop] if age >=60 & age < 70
   local mu = `r(mean)'*100
-  insert_into_file using $ddl/covid/como/a/covid_como_agerisks.csv, key(india_`var'_60_70) value("`mu'") format(%2.1f)
+  insert_into_file using $out/covid_como_agerisks.csv, key(india_`var'_60_70) value("`mu'") format(%2.1f)
 
   /* 70-80 */
   qui sum `var' [aw=india_pop] if age >= 70 & age < 80
   local mu = `r(mean)'*100
-  insert_into_file using $ddl/covid/como/a/covid_como_agerisks.csv, key(india_`var'_70_80) value("`mu'") format(%2.1f)
+  insert_into_file using $out/covid_como_agerisks.csv, key(india_`var'_70_80) value("`mu'") format(%2.1f)
 
   /* 80+ */
   qui sum `var' [aw=india_pop] if age >=80
   local mu = `r(mean)'*100
-  insert_into_file using $ddl/covid/como/a/covid_como_agerisks.csv, key(india_`var'_80_) value("`mu'") format(%2.1f)
-
+  insert_into_file using $out/covid_como_agerisks.csv, key(india_`var'_80_) value("`mu'") format(%2.1f)
 }
 
 /* do the UK demographics */
@@ -155,32 +154,32 @@ foreach geo in india uk {
     /* 18 - 40 */
     qui sum `var' [aw=`geo'_pop] if age >= 18 & age < 40
     local mu = `r(mean)'*100
-    insert_into_file using $ddl/covid/como/a/covid_como_agerisks.csv, key(`geo'_`var'_18_40) value("`mu'") format(%2.1f)
+    insert_into_file using $out/covid_como_agerisks.csv, key(`geo'_`var'_18_40) value("`mu'") format(%2.1f)
 
     /* 40 - 50 */
     qui sum `var' [aw=`geo'_pop] if age >= 40 & age < 50
     local mu = `r(mean)'*100
-    insert_into_file using $ddl/covid/como/a/covid_como_agerisks.csv, key(`geo'_`var'_40_50) value("`mu'") format(%2.1f)
+    insert_into_file using $out/covid_como_agerisks.csv, key(`geo'_`var'_40_50) value("`mu'") format(%2.1f)
 
     /* 50 - 60 */
     qui sum `var' [aw=`geo'_pop] if age >= 50 & age < 60
     local mu = `r(mean)'*100
-    insert_into_file using $ddl/covid/como/a/covid_como_agerisks.csv, key(`geo'_`var'_50_60) value("`mu'") format(%2.1f)
+    insert_into_file using $out/covid_como_agerisks.csv, key(`geo'_`var'_50_60) value("`mu'") format(%2.1f)
 
     /* 60 - 70 */
     qui sum `var' [aw=`geo'_pop] if age >= 60 & age < 70
     local mu = `r(mean)'*100
-    insert_into_file using $ddl/covid/como/a/covid_como_agerisks.csv, key(`geo'_`var'_60_70) value("`mu'") format(%2.1f)
+    insert_into_file using $out/covid_como_agerisks.csv, key(`geo'_`var'_60_70) value("`mu'") format(%2.1f)
 
     /* 70 - 80 */
     qui sum `var' [aw=`geo'_pop] if age >= 70 & age < 80
     local mu = `r(mean)'*100
-    insert_into_file using $ddl/covid/como/a/covid_como_agerisks.csv, key(`geo'_`var'_70_80) value("`mu'") format(%2.1f)
+    insert_into_file using $out/covid_como_agerisks.csv, key(`geo'_`var'_70_80) value("`mu'") format(%2.1f)
   
     /* 80+ */
     qui sum `var' [aw=`geo'_pop] if age >= 80
     local mu = `r(mean)'*100
-    insert_into_file using $ddl/covid/como/a/covid_como_agerisks.csv, key(`geo'_`var'_80_) value("`mu'") format(%2.1f)
+    insert_into_file using $out/covid_como_agerisks.csv, key(`geo'_`var'_80_) value("`mu'") format(%2.1f)
   }
 }
 
@@ -202,32 +201,32 @@ foreach var in male uk_prev_chronic_resp_dz uk_prev_diabetes_contr uk_prev_diabe
   /* 18 - 40 */
   qui sum `var' [aw=uk_pop] if age >= 18 & age < 40
   local mu = `r(mean)'*100
-  insert_into_file using $ddl/covid/como/a/covid_como_agerisks.csv, key(`var'_18_40) value("`mu'") format(%2.1f)
+  insert_into_file using $out/covid_como_agerisks.csv, key(`var'_18_40) value("`mu'") format(%2.1f)
 
   /* 40 - 50 */
   qui sum `var' [aw=uk_pop] if age >= 40 & age < 50
   local mu = `r(mean)'*100
-  insert_into_file using $ddl/covid/como/a/covid_como_agerisks.csv, key(`var'_40_50) value("`mu'") format(%2.1f)
+  insert_into_file using $out/covid_como_agerisks.csv, key(`var'_40_50) value("`mu'") format(%2.1f)
 
   /* 50 - 60 */
   qui sum `var' [aw=uk_pop] if age >= 50 & age < 60
   local mu = `r(mean)'*100
-  insert_into_file using $ddl/covid/como/a/covid_como_agerisks.csv, key(`var'_50_60) value("`mu'") format(%2.1f)
+  insert_into_file using $out/covid_como_agerisks.csv, key(`var'_50_60) value("`mu'") format(%2.1f)
 
   /* 60 - 70 */
   qui sum `var' [aw=uk_pop] if age >= 60 & age < 70
   local mu = `r(mean)'*100
-  insert_into_file using $ddl/covid/como/a/covid_como_agerisks.csv, key(`var'_60_70) value("`mu'") format(%2.1f)
+  insert_into_file using $out/covid_como_agerisks.csv, key(`var'_60_70) value("`mu'") format(%2.1f)
 
   /* 70 - 80 */
   qui sum `var' [aw=uk_pop] if age >= 70 & age < 80
   local mu = `r(mean)'*100
-  insert_into_file using $ddl/covid/como/a/covid_como_agerisks.csv, key(`var'_70_80) value("`mu'") format(%2.1f)
+  insert_into_file using $out/covid_como_agerisks.csv, key(`var'_70_80) value("`mu'") format(%2.1f)
 
   /* 80+ */
   qui sum `var' [aw=uk_pop] if age >= 80
   local mu = `r(mean)'*100
-  insert_into_file using $ddl/covid/como/a/covid_como_agerisks.csv, key(`var'_80_) value("`mu'") format(%2.1f)
+  insert_into_file using $out/covid_como_agerisks.csv, key(`var'_80_) value("`mu'") format(%2.1f)
 
 }
 
@@ -238,7 +237,7 @@ table_from_tpl, t($ddl/covid/como/a/covid_como_sumstats_tpl.tex) r($ddl/covid/co
 table_from_tpl, t($ddl/covid/como/a/covid_como_sumhr_tpl.tex) r($ddl/covid/como/a/covid_como_sumstats.csv) o($out/covid_como_sumhr.tex)
 
 /* create the age-specific prevalence appendix table */
-table_from_tpl, t($ddl/covid/como/a/covid_como_agerisks_tpl.tex) r($ddl/covid/como/a/covid_como_agerisks.csv) o($out/covid_como_agerisks.tex)
+table_from_tpl, t($ddl/covid/como/a/covid_como_agerisks_tpl.tex) r($out/covid_como_agerisks.csv) o($out/covid_como_agerisks.tex)
 
 /* create the o/s vs. england  prevalence appendix table */
 table_from_tpl, t($ddl/covid/como/a/covid_como_oscompare_tpl.tex) r($ddl/covid/como/a/covid_como_sumstats.csv) o($out/covid_como_oscompare.tex)
