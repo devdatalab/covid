@@ -47,7 +47,7 @@ forval b = 1/1000 {
       
       /* calculate the all-comorbidity population relative risk at each age, multiplying prevalence by hazard ratio */
       gen prr_health = 1
-      foreach v in male $hr_biomarker_vars $hr_gbd_vars {
+      foreach v in $hr_biomarker_vars $hr_gbd_vars {
         gen prr_`v' = prev_`v' * hr_`v' + (1 - prev_`v')
         qui replace prr_health = prr_health * prr_`v'
         qui sum prr_health
