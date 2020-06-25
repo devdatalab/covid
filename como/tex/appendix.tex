@@ -1,7 +1,6 @@
 \documentclass[10pt,letterpaper]{article}
 \setcounter{page}{0}
 
-\usepackage{lscape} 
 \usepackage{mathptmx}
 \usepackage{mathtools} 
 \usepackage{bbm}
@@ -27,7 +26,7 @@
 \input{\HOME/include.tex}
 
 % include standard package
-\input{\includepath/front_matter}
+\input{\includepath/front_matter_como}
 
 \usepackage{fancyhdr} 
 \pagestyle{fancy}
@@ -62,7 +61,7 @@ The DLHS-4 and AHS surveys administered a household-level questionnaire that col
 We combined the DLHS-4 and AHS datasets to create a nationally representative dataset for analysis. Individuals with missing age, sex, height, weight, glucose, or blood pressure measurement were dropped from the sample. Individuals with reported age greater than 99 were assumed to be outliers and also dropped from the dataset. Additionally, as the thresholds for defining risk factors like obesity during pregnancy are not well established, pregnant women were also dropped from the sample. The final analysis sample contained 1,375,548 individuals, of which 577,994 (42.0\%) came from the AHS and the remaining 797,554 (58.0\%) came from the DLHS.
 
 \subsection{Estimation of glucose, obesity, and blood pressure in India}
-The DLHS-4 and AHS surveys both used the same data collection methods for biomarkers. Details of biomarker measurement are described in the survey manuals and summarized briefly here.\cite{noauthor_annual_2014} Systolic and diastolic BP were measured twice on the upper left arm, while sitting, with an interval of at least 3 minutes for each individual. The mean of the two measures was used to generate a single continuous measure of BP that was then classified as hypertension if systolic BP was 140 mmHg or higher or diastolic BP was 90 mmHg or higher, or if the individual reported a diagnosis of hypertension. Height and weight were directly measured and BMI was calculated as weight in kilograms divided by the square of height in meters. Blood glucose was measured from a single capillary blood sample (finger prick) and automatically converted into plasma equivalents by the glucometer. Single capillary glucose measures are not ideal for clinical diagnosis of diabetes but have been recommended by the WHO for population surveillance in lower income countries [REF Definition and diagnosis of diabetes mellitus and intermediate hyperglycemia: report of a WHO/IDF consultation]. Standard international thresholds were used to define diabetes as a plasma glucose reading $\geq$126mg/dL [7.0mmol/L] if fasting or $\geq$200 mg/dL [11.1 mmol/L] if reported not fasting. Individuals were asked to fast overnight before their glucose measurement. Self-reported fasting status was recorded in the DLHS-4 but not the AHS. We follow other studies that have used these data and use self-reported fasting status for all DLHS-4 participants and assume all AHS participants had fasted for the primary analysis. \cite{geldsetzer_diabetes_2018,bischops_prevalence_2019} Assuming these individuals were not fasting changes estimated total diabetes prevalence in India from 9.8\% to 8.5\%.
+The DLHS-4 and AHS surveys both used the same data collection methods for biomarkers. Details of biomarker measurement are described in the survey manuals and summarized briefly here.\cite{noauthor_annual_2014} Systolic and diastolic BP were measured twice on the upper left arm, while sitting, with an interval of at least 3 minutes for each individual. The mean of the two measures was used to generate a single continuous measure of BP that was then classified as hypertension if systolic BP was 140 mmHg or higher or diastolic BP was 90 mmHg or higher, or if the individual reported a diagnosis of hypertension. Height and weight were directly measured and BMI was calculated as weight in kilograms divided by the square of height in meters. Blood glucose was measured from a single capillary blood sample (finger prick) and automatically converted into plasma equivalents by the glucometer. Single capillary glucose measures are not ideal for clinical diagnosis of diabetes but have been recommended by the WHO for population surveillance in lower income countries [REF Definition and diagnosis of diabetes mellitus and intermediate hyperglycemia: report of a WHO/IDF consultation]. Standard international thresholds were used to define diabetes as a plasma glucose reading $\geq$126mg/dL [7.0mmol/L] if fasting or $\geq$200 mg/dL [11.1 mmol/L] if reported not fasting. Individuals were asked to fast overnight before their glucose measurement. Self-reported fasting status was recorded in the DLHS-4 but not the AHS. We follow other studies that have used these data and use self-reported fasting status for all DLHS-4 participants and assume all AHS participants had fasted for the primary analysis. \cite{geldsetzer2018,bischops2019} Assuming these individuals were not fasting changes estimated total diabetes prevalence in India from 9.8\% to 8.5\%.
 
 All prevalence estimates from the DLHS-4 and AHS were weighted with a sample weight. Sample weights determined by the survey design of the DLHS-4 were provided in the publicly available data. These weights were multiplied by a district population weight, defined as the percentage of the national population in each district, to obtain the final sample weight. Due to a different survey design, the AHS does not have a sample weight in the data and so the sample weight was defined only by the district population weight.
 
@@ -102,9 +101,9 @@ We obtained estimated COVID-19 mortality hazard ratios for risk factors from the
     \footnotesize{[figure note]}
     \end{center}
   \end{figure}
-  
- \bibliography{\HOME/ddl/covid/como/tex/covid-como}
- \bibliographystyle{vancouver}
+
+\bibliographystyle{vancouver}
+\bibliography{\includepath/covid-como}
 
 \end{document}
 
