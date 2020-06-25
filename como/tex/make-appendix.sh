@@ -15,3 +15,4 @@ pdflatex appendix.tex
 echo "MAKE: 3RD LATEX RUN"
 pdflatex appendix.tex
 
+cp appendix.pdf ~/public_html/pdf
