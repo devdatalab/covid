@@ -32,11 +32,14 @@ foreach hr in hr_full hr_simp {
   /* keep the risk factors, the desired hazard ratio, and the confidence interval */
   keep variable `hr' `hr'_low `hr'_up
 
+  /* transform hazard ratio into a relative risk, assuming base mortality rate of 1% */
+  replace `hr' = (1 - exp(`hr' * ln(1 - 0.01))) / 0.01
+
   /* replace the confidence interval with a standard error.
   These are odds ratios. CIs for log odds are symmetric. */
   gen `hr'_lnse = (ln(`hr') - ln(`hr'_low)) / 1.96
   gen `hr'_lnse2 = (ln(`hr'_up) - ln(`hr')) / 1.96
-  
+
   /* reshape them to wide format */
   gen v1 = 0
   keep `hr' `hr'_lnse v1 variable

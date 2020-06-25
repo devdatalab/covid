@@ -30,13 +30,13 @@ foreach prev in india uk_os uk_nhs uk_nhs_matched {
   foreach hr in simp_dis full_dis simp_cts full_cts ny nycu {
 
     /* show which entry we are on */
-    disp_nice "`prev'-`hr'"
+    // disp_nice "`prev'-`hr'"
     
     /* open the hazard ratio file */
     use $tmp/hr_`hr', clear
     
     /* merge the prevalence file */
-    merge 1:1 age using $tmp/prev_`prev', nogen
+    qui merge 1:1 age using $tmp/prev_`prev', nogen
     
     /* calculate the risk factor at each age, multiplying prevalence by hazard ratio */
     gen prr_health = 1
@@ -46,7 +46,7 @@ foreach prev in india uk_os uk_nhs uk_nhs_matched {
       gen prr_`v' = prev_`v' * hr_`v' + (1 - prev_`v')
       qui replace prr_health = prr_health * prr_`v'
       qui sum prr_health
-      di "`v': " %5.2f `r(mean)'
+      // di "`v': " %5.2f `r(mean)'
     }
 
     /* normalize the cts age hazard ratio around age 50 */
@@ -94,7 +94,7 @@ ren *uk_nhs_matched_ny* *uk_ny*
 ren *india_simp_cts* *india_simp*
 ren *uk_nhs_simp_cts* *uk_simp*
 
-global modellist india_full uk_full india_simp uk_simp ipop_ehealth
+global modellist india_full uk_full ipop_ehealth
 
 /* Calculate the distribution of deaths in the model */
 global mortrate 1
@@ -220,7 +220,7 @@ merge 1:1 age using $tmp/uk_pop, keep(master match) nogen keepusing(uk_pop)
 save $tmp/prr_result, replace
 
 local t 1
-foreach v in male $hr_biomarker_vars $hr_gbd_vars health {
+foreach v in $hr_biomarker_vars $hr_gbd_vars health {
 
   /* show title only if it's the first pass thru the loop */
   if `t' {

@@ -13,7 +13,7 @@ twoway ///
     legend(size(vsmall) rows(2) ///
     lab(1 "Uncontrolled Diabetes (India)") ///
     lab(2 "Controlled Diabetes (India)") ///
-    lab(3 "Uncontrolled Diabetes (Englamd)") ///
+    lab(3 "Uncontrolled Diabetes (England)") ///
     lab(4 "Controlled Diabetes (England)"))
 graphout diabetes
 
