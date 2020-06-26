@@ -52,10 +52,10 @@ sort age
 twoway ///
     (line prr_health_micro age, lwidth(medthick) lcolor(black)) ///
     (line prr_health_agg   age, lwidth(medthick) lcolor(lavender)), ///
-    ytitle("Aggregate Contribution to Mortality from Risk Factors") xtitle("Age") ///
+    ytitle("Aggregate Population Relative Risk from Health Conditions") xtitle("Age") ///
     legend(lab(1 "Microdata") lab(2 "Aggregate Data") ring(0) pos(5) cols(1) size(small) symxsize(5) bm(tiny) region(lcolor(black))) ///
     ylabel(1(.5)2.5) 
-graphout prr_health_joint
+graphout prr_health_joint, pdf
 
 line gap age if age < 98, lwidth(medthick) ylabel(1 1.05 1.1 1.15) ///
     xtitle("Age") ytitle("Increased population relative risk" "from comorbidity correlation")

@@ -1,6 +1,7 @@
 \documentclass[12pt,letterpaper]{article}
 \setcounter{page}{0}
 
+% \usepackage[a4paper,margin=1in,landscape]{geometry}
 \usepackage{mathtools} 
 \usepackage{bbm}
 \usepackage[multiple]{footmisc}
@@ -25,7 +26,7 @@
 \input{\HOME/include.tex}
 
 % include standard package
-\input{\includepath/front_matter}
+\input{\includepath/front_matter_como}
 
 \usepackage{fancyhdr} 
 \pagestyle{fancy}
@@ -57,7 +58,8 @@
    \begin{table}[H]
     \begin{center}
      \caption{condition prevalences }
-     \input{\covidpath/app_table_age_bin_prev}
+     %\input{\covidpath/app_table_age_bin_prev}
+     \input{\covidpath/covid_como_agerisks.tex}
      
      \footnotesize{[table note]}
     \end{center}
@@ -66,7 +68,8 @@
   \begin{table}[H]
     \begin{center}
     \caption{Prevalence of Conditions in Population and in OpenSAFELY}
-    \input{\covidpath/app_table_os_vs_nhs}
+    %\input{\covidpath/app_table_os_vs_nhs}
+    \input{\covidpath/covid_como_oscompare.tex}
     
     \footnotesize{[table note]}
     \end{center}
@@ -76,12 +79,7 @@
   \begin{figure}[H]
     \begin{center}
     \caption{Prevalence of Conditions in Population and in OpenSAFELY}
-    \textbf{Age Interpolation: Model with only Age and Sex}
-    
-    \includegraphics[scale=0.5]{\covidpath/age_interpolation_simple.pdf}
-
-    \newline
-    \textbf{Age Interpolation: Fully-Adjusted Model}
+     \textbf{Age Interpolation: Fully-Adjusted Model}
     
     \includegraphics[scale=0.5]{\covidpath/age_interpolation_full}
     
