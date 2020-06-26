@@ -40,6 +40,11 @@ foreach v in male $hr_biomarker_vars {
   di "`v': " %5.2f `r(mean)'
 }
 
+gen gap = prr_health_micro / prr_health_agg
+tsset age
+replace gap = (L3.gap + L2.gap + L.gap + gap + F.gap + F2.gap + F3.gap) / 7 if !mi(L3.gap) & !mi(F3.gap)
+keep if age <= 95
+
 /* plot the two age-specific PRR distributions */
 sort age
 twoway ///
@@ -50,9 +55,6 @@ twoway ///
     ylabel(1(.5)2.5) 
 graphout prr_health_joint
 
-gen gap = prr_health_micro / prr_health_agg
-
-tsset age
-replace gap = (L3.gap + L2.gap + L.gap + gap + F.gap + F2.gap + F3.gap) / 7 if !mi(L3.gap) & !mi(F3.gap)
-line gap age if age < 90, lwidth(medthick) ylabel(1 1.05 1.1 1.15)
-graphout x
+line gap age if age < 98, lwidth(medthick) ylabel(1 1.05 1.1 1.15) ///
+    xtitle("Age") ytitle("Increased population relative risk" "from comorbidity correlation")
+graphout prr_ratio_micro, pdf

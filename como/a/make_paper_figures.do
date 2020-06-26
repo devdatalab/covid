@@ -72,7 +72,7 @@ ren v1 variable
 ren v2 coef
 save $tmp/coefs_to_plot, replace
 shell python $ccode/como/a/make_coef_plot.py
-cp ~/public_html/png/coefplot.png $out/, replace
+// cp ~/public_html/png/coefplot.png $out/, replace
 
 /*******************************/
 /* plot distribution of deaths */
