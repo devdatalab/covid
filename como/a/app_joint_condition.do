@@ -8,9 +8,11 @@ Indian data since we don't have microdata on the GBD variables. */
 
 /*************************************************************************************/
 
+global conditionlist male $hr_biomarker_vars
+
 /* open Indian comorbidity microdata */
 use $health/dlhs/data/dlhs_ahs_covid_comorbidities, clear
-keep wt age male $hr_biomarker_vars
+keep wt age $conditionlist
 
 /* merge primary hazard ratios */
 merge m:1 age using $tmp/hr_full_cts
@@ -18,7 +20,7 @@ merge m:1 age using $tmp/hr_full_cts
 /* calculate the risk factor for each individual, multiplying the hazard ratio by
    an indicator for condition existence. */
 gen prr_health = 1
-foreach v in male $hr_biomarker_vars  {
+foreach v in $conditionlist  {
 
   qui gen prr_`v' = `v' * hr_`v' + (1 - `v')
   qui replace prr_health = prr_health * prr_`v'
@@ -27,13 +29,13 @@ foreach v in male $hr_biomarker_vars  {
 }
 
 /* collapse combined health PRR to age-level using survey weights */
-collapse (mean) male $hr_biomarker_vars prr_health [aw=wt], by(age)
+collapse (mean) $conditionlist prr_health [aw=wt], by(age)
 ren prr_health prr_health_micro
 
 /* now repeat the exercise using the aggregate data (which ignores interactions) */
 merge 1:1 age using $tmp/hr_full_cts, nogen
 gen prr_health_agg = 1
-foreach v in male $hr_biomarker_vars {
+foreach v in $conditionlist {
   qui gen prr_`v' = `v' * hr_`v' + (1 - `v')
   qui replace prr_health_agg = prr_health_agg * prr_`v'
   qui sum prr_health_agg

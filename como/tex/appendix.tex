@@ -174,13 +174,17 @@ The sensitivity of the results to sampling error in prevalences is even smaller 
 
 Our primary analysis implicitly assumes that COVID-19 mortality risk factors are uncorrelated with each other. This assumption is unavoidable given that many of the risk factors in India are drawn from the Global Burden of Disease studies which report age-specific prevalence but not the correlation across conditions.
 
-If risk factors are correlated, then actual mortality risk will be higher than what is estimated.
+If risk factors are correlated, then actual mortality risk will be higher than what is estimated because the relative risks of joint comorbidities will be compounded. Even if mortality risk is biased downward, our results may not be substantially affected because they rely on comparisons between England and India rather than focusing on the relative risk directly. If England and India have similar covariances of health conditions, then the biases will balance out exactly. Note that our analysis accounts for the most significant correlation of risk factors, which is the positive correlation between health conditions and age. This is accounted for because all health conditions are aggregated at each age.
 
+To study the impact of correlated health conditions on population relative risk, we focused on the subset of health conditions available in the Indian microdata: obesity, diabetes, and hypertension. We calculate individual relative risk from the combined set of these risk factors by compounding the relative risks for these conditions at the individual level. We then aggregated the data across individuals and compared the combined relative risk to the same measure generated from the aggregate data, i.e. without accounting for correlation between comorbidities (Figure~\ref{fig:covar}).
+The covariance of conditions increases the mortality rate by 5--10\% across the age distribution. The effect does not vary much by age and is small relative to the aggregate risk factor shown in Figure 2.
+
+The close match of our model to the age-specific death rates in OpenSAFELY is a second indication that condition covariance is unlikely to substantially bias the findings. As noted in the body of the paper, our model predicts 8.8\% of deaths below the age of 60 in England; OpenSAFELY reports a figure of 8.6\%. Because our hazard ratios come from an individual model that takes correlation between conditions into account, the close match of the age distribution of deaths suggests that our inability to observe condition covariance has not biased the results substantially.
 
 \begin{figure}[H]
   \begin{center}
     \caption{Sensitivity Test 3: Covariance of Health Conditions}
-    
+    \label{fig:covar}    
     \includegraphics[scale=0.85]{\covidpath/prr_ratio_micro.pdf}
     
     \footnotesize{}
