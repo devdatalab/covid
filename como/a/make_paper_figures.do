@@ -13,7 +13,7 @@ twoway ///
     (line i_diabetes_contr   age, lwidth(thick) lcolor(gs2) lpattern(-))     ///
     (line u_diabetes_uncontr age, lwidth(thick) lcolor(orange) lpattern(solid)) ///
     (line u_diabetes_contr   age, lwidth(thick) lcolor(orange) lpattern(-)) ///
-    , name(diabetes, replace) xtitle("Age") ytitle("Prevalence (%)") xlabel(, labsize(medium)) ylabel(, labsize(medium)) ///
+    , name(diabetes, replace) xtitle("Age", size(large)) ytitle("Prevalence (%)", size(large)) xlabel(, labsize(medium)) ylabel(, labsize(medium)) ///
     legend(size(large) rows(2) symxsize(5) bm(tiny) ///
     lab(1 "Uncontrolled (India)") ///
     lab(2 "Controlled (India)") ///
@@ -39,7 +39,7 @@ graphout hypertension, pdf
 twoway ///
     (line i_obese age, lwidth(thick) lcolor(gs2) lpattern(solid)) ///
     (line u_obese age, lwidth(thick) lcolor(orange) lpattern(solid)) ///
-    , name(obese, replace) xtitle("Age") ytitle("Prevalence (%)") xlabel(, labsize(medium)) ylabel(, labsize(medium)) ///
+    , name(obese, replace) xtitle("Age", size(large)) ytitle("Prevalence (%)", size(large)) xlabel(, labsize(medium)) ylabel(, labsize(medium)) ///
     legend(size(large) rows(1) symxsize(5) bm(tiny) ///
     lab(1 "India") ///
     lab(2 "England"))
