@@ -60,8 +60,12 @@ forval b = 1/1000 {
         qui replace hr_age = hr_age / `r(mean)'
       }
       
-      /* create another one that has age */
-      gen prr_all = prr_health * hr_age
+      /* create a prr for male gender */
+      gen prr_male = (prev_male * hr_male + (1 - prev_male))
+
+      /* create prr for combined health, age and gender */
+      gen prr_all = prr_health * hr_age * prr_male
+      
       save $tmp/prr_`prev'_`hr'_boot, replace
     }
   }
