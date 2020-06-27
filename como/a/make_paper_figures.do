@@ -3,6 +3,10 @@
 /******************************************************/
 use $tmp/prev_compare, clear
 
+foreach v of varlist i_* u_* {
+  replace `v' = `v' * 100
+}
+
 /* diabetes comparison */
 twoway ///
     (line i_diabetes_uncontr age, lwidth(thick) lcolor(gs2) lpattern(solid)) ///
@@ -81,6 +85,10 @@ shell python $ccode/como/a/make_coef_plot.py
 /* open the full data */
 use $tmp/mort_density_full, clear
 
+foreach v of varlist *deaths {
+  replace `v' = `v' * 100
+}
+
 /* graph with hybrid india population * england health conditions */
 twoway ///
     (line india_full_deaths age if age <= 89, lcolor(black) lpattern(solid) lwidth(medthick))       ///
@@ -90,5 +98,5 @@ twoway ///
     legend(lab(1 "India") ///
     lab(2 "England") lab(3 "India demographics, England age-specific health") ///
     ring(0) pos(11) cols(1) region(lcolor(black)) size(small) symxsize(5) bm(tiny)) ///
-    xscale(range(18 90)) xlabel(20 40 60 80) ylabel(.01 .02 .03 .04 .044) 
+    xscale(range(18 90)) xlabel(20 40 60 80) ylabel(0 1 2 3 4) 
 graphout mort_density_full, pdf
