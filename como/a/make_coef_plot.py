@@ -120,6 +120,6 @@ ax.set_title("Percent Change of Population Relative Risk for each \n Health Cond
 
 # save figure
 plt.savefig(os.path.join(homedir, "iec", "output", "covid", "coefplot.pdf"), bbox_inches="tight", dpi=150)
-plt.savefig(os.path.join(homedir, "public_html", "png", "coefplot.png"), bbox_inches="tight", dpi=150)
+# plt.savefig(os.path.join(homedir, "public_html", "png", "coefplot.png"), bbox_inches="tight", dpi=150)
 
 plt.close("all")
