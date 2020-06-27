@@ -12,7 +12,6 @@
 \usepackage[hyperpageref]{backref}
 \usepackage[hidelinks]{hyperref}
 \usepackage{url}
-\usepackage{graphicx}
 \usepackage{epstopdf}
 \usepackage{multirow}
 %\usepackage{array}
@@ -44,7 +43,7 @@
 %\citationstyle{dcu}
 
 \usepackage[labelfont=bf,center,large,labelsep=newline]{caption}
-\usepackage{subfigure}
+%\usepackage{subfigure}
 % \counterwithout{subtable}{table}
 \def\changemargin#1#2{\list{}{\rightmargin#2\leftmargin#1}\item[]}
 \let\endchangemargin=\endlist
@@ -66,3 +65,10 @@
 
 % set home path
 % \newcommand{\HOME}{\string~}
+
+\newcommand{\subfigimg}[3][,]{%
+  \setbox1=\hbox{\includegraphics[#1]{#3}}% Store image in box
+  \leavevmode\rlap{\usebox1}% Print image
+  \rlap{\hspace*{90pt}\raisebox{\dimexpr\ht1+0.9\baselineskip}{\colorbox{white}{{\footnotesize#2}}}}% Print label
+  \phantom{\usebox1}% Insert appropriate spcing
+}

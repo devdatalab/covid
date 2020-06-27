@@ -26,8 +26,8 @@ foreach v in male $hr_biomarker_vars $hr_gbd_vars health {
   else local sign " "
 
   /* save everying in csv for table */
-  insert_into_file using $ddl/covid/como/a/covid_como_sumstats.csv, key(uk_`v'_risk) value("`umean'") format(%3.2f)  
-  insert_into_file using $ddl/covid/como/a/covid_como_sumstats.csv, key(india_`v'_risk) value("`imean'") format(%3.2f)
+  insert_into_file using $ddl/covid/como/a/covid_como_sumstats.csv, key(uk_`v'_risk) value("`umean'") format(%4.3f)  
+  insert_into_file using $ddl/covid/como/a/covid_como_sumstats.csv, key(india_`v'_risk) value("`imean'") format(%4.3f)
   insert_into_file using $ddl/covid/como/a/covid_como_sumstats.csv, key(`v'_ratio_sign) value("`sign'")
   insert_into_file using $ddl/covid/como/a/covid_como_sumstats.csv, key(`v'_ratio) value("`perc'") format(%3.2f)  
 }

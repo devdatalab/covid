@@ -5,40 +5,40 @@ use $tmp/prev_compare, clear
 
 /* diabetes comparison */
 twoway ///
-    (line i_diabetes_uncontr age, lwidth(medthick) lcolor(gs2) lpattern(solid)) ///
-    (line i_diabetes_contr   age, lwidth(medthick) lcolor(gs2) lpattern(-))     ///
-    (line u_diabetes_uncontr age, lwidth(medthick) lcolor(orange) lpattern(solid)) ///
-    (line u_diabetes_contr   age, lwidth(medthick) lcolor(orange) lpattern(-))     ///
-    , name(diabetes, replace) xtitle("Age") ytitle("Prevalence") ///
-    legend(size(vsmall) rows(2) ///
-    lab(1 "Uncontrolled Diabetes (India)") ///
-    lab(2 "Controlled Diabetes (India)") ///
-    lab(3 "Uncontrolled Diabetes (England)") ///
-    lab(4 "Controlled Diabetes (England)"))
+    (line i_diabetes_uncontr age, lwidth(thick) lcolor(gs2) lpattern(solid)) ///
+    (line i_diabetes_contr   age, lwidth(thick) lcolor(gs2) lpattern(-))     ///
+    (line u_diabetes_uncontr age, lwidth(thick) lcolor(orange) lpattern(solid)) ///
+    (line u_diabetes_contr   age, lwidth(thick) lcolor(orange) lpattern(-)) ///
+    , name(diabetes, replace) xtitle("Age") ytitle("Prevalence (%)") xlabel(, labsize(medium)) ylabel(, labsize(medium)) ///
+    legend(size(large) rows(2) symxsize(5) bm(tiny) ///
+    lab(1 "Uncontrolled (India)") ///
+    lab(2 "Controlled (India)") ///
+    lab(3 "Uncontrolled (England)") ///
+    lab(4 "Controlled (England)"))
 graphout diabetes, pdf
 
 /* hypertension comparison */
 twoway ///
-    (line i_hypertension_uncontr age, lwidth(medthick) lcolor(gs2) lpattern(solid)) ///
-    (line i_hypertension_contr   age, lwidth(medthick) lcolor(gs2) lpattern(-))     ///
-    (line u_hypertension_uncontr age, lwidth(medthick) lcolor(orange) lpattern(solid)) ///
-    (line u_hypertension_contr   age, lwidth(medthick) lcolor(orange) lpattern(-))     ///
-    , name(hypertension, replace) xtitle("Age") ytitle("Prevalence") ///
-    legend(size(vsmall) rows(2) ///
-    lab(1 "Uncontrolled Hypertension (India)") ///
-    lab(2 "Controlled Hypertension (India)") ///
-    lab(3 "Uncontrolled Hypertension (England)") ///
-    lab(4 "Controlled Hypertension (England)"))
+    (line i_hypertension_uncontr age, lwidth(thick) lcolor(gs2) lpattern(solid)) ///
+    (line i_hypertension_contr   age, lwidth(thick) lcolor(gs2) lpattern(-))     ///
+    (line u_hypertension_uncontr age, lwidth(thick) lcolor(orange) lpattern(solid)) ///
+    (line u_hypertension_contr   age, lwidth(thick) lcolor(orange) lpattern(-))     ///
+    , name(hypertension, replace) xtitle("Age", size(large)) ytitle("Prevalence (%)", size(large)) xlabel(, labsize(medium)) ylabel(, labsize(medium)) ///
+    legend(size(large) rows(2) symxsize(5) bm(tiny) ///
+    lab(1 "Uncontrolled (India)") ///
+    lab(2 "Controlled (India)") ///
+    lab(3 "Uncontrolled (England)") ///
+    lab(4 "Controlled (England)"))
 graphout hypertension, pdf
 
 /* obesity comparison */
 twoway ///
-    (line i_obese age, lwidth(medthick) lcolor(gs2) lpattern(solid)) ///
-    (line u_obese age, lwidth(medthick) lcolor(orange) lpattern(solid)) ///
-    , name(obese, replace) xtitle("Age") ytitle("Prevalence") ///
-    legend(size(vsmall) rows(2) ///
-    lab(1 "Obese (India)") ///
-    lab(2 "Obese (England)"))
+    (line i_obese age, lwidth(thick) lcolor(gs2) lpattern(solid)) ///
+    (line u_obese age, lwidth(thick) lcolor(orange) lpattern(solid)) ///
+    , name(obese, replace) xtitle("Age") ytitle("Prevalence (%)") xlabel(, labsize(medium)) ylabel(, labsize(medium)) ///
+    legend(size(large) rows(1) symxsize(5) bm(tiny) ///
+    lab(1 "India") ///
+    lab(2 "England"))
 graphout obese, pdf
 
 graph combine diabetes hypertension obese, rows(2)
@@ -56,7 +56,7 @@ sort age
 twoway ///
     (line prr_h_india_full_cts age, lwidth(medthick) lcolor(black)) ///
     (line prr_h_uk_nhs_matched_full_cts age, lwidth(medthick) lcolor(orange)), ///
-    ytitle("Aggregate Population Relative Risk from Population Health") xtitle("Age") ///
+    ytitle("Aggregate Population Relative Risk from Population Helath", size(medsmall)) xtitle("Age", size(medsmall)) ///
     legend(lab(1 "India") lab(2 "England") ring(0) pos(5) cols(1) size(small) symxsize(5) bm(tiny) region(lcolor(black))) ///
     name(prr_health, replace)  ylabel(1(.5)3) 
 graphout prr_health, pdf
@@ -86,7 +86,7 @@ twoway ///
     (line india_full_deaths age if age <= 89, lcolor(black) lpattern(solid) lwidth(medthick))       ///
     (line uk_full_deaths    age if age <= 89, lcolor(orange) lwidth(medthick) lpattern(solid))     ///
     (line ipop_ehealth_deaths age if age <= 89, lcolor("33 173 191") lwidth(medium) lpattern(dash))     ///
-    , ytitle("Share of Deaths at each Age (%)") xtitle(Age)  ///
+    , ytitle("Share of Deaths at each Age (%)", size(medsmall)) xtitle(Age, size(medsmall))  ///
     legend(lab(1 "India") ///
     lab(2 "England") lab(3 "India demographics, England age-specific health") ///
     ring(0) pos(11) cols(1) region(lcolor(black)) size(small) symxsize(5) bm(tiny)) ///
