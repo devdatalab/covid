@@ -1,16 +1,19 @@
-
-
-/********************************************************************************************/
-/* Append HMIS data across years, after matching variables from early years and later years */
-/********************************************************************************************/
+/*********************************************************************************************************/
+/* Append HMIS(subdistrict) data across years, after matching variables from early years and later years */
+/*********************************************************************************************************/
 
 /* We have broadly two regimes of variable naming: an early regime from 2208/09 to 2016/17
 and the present regime from 2017/18 to 2020/21. Variables in early regime are prefixed by "ev_" and
-variables from the present regime are prefixed with a "v_". We first append all the variables for this early regime and then rename it to be consistent with the present regime by matching
-on variable descriptions with the new regime of data.*/
+variables from the present regime are prefixed with a "v_". We first append all the variables
+for this early regime and then rename it to be consistent with the present regime by matching
+on variable descriptions with the new regime of data.
+
+Note some variables are only available at the district level and not at subdistrict level.
+Hence the number of variables differ on these two files
+
+*/
 
 /* Create an empty temp file to append early years' data */
-
 clear
 save $tmp/hmis_early_years, replace emptyok
 
@@ -19,7 +22,7 @@ local early_years "2008-2009 2009-2010 2010-2011 2011-2012 2012-2013 2013-2014 2
 
 /* Append Data for years 2008-2017 */
 foreach year in `early_years'{
-  use $tmp/hmis/hmis_dist_clean_`year', clear
+  use $tmp/hmis/subdistrict/hmis_subdist_clean_`year', clear
 
   /* We use ev_ to denote variable that come from early regime of data (ev_ = early variables) */
   ren v_* ev_*
@@ -231,12 +234,12 @@ ren ev_15_1_2_c_1 v_15_3_3_a_TOTAL
 ren ev_15_1_2_c_2 v_15_3_3_b_TOTAL
 
 /* Widal Tests */
-ren ev_15_2_Number_tested v_15_4_1_TOTAL
+ren ev_15_2_Number v_15_4_1_TOTAL
 
 /* Syphilis/VDRL Tests */
-ren ev_15_3_a_Number_tested v_15_3_4_a_TOTAL
-ren ev_15_3_b_Number_tested v_15_3_4_c_TOTAL
-ren ev_15_3_c_Number_tested v_1_6_2_a_TOTAL
+ren ev_15_3_a_Number v_15_3_4_a_TOTAL
+ren ev_15_3_b_Number v_15_3_4_c_TOTAL
+ren ev_15_3_c_Number v_1_6_2_a_TOTAL
 
 /* Malaria Tests */
 /* We Assume microscopy tests == blood smear test */
@@ -244,202 +247,6 @@ ren ev_15_4_1_TOTAL v_11_1_1_a_TOTAL
 ren ev_15_4_2_TOTAL v_11_1_1_b_TOTAL
 ren ev_15_4_3_TOTAL v_11_1_1_c_TOTAL
 
-/* Vaccinations */
-
-/* DPT  */
-ren ev_16_1_1_1 v_17_1_1
-ren ev_16_1_1_2 v_17_1_2
-ren ev_16_1_1_3 v_17_1_3
-ren ev_16_1_1_4 v_17_1_4
-ren ev_16_1_1_5 v_17_1_5
-
-/* Penatvalent  */
-ren ev_16_1_1A_1 v_17_2_1
-ren ev_16_1_1A_2 v_17_2_2
-ren ev_16_1_1A_3 v_17_2_3
-ren ev_16_1_1A_4 v_17_2_4
-ren ev_16_1_1A_5 v_17_2_5
-
-/* OPV  */
-ren ev_16_1_2_1 v_17_3_1
-ren ev_16_1_2_2 v_17_3_2
-ren ev_16_1_2_3 v_17_3_3
-ren ev_16_1_2_4 v_17_3_4
-ren ev_16_1_2_5 v_17_3_5
-
-/* TT  */
-ren ev_16_1_3_1 v_17_4_1
-ren ev_16_1_3_2 v_17_4_2
-ren ev_16_1_3_3 v_17_4_3
-ren ev_16_1_3_4 v_17_4_4
-ren ev_16_1_3_5 v_17_4_5
-
-/* DT  */
-ren ev_16_1_4_1 v_17_5_1
-ren ev_16_1_4_2 v_17_5_2
-ren ev_16_1_4_3 v_17_5_3
-ren ev_16_1_4_4 v_17_5_4
-ren ev_16_1_4_5 v_17_5_5
-
-/* BCG  */
-ren ev_16_1_5_1 v_17_6_1
-ren ev_16_1_5_2 v_17_6_2
-ren ev_16_1_5_3 v_17_6_3
-ren ev_16_1_5_4 v_17_6_4
-ren ev_16_1_5_5 v_17_6_5
-
-/* Measles */
-ren ev_16_1_6_1 v_17_7_1
-ren ev_16_1_6_2 v_17_7_2
-ren ev_16_1_6_3 v_17_7_3
-ren ev_16_1_6_4 v_17_7_4
-ren ev_16_1_6_5 v_17_7_5
-
-/* JE */
-ren ev_16_1_7_1 v_17_8_1
-ren ev_16_1_7_2 v_17_8_2
-ren ev_16_1_7_3 v_17_8_3
-ren ev_16_1_7_4 v_17_8_4
-ren ev_16_1_7_5 v_17_8_5
-
-/* Hep B */
-ren ev_16_1_8_1 v_17_9_1
-ren ev_16_1_8_2 v_17_9_2
-ren ev_16_1_8_3 v_17_9_3
-ren ev_16_1_8_4 v_17_9_4
-ren ev_16_1_8_5 v_17_9_5
-
-/* Family Planning Inventory Data */
-
-/* IUD 380A */
-ren ev_16_2_1_1 v_18_1_1
-ren ev_16_2_1_2 v_18_1_2
-ren ev_16_2_1_3 v_18_1_3
-ren ev_16_2_1_4 v_18_1_4
-ren ev_16_2_1_5 v_18_1_5
-
-/* Condoms */
-ren ev_16_2_2_1 v_18_3_1
-ren ev_16_2_2_2 v_18_3_2
-ren ev_16_2_2_3 v_18_3_3
-ren ev_16_2_2_4 v_18_3_4
-ren ev_16_2_2_5 v_18_3_5
-
-/* Oral Contraceptive */
-ren ev_16_2_3_1 v_18_4_1
-ren ev_16_2_3_2 v_18_4_2
-ren ev_16_2_3_3 v_18_4_3
-ren ev_16_2_3_4 v_18_4_4
-ren ev_16_2_3_5 v_18_4_5
-
-/* Emergency Contraceptive */
-ren ev_16_2_4_1 v_18_5_1
-ren ev_16_2_4_2 v_18_5_2
-ren ev_16_2_4_3 v_18_5_3
-ren ev_16_2_4_4 v_18_5_4
-ren ev_16_2_4_5 v_18_5_5
-
-/* Tubal Rings */
-ren ev_16_2_5_1 v_18_8_1
-ren ev_16_2_5_2 v_18_8_2
-ren ev_16_2_5_3 v_18_8_3
-ren ev_16_2_5_4 v_18_8_4
-ren ev_16_2_5_5 v_18_8_5
-
-/* Miscellaneous Inventory */
-
-/* Gloves */
-ren ev_16_3_02_1 v_19_1_1
-ren ev_16_3_02_2 v_19_1_2
-ren ev_16_3_02_3 v_19_1_3
-ren ev_16_3_02_4 v_19_1_4
-ren ev_16_3_02_5 v_19_1_5
-
-/* MVA Syringes */
-ren ev_16_3_03_1 v_19_2_1
-ren ev_16_3_03_2 v_19_2_2
-ren ev_16_3_03_3 v_19_2_3
-ren ev_16_3_03_4 v_19_2_4
-ren ev_16_3_03_5 v_19_2_5
-
-/* Fluconazole Tablets */
-ren ev_16_3_04_1 v_19_3_1
-ren ev_16_3_04_2 v_19_3_2
-ren ev_16_3_04_3 v_19_3_3
-ren ev_16_3_04_4 v_19_3_4
-ren ev_16_3_04_5 v_19_3_5
-
-/* Blood Transfusion Sets */
-ren ev_16_3_05_1 v_19_4_1
-ren ev_16_3_05_2 v_19_4_2
-ren ev_16_3_05_3 v_19_4_3
-ren ev_16_3_05_4 v_19_4_4
-ren ev_16_3_05_5 v_19_4_5
-
-/* Gluteraldehyde 2%  */
-ren ev_16_3_06_1 v_19_5_1
-ren ev_16_3_06_2 v_19_5_2
-ren ev_16_3_06_3 v_19_5_3
-ren ev_16_3_06_4 v_19_5_4
-ren ev_16_3_06_5 v_19_5_5
-
-/* IFA Tablets */
-ren ev_16_3_07_1 v_19_6_1
-ren ev_16_3_07_2 v_19_6_2
-ren ev_16_3_07_3 v_19_6_3
-ren ev_16_3_07_4 v_19_6_4
-ren ev_16_3_07_5 v_19_6_5
-
-/* IFA Syrup */
-ren ev_16_3_08_1 v_19_9_1
-ren ev_16_3_08_2 v_19_9_2
-ren ev_16_3_08_3 v_19_9_3
-ren ev_16_3_08_4 v_19_9_4
-ren ev_16_3_08_5 v_19_9_5
-
-/* Pediatric Antibiotics */
-ren ev_16_3_09_1 v_19_10_1
-ren ev_16_3_09_2 v_19_10_2
-ren ev_16_3_09_3 v_19_10_3
-ren ev_16_3_09_4 v_19_10_4
-ren ev_16_3_09_5 v_19_10_5
-
-/* Vitaman A Solution Merged with Vitamin A Syrup**  */
-ren ev_16_3_10_1 v_19_11_1
-ren ev_16_3_10_2 v_19_11_2
-ren ev_16_3_10_3 v_19_11_3
-ren ev_16_3_10_4 v_19_11_4
-ren ev_16_3_10_5 v_19_11_5
-
-/* ORS(New WHO) */
-ren ev_16_3_11_1 v_19_12_1
-ren ev_16_3_11_2 v_19_12_2
-ren ev_16_3_11_3 v_19_12_3
-ren ev_16_3_11_4 v_19_12_4
-ren ev_16_3_11_5 v_19_12_5
-
-/* Syringes*/
-
-/* 0.1ml */
-ren ev_16_4_1_1 v_20_1_1
-ren ev_16_4_1_2 v_20_1_2
-ren ev_16_4_1_3 v_20_1_3
-ren ev_16_4_1_4 v_20_1_4
-ren ev_16_4_1_5 v_20_1_5
-
-/* 0.5ml */
-ren ev_16_4_2_1 v_20_2_1
-ren ev_16_4_2_2 v_20_2_2
-ren ev_16_4_2_3 v_20_2_3
-ren ev_16_4_2_4 v_20_2_4
-ren ev_16_4_2_5 v_20_2_5
-
-/* 5ml Disposable */
-ren ev_16_4_3_1 v_20_3_1
-ren ev_16_4_3_2 v_20_3_2
-ren ev_16_4_3_3 v_20_3_3
-ren ev_16_4_3_4 v_20_3_4
-ren ev_16_4_3_5 v_20_3_5
 
 /* Deaths */
 
@@ -553,10 +360,10 @@ clear
 save $tmp/hmis_later_years, replace emptyok
 
 /* Append Data for years 2017-2021 */
-local later_years "2017-2018 2018-2019 2019-2020 2020-2021"
+local later_years "2017-2018 2018-2019 2019-2020"
 
 foreach year in `later_years'{
-  use $tmp/hmis/hmis_dist_clean_`year', clear
+  use $tmp/hmis/subdistrict/hmis_subdist_clean_`year', clear
   append using $tmp/hmis_later_years
   save $tmp/hmis_later_years, replace
 }
@@ -603,13 +410,6 @@ rename v_4_1_1_b_TOTAL hm_birth_f
 rename v_4_1_1_a_TOTAL hm_birth_m
 rename v_2_1_3_TOTAL hm_care_home
 rename v_2_2_2_TOTAL hm_care_institution	
-
-/* PPE */
-rename v_19_1_1 hm_gloves_balance
-rename v_19_1_2	hm_gloves_received 
-rename v_19_1_3	hm_gloves_unusable
-rename v_19_1_4	hm_gloves_distributed
-rename v_19_1_5	hm_gloves_total
 
 /* Deaths Data */
 
@@ -672,24 +472,11 @@ ren v_16_8_4_TOTAL hm_death_viral_dengue
 ren v_16_8_5_TOTAL hm_death_viral_aes
 ren v_16_8_6_TOTAL hm_death_viral_je
 
-/* rename and label hospitals with their full names */
-label var sc "Number of Sub Center Reporting Reporting"
-label var phc "Number of Primary Health Center Reporting"
-label var chc "Number of Community Health Center Reporting"
-label var sdh "Number of Sub District Hospital Reporting"
-label var dh  "Number of District Hospital Reporting"
-label var total "Total Number of Hospitals Reporting"
-
-rename sc hm_hosp_sc
-rename phc hm_hosp_phc
-rename chc hm_hosp_chc
-rename sdh hm_hosp_sdh
-rename dh hm_hosp_dh
-rename total hm_hosp_total
 
 /* Label identifiers */
 label var state "Name of the State"
 label var district "Name of the district"
+label var subdistrict "Name of the Subdistrict"
 label var year "Calendar Year"
 label var month "Month"
 label var category "Total/Rural/Urban/Private/Public"
@@ -705,8 +492,8 @@ ren v_* hm_v_*
 
 /* Save Data */
 compress
-save $health/hmis/hmis_dist_clean.dta, replace
+save $health/hmis/hmis_subdist_clean.dta, replace
 
 /* save to covid repo */
-save $covidpub/hmis/hmis_dist_clean.dta, replace
-export delimited $covidpub/hmis/csv/hmis_dist_clean.csv, replace
+save $covidpub/hmis/hmis_subdist_clean.dta, replace
+export delimited $covidpub/hmis/csv/hmis_subdist_clean.csv, replace
