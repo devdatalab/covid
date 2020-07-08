@@ -1,3 +1,5 @@
+
+
 /********************************************************************************************/
 /* Append HMIS data across years, after matching variables from early years and later years */
 /********************************************************************************************/
@@ -8,6 +10,7 @@ variables from the present regime are prefixed with a "v_". We first append all 
 on variable descriptions with the new regime of data.*/
 
 /* Create an empty temp file to append early years' data */
+
 clear
 save $tmp/hmis_early_years, replace emptyok
 
@@ -16,7 +19,7 @@ local early_years "2008-2009 2009-2010 2010-2011 2011-2012 2012-2013 2013-2014 2
 
 /* Append Data for years 2008-2017 */
 foreach year in `early_years'{
-  use $health/hmis/hmis_dist_clean_`year', clear
+  use $tmp/hmis/hmis_dist_clean_`year', clear
 
   /* We use ev_ to denote variable that come from early regime of data (ev_ = early variables) */
   ren v_* ev_*
@@ -553,7 +556,7 @@ save $tmp/hmis_later_years, replace emptyok
 local later_years "2017-2018 2018-2019 2019-2020 2020-2021"
 
 foreach year in `later_years'{
-  use $health/hmis/hmis_dist_clean_`year', clear
+  use $tmp/hmis/hmis_dist_clean_`year', clear
   append using $tmp/hmis_later_years
   save $tmp/hmis_later_years, replace
 }

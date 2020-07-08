@@ -26,7 +26,7 @@ save $tmp/append_keys, replace emptyok
 qui do $ddl/covid/covid_progs.do
 
 /* Import data to get distinct values to loop over */
-use $health/hmis/hmis_dist_clean_key, clear
+use $tmp/hmis/hmis_dist_clean_key, clear
 
 /* Get distinct values of hmis_year variable */
 levelsof hmis_year, local(fin_years)
