@@ -34,7 +34,7 @@ foreach geo in uk india {
 
 /* ENGLAND */
 /* import the non-gbd prevalences */
-import delimited $covidpub/covid/csv/uk_condition_sd.csv, clear
+import delimited $comocsv/uk_condition_sd.csv, clear
 
 /* reshape wide on conditions */
 replace condition = condition[_n-1] if mi(condition)
@@ -85,7 +85,7 @@ merge 1:1 age using $tmp/prev_uk_nhs_matched, nogen
 save $tmp/all_uk_se, replace
 
 /* get the copd data */
-import delimited using $iec/covid/covid/csv/copd_mclean_rates.csv, clear
+import delimited using $comocsv/copd_mclean_rates.csv, clear
 
 /* calculate the total population */
 gen pop_total = pop_female + pop_male

@@ -1,7 +1,7 @@
 /*****************************************/
 /* transform NHS incidence data into dta */
 /*****************************************/
-import delimited using $covidpub/covid/csv/uk_nhs_incidence.csv, clear varnames(1)
+import delimited using $comocsv/uk_nhs_incidence.csv, clear varnames(1)
 replace prevalence = prevalence / 100
 
 /* reshape it to wide */

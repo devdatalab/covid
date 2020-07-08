@@ -48,6 +48,9 @@ graphout obese, pdf
 graph combine diabetes hypertension obese, rows(2)
 graphout biomarker_uk_india
 
+graph combine diabetes hypertension obese, rows(2) title("Prevalence of diabetes, hypertension, and obesity in India and England")
+graphout biomarker_uk_india_title
+
 /***********************************************/
 /* plot combined risk of all health conditions */
 /***********************************************/

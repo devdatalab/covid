@@ -1,7 +1,7 @@
 global conditionlist copd asthma
 
 /* import india prevalence csv */
-import delimited using $covidpub/covid/csv/india_condition_prevalence.csv, varnames(1) clear
+import delimited using $comocsv/india_condition_prevalence.csv, varnames(1) clear
 drop source
 ren *, lower
 
