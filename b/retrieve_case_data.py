@@ -29,11 +29,33 @@ def retrieve_covid19india_case_data(url, output_fp):
     df["date"] = df["dateannounced"].apply(lambda x: datetime.datetime.strptime(x, "%d/%m/%Y"))
     df = df.sort_values(["date", "detectedstate", "detecteddistrict"]).reset_index(drop=True)
 
-    # get filename
-    fn = os.path.basename(url).replace(".json", ".csv")
+    # write the dataframe out as a csv
+    df.to_csv(os.path.join(output_fp, "covid19india_old_cases.csv"))
+
+    
+def retrieve_covid19india_deaths_data(url, output_fp):
+    """
+    url = specific url to api provided by covid19india (ex. "https://api.covid19india.org/deaths_recoveries.json")
+    output_fp = the filepath the final csv data is stored to, should be your scratch folder
+    """
+    # retrieve the json with all data
+    with urllib.request.urlopen(url) as _url:
+
+        # load the json
+        data = json.loads(_url.read().decode())
+
+        # get name of data sheet 
+        key = list(data.keys())[0]
+        
+        # convert the raw data to a dataframe
+        df =  pd.DataFrame.from_records(data[key])
+
+    # make date a python object
+    df["date"] = df["date"].apply(lambda x: datetime.datetime.strptime(x, "%d/%m/%Y"))
+    df = df.sort_values(["date", "state", "district"]).reset_index(drop=True)
 
     # write the dataframe out as a csv
-    df.to_csv(os.path.join(output_fp, fn))
+    df.to_csv(os.path.join(output_fp, "covid19india_old_deaths.csv"))
 
 
 def retrieve_covid19india_district_data(url, output_fp):
@@ -71,11 +93,13 @@ def retrieve_covid19india_district_data(url, output_fp):
             df_dist = df_dist.sort_values("date_obj").reset_index(drop=True)
 
             # count new cases
-            df_dist["cases"] = df_dist["confirmed"].diff()
+            # df_dist["cases"] = df_dist["confirmed"].diff()
+            # df_dist.loc[0, "cases"] = df_dist.loc[0, "confirmed"].copy()           
 
             # count new deaths
-            df_dist["death"] = df_dist["deceased"].diff()
-
+            # df_dist["death"] = df_dist["deceased"].diff()
+            # df_dist.loc[0, "death"] = df_dist.loc[0, "deceased"].copy()
+            
             # add this data to the master dataframe
             if df.empty:
                 df = df_dist.copy()
@@ -417,3 +441,142 @@ def read_hmis_csv_hospitals(year, filepath):
     
 
 
+def read_hmis_subdistrict_csv(year, filepath):
+    """
+    read in hmis data stored in xml/xls format
+    and convert to csv
+    """
+    # get full filepath to state directory
+    # (this is where we'll save the data)
+    fp_state = os.path.join(filepath, "hmis", "itemwise_monthly", "subdistrict", year, "A.Monthwise")
+
+    # get all sub directories in this folder
+    filelist_state = os.listdir(fp_state)
+
+    #Loop Over all States
+    for i in filelist_state:
+        try:
+        	    
+            #get full filepath to district folders
+            fp_dist = os.path.join(filepath, "hmis", "itemwise_monthly", "subdistrict", year, "A.Monthwise",
+        	                       i)
+
+            #get all subdirectories list in this folder
+            filelist_dist = os.listdir(fp_dist)
+
+    	    # create an empty dataframe to hold all the districts and subdistrict data
+            df_all = pd.DataFrame()
+    
+            # create dataframe to store all variable definitions at the state level
+            df_vars_all = pd.DataFrame()
+
+            #Loop over all the districts directories in the state
+            for j in filelist_dist:
+                
+                #get filepath to month of district reporting
+                fp_month = os.path.join(filepath, "hmis", "itemwise_monthly", "subdistrict", year, "A.Monthwise",
+                                        i, j)
+
+                #get all subdirectories in monthly district reporting data
+                filelist_month =  os.listdir(fp_month)
+
+                #Only keep xls files
+                filelist_month = [x for x in filelist_month if x.endswith(".xls")]
+            
+                #Loop Over all Distrct-month xls files
+                for k in filelist_month:
+    
+                    #read in xls file
+                    temp = pd.read_html(os.path.join(fp_month,k))[0]
+
+                    # transpose the dataframe
+                    temp = temp.T.reset_index()
+    
+                    # drop the unnecessary subdistrict column and variable category row
+                    temp = temp.drop(["level_0"], axis = 1)
+
+                    # combine variable name columns
+                    temp.loc[1] = temp.loc[1] + "." + temp.loc[3].astype(str)
+
+                    # initialise a dataframe to hold all variable and descriptions
+                    df_vars = pd.DataFrame()
+                    
+                    # extract the variable names and descriptions as their own dataframe
+                    df_vars = temp.loc[1:2].T
+                    
+                    # drop extra rows with no data
+                    index_col_map = {
+                        "2020-2021": ["level_1","level_2"],
+                        "2019-2020": ["level_1", "level_2"],
+                        "2018-2019": ["level_1", "level_2"],
+                        "2017-2018": ["level_1", "level_2"],
+                        "2016-2017": ["level_1"],
+                        "2015-2016": ["level_1"],
+                        "2014-2015": ["level_1"],
+                        "2013-2014": ["level_1"],
+                        "2012-2013": ["level_1"],
+                        "2011-2012": ["level_1"],
+                        "2010-2011": ["level_1"],
+                        "2009-2010": ["level_1"],
+                        "2008-2009": ["level_1"]
+                    }
+    
+    
+                    # drop extra rows with no data
+                    df_vars = df_vars.drop(index_col_map[year]).reset_index(drop=True)
+    
+                    # rename the columns
+                    df_vars.columns = ["variable", "description"]
+    
+                    # add month, district and subdistrict identifiers to df_var data
+                    # add in month
+                    df_vars["month"] =  f"{k.split('_')[1].split('.')[0]}"
+    
+                    # add in district
+                    df_vars["district"] = f"{j}"
+
+                    # drop extra rows with variable description and redundant name information
+                    temp = temp.drop([0,2, 3]).reset_index(drop=True)
+
+                    # Rename columns using the first row
+                    temp = temp.set_axis(list(Counter(temp.loc[0]).keys()), axis = 1)
+
+                    # Drop now redundant first row
+                    temp = temp.drop(0)
+
+                    # rename subdistrict and category columns
+                    temp = temp.rename(columns = {"Unnamed: 1_level_1.Unnamed: 3_level_1": "subdistrict",
+                                                  "Unnamed: 1_level_2.Unnamed: 3_level_2":"category"})
+                
+    
+                    # filter district names out
+                    dist_name = f"_{j}"
+                    temp = temp.query('subdistrict != @dist_name ')
+    
+                    # add in month
+                    temp = temp.assign(month =  f"{k.split('_')[1].split('.')[0]}")
+    
+                    # add in district
+                    temp = temp.assign(district = f"{j}")
+
+    
+                    # save data to dataframe
+                    df_all = df_all.append(temp)
+
+                    # save data definitions to dataframe
+                    df_vars_all = df_vars_all.append(df_vars)
+    
+            # save state-wise data
+            df_all.to_csv(os.path.join(fp_state, f"{i}.csv"))
+
+            # drop duplicates. For every district with n subdistricts, variables are repeated n times.
+            df_vars_all = df_vars_all.drop_duplicates()
+            
+            # save state-wise data definitions
+            df_vars_all.to_csv(os.path.join(fp_state, f"{i}_hmis_variable_definitions.csv"))
+
+            # print success message
+            print(f"Saved {i}.csv for {year}")
+        except:
+            print(f"Error in year {year} and state {i}")
+       

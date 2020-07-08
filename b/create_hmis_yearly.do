@@ -1,7 +1,22 @@
-/* processes excel files from NRHM HMIS and saves as stata files and csv's */
-/* data source: https://nrhm-mis.nic.in/hmisreports/frmstandard_reports.aspx */
+/*
 
-/* make directories for hmis data*/
+This do file processes and saves district level hmis data, through the following steps:
+
+1. make directories for hmis data: to store and save intermediary files.
+2. Ingest and Process District  Health/Itemwise Monthly Data
+3. Process Number of Hospitals/data_reporting_status data
+4. Merge Health and Hospital Data
+
+Uutputs: $tmp/hmis/hmis_dist_clean_`year' for every financial year of hmis data
+
+data source: https://nrhm-mis.nic.in/hmisreports/frmstandard_reports.aspx 
+
+*/
+
+
+/*************************************/
+/* 1. make directories for hmis data */
+/*************************************/
 cap mkdir $tmp/hmis
 cap mkdir $tmp/hmis/itemwise_monthly/
 cap mkdir $tmp/hmis/itemwise_monthly/district
@@ -16,9 +31,9 @@ foreach level in district subdistrict {
   }
 }
 
-/*************************************************************/
-/* Ingest and Process District  Health/Itemwise Monthly Data */
-/*************************************************************/
+/****************************************************************/
+/* 2. Ingest and Process District  Health/Itemwise Monthly Data */
+/****************************************************************/
 
 /* Change directory to run python code */
 cd $ddl/covid
@@ -51,7 +66,7 @@ foreach year in `years'{
   replace variable = subinstr(variable, " ", "_", .)
   replace variable = subinstr(variable, "(","_",.)
   replace variable = subinstr(variable, ")","",.)
-	
+
 	/* Save as stata file */
 	save $health/hmis/data_dictionary/hmis_variable_definitions_`year', replace
 
@@ -123,7 +138,6 @@ foreach year in `years'{
   /* For  years 2017-2021, where the variable "category" exists*/
   capture confirm variable category
   if (_rc == 0){ 
-
     order state district year month category year_financial
   }
 
@@ -147,7 +161,7 @@ foreach year in `years'{
   }
 
   /* Save data */
-  save $health/hmis/hmis_dist_clean_`year', replace
+  save $tmp/hmis/hmis_dist_clean_`year', replace
   
   /* Label the variables according to their data dictionary */
   /* read in variable definitions */
@@ -159,7 +173,7 @@ foreach year in `years'{
   drop in 1
 
   /* Copy variable description as labels to variables encoded by in hmis_dist_clean_`year' */
-  merge using $health/hmis/hmis_dist_clean_`year'
+  merge using $tmp/hmis/hmis_dist_clean_`year'
   drop _merge
   local i = 1
   foreach v of varlist v_* {
@@ -172,14 +186,14 @@ foreach year in `years'{
   drop variable description
   
   /* Save labelled and cleaned data */
-  save $health/hmis/hmis_dist_clean_`year', replace
+  save $tmp/hmis/hmis_dist_clean_`year', replace
 
 }
 
-/**********************************************************/
-/* Process Number of Hospitals/data_reporting_status data */
-/**********************************************************/
 
+/**************************************************************/
+/* 3. Process Number of Hospitals/data_reporting_status data  */
+/**************************************************************/
 /* Unzip Hospitals/District Reporting Status Data from zip files and save .xls files in $tmp*/
 local filelist : dir "$health/hmis/raw/data_reporting_status" files "*.zip"
 foreach file in `filelist' {
@@ -267,13 +281,13 @@ foreach year in `years'{
 
 }
 
-/**********************************/
-/* Merge Health and Hospital Data */
-/**********************************/
+/************************************/
+/*4. Merge Health and Hospital Data */
+/************************************/
 foreach year in `years'{
 
   /* Use health data, merge with hospitals data and then save  */
-  use $health/hmis/hmis_dist_clean_`year', clear
+  use $tmp/hmis/hmis_dist_clean_`year', clear
   merge 1:1 state district year month category year_financial using $tmp/hmis/hmis_dist_clean_hospitals_`year' 
 
   /* Drop unmerged hospitals data for 2020-2021  */
@@ -283,6 +297,6 @@ foreach year in `years'{
   drop _merge
   
   /* Save Merged health + hospitals data */
-  save $health/hmis/hmis_dist_clean_`year', replace
+  save $tmp/hmis/hmis_dist_clean_`year', replace
 
 }

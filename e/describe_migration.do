@@ -29,7 +29,7 @@ foreach var in total_cases outltmigration pc11_pca_tot_p outltmigration_pc total
 }
 
 /* keep latest covid data */
-keep if date == 22081
+keep if date == 22082
 
 /* save dataset */
 save $tmp/covid_migration.dta, replace

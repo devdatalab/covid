@@ -13,63 +13,50 @@ do $ccode/como/b/prep_health_data.do
 do $ccode/como/b/prep_gbd.do
 
 /* calculate risk factors */
-do $ccode/como/b/gen_comorbidity_predictions.do
+do $ccode/como/b/prep_india_comorbidities.do
 
-/* create an age-level dataset with UK condition prevalence */
-do $ccode/como/b/prep_uk_prevalence.do
+/* create an age-level dataset with England condition prevalence */
+do $ccode/como/b/prep_england_prevalence.do
 
 /* create a clean set of files with relative risks */
 do $ccode/como/b/prep_hrs.do
 
-/* repeat with external india aggregate data (e.g. GBD) */
-// do $ccode/como/b/prep_india_sim_prevalence.do
-
 /* prep NY odds ratios of death */
-do $ccode/como/b/prep_ny_mortality.do
-
-/* clean state-level GBD for India */
-// do $ccode/como/b/clean_gbd_india.do
-
-/* create state-level biomarker variables */
-// do $ccode/como/b/collapse_biomarkers_to_state.do
+// do $ccode/como/b/prep_ny_mortality.do
 
 /* prep india and UK sex ratios and populations */
 do $ccode/como/b/prep_pop_sex.do
 
-/* create HR, prevalence, population files all with identical structures */
-do $ccode/como/b/prep_outcomes_generic.do
+/* create age-level datasets for HR, prevalence, population, all with identical structures */
+/* THIS CREATES THE MAIN ANALYSIS FILE */
+do $ccode/como/b/prep_age_level_data.do
+
+/* create prevalence standard errors for bootstraps */
+do $ccode/como/b/prep_standard_errors.do
+
+/* calculate population relative risks and death distributions for england / india */
+do $ccode/como/a/calc_prrs.do
 
 /************/
 /* analysis */
 /************/
 
+/* prepare data for England / India prevalence comparison */
+do $ccode/como/a/prep_eng_india_prev_compare.do
+
 /* calculate summary statistics and prevalences */
 // do $ccode/como/a/sumstats.do
 
-/* Figure 1: plot UK / India prevalence of comorbid conditions */
-do $ccode/como/a/compare_uk_india_prevalence.do
+/**********************/
+/* figures and tables */
+/**********************/
 
-/* run analysis for paper */
-do $ccode/como/a/calc_outcomes_generic.do
+/* create tables for main text and appendix*/
+do $ccode/como/a/make_paper_tables.do
 
-/* Figure 3: coefficient plot */
-shell python $ccode/como/a/make_coef_plot.py
+/* create figures */
+do $ccode/como/a/make_paper_figures.do
 
-/* create tables */
-do $ccode/como/b/make_paper_tables.do
-
-// /* plot India risk factors under various assumptions*/
-// do $ccode/como/a/analyze_age_mort_risk.do
-// 
-// /* run model in levels with population weighting to predict E(deaths) */
-// do $ccode/como/a/analyze_mort_counts.do
-// 
-// /* examine risk factor distribution across states */
-// 
-// 
-// /* plot relationship between risk and poverty */
-// do $ccode/como/a/examine_risk_factors_poverty.do
-// 
 
 /************/
 /* appendix */
@@ -78,9 +65,11 @@ do $ccode/como/b/make_paper_tables.do
 /* app figure: hr interpolations */
 do $ccode/como/a/app_age_hr_interpolation.do
 
-/* app table: NHS/GBD prevalences vs OpenSAFELY */
-do $ccode/como/a/app_table_nhs_vs_os.do
+/* run sensitivity tests for sampling error in HRs */
+do $ccode/como/a/calc_hr_sensitivity.do
 
-/* app table: risk factor prevalences by age bin for all places */
-do $ccode/como/a/app_table_age_bin_prev.do
+/* run sensitivity tests for sampling error in prevalences */
+do $ccode/como/a/calc_prev_sensitivity.do
 
+/* sensitivity to joint conditions */
+do $ccode/como/a/app_joint_condition.do

@@ -21,7 +21,7 @@ ren hv21 symptoms_pertaining_illness
 ren hv23 diagnosed_for
 ren hv02 sl_no
 ren hv91a fasting_blood_glucose_mg_dl
-ren hv91 fasting_blood_glucose
+ren hv91 fasting
 ren hv25 regular_treatment
 
 /* match variables to format in AHS */
@@ -65,9 +65,6 @@ drop if mi(age) | mi(sex) | sex == 3
 
 /* drop missing age and those under 18 */
 drop if age < 18
-
-/* replace fasting question with missing if not yes or no */
-replace fasting_blood_glucose = . if (fasting_blood_glucose != 1 & fasting_blood_glucose != 2)
 
 /* SAMPLE */
 /* define a variable to clarify the sample for each variable */

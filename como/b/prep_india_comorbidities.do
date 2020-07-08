@@ -56,7 +56,7 @@ replace female = . if (mi(sex) | sex == 3)
 
 gen male = 0
 replace male = 1 if sex == 1
-replace male =. if (mi(sex) |sex == 3)
+replace male =. if (mi(sex) | sex == 3)
 
 /* BMI */
 /* convert height to meters */
@@ -226,10 +226,10 @@ label var chronic_heart_dz "self-reported diagnosis or symptoms of heart disease
 gen diabetes_biomarker = 0 if !mi(fasting_blood_glucose_mg_dl)
 
 /* standard WHO definition of diabetes is >=126mg/dL if fasting and >=200 if not */
-replace diabetes_biomarker = 1 if (fasting_blood_glucose_mg_dl >= 126 & fasting_blood_glucose == 2) | (fasting_blood_glucose_mg_dl >= 200 & fasting_blood_glucose == 1)
+replace diabetes_biomarker = 1 if (fasting_blood_glucose_mg_dl >= 126 & fasting == 2) | (fasting_blood_glucose_mg_dl >= 200 & fasting == 1)
 
 /* assume that people with a glucose measure but missing fasting data are fasting */
-replace diabetes_biomarker = 1 if (fasting_blood_glucose_mg_dl >= 126 & !mi(fasting_blood_glucose_mg_dl)) & mi(fasting_blood_glucose)
+replace diabetes_biomarker = 1 if (fasting_blood_glucose_mg_dl >= 126 & !mi(fasting_blood_glucose_mg_dl)) & mi(fasting)
 
 /* the threshold is not well established for pregnant women, set their values to missing */
 replace diabetes_biomarker = . if pregnant == 1
@@ -282,7 +282,7 @@ replace autoimmune_dz = 1 if (diagnosed_for == 19 | diagnosed_for == 20)
 label var autoimmune_dz "self-reported psoriasis or rheumatoid arthritis"
 
 /* keep only identifying information and comorbidity variables */
-keep uid pc11* psu htype rcvid supid tsend tsstart person_index hh* *wt survey rural_urban stratum psu_id ahs_house_unit house_hold_no date_survey age* male female bmi* height weight_in_kg bp* hypertension* resp* cardio_symptoms diabetes* *haem* *_dz stroke diagnosed_for fasting* survey sample
+keep uid pc11* psu htype rcvid supid tsend tsstart person_index hh* *wt survey rural_urban stratum psu_id ahs_house_unit house_hold_no date_survey age* male female bmi* height weight_in_kg bp* hypertension* resp* cardio_symptoms diabetes* *haem* *_dz stroke diagnosed_for fasting* survey sample pregnant
 
 /* create a combined weight variable */
 /* - assume all AHS weights are 1 (since it's self-weighting) */
@@ -346,39 +346,3 @@ compress
 save $health/dlhs/data/dlhs_ahs_covid_comorbidities, replace
 
 
-
-
-
-
-
-/*****************************************************************/
-/* PN 6/16/2020 --- I believe everything below this is obsolete. */
-/*****************************************************************/
-exit
-exit
-exit
-
-
-/* combine the risk factors with the DLHS/AHS */
-use $health/dlhs/data/dlhs_ahs_covid_comorbidities, clear
-
-/* shrink by dropping string vars */
-drop tsend tsstart date_survey
-
-merge 1:1 uid using $tmp/individual_risk_factors_hr_full, gen(_m_full)
-assert _m_full == 3
-drop _m_full
-merge 1:1 uid using $tmp/individual_risk_factors_hr_age_sex, gen(_m_agesex)
-assert _m_agesex == 3
-drop _m_agesex
-
-/* bring in continuous age factors */
-winsorize age 18 100, replace
-merge m:1 age using $tmp/uk_age_predicted_hr, gen(_m_cts_age) keep(match master)
-assert _m_cts_age == 3
-
-/* limit to the 18-99 year old sample for the paper */
-keep if inrange(age, 18, 99)
-
-/* save micro dataset with NHS hazard ratios */
-save $tmp/combined, replace

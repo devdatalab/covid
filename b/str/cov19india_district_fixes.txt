@@ -4,7 +4,8 @@ y.s.r.,ysr kadapa,andhra pradesh
 y.s.r.,y.s.r. kadapa,andhra pradesh
 y.s.r.,y s r,andhra pradesh
 spsr nellore,s.p.s. nellore,andhra pradesh
-spsr nellore,sri potti sriramulu nellore,candhra pradesh
+spsr nellore,sri potti sriramulu nellore,andhra pradesh
+dibang valley,upper dibang valley,arunachal pradesh
 south salmara mancachar,south salmara mankachar,assam
 aurangabad,aurangabad bihar,bihar
 purbi champaran,purba champaran,bihar
@@ -20,14 +21,44 @@ gariyaband,gariaband,chhattisgarh
 janjgir-champa,janjgir champa,chhattisgarh
 kabirdham,kabeerdham,chhattisgarh
 uttar bastar kanker,uttar bastar kanker,chhattisgarh
+bilaspur,gaurela pendra marwahi,chhattisgarh
 ahmadabad,ahmedabad,gujarat
-dibang valley,upper dibang valley,arunachal pradesh
+sabar kantha,sabarkantha,gujarat
+panch mahals,panchmahal,gujarat
+mehsana,mahesana,gujarat
+kachchh,kutch,gujarat
+chota udaipur,chhota udaipur,gujarat
+banas kantha,banaskantha,gujarat
+charkhi dadri,charki dadri,haryana
+shopiyan,shupiyan,jammu and kashmir
+baramulla,baramula,jammu and kashmir
+bandipora,bandipore,jammu and kashmir
+budgam,badgam,jammu and kasmir
+koderma,kodarma,jharkhand
+bengaluru urban,bengaluru,karnataka
+ahmednagar,ahmadnagar,maharashtra
+beed,bid,maharashtra
+raigarh,raigad,maharashtra
+gondiya,gondia,maharashtra
+buldhana,buldana,maharashtra
+deogarh,debagarh,odisha
+baleshwar,balasore,odisha
+jajapur,jajpur,odisha
+ferozepur,firozpur,punjab
+dholpur,dhaulpur,rajasthan
+chittaurgarh,chittorgarh,rajasthan
 west district,west sikkim,sikkim
 east district,east sikkim,sikkim
 north district,north sikkim,sikkim
 south district,south sikkim,sikkim
-bengaluru urban,bengaluru,karnataka
 the nilgiris,nilgiris,tamil nadu
 jayashankar bhupalapally,jayashankar,tamil nadu
 kumuram bheem asifabad,komaram bheem,tamil nadu
+kanniyakumari,kanyakumari,tamil nadu
+jangoan,jangaon,telangana
+jagitial,jagtial,telangana
+mahrajganj,maharajganj,uttar pradesh
 kheri,lakhimpur kheri,uttar pradesh
+barabanki,bara banki,uttar pradesh
+medinipur east,purba medinipur,west bengal
+

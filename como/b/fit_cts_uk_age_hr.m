@@ -34,7 +34,10 @@ write_png('/scratch/pn/fit_age_sex')
 predicted_hr_age_sex = fit_age_sex(age);
 predicted_hr_full = fit_full(age);
 
-%% 
+%% topcode predicted values at age 90 value since we don't have certainty over the
+%% age distribution here or whether HRs keep rising
+predicted_hr_age_sex(age > 90) = predicted_hr_age_sex(age == 90);
+predicted_hr_full(age > 90) = predicted_hr_full(age == 90);
 
 %% write these to a file
 writematrix([age predicted_hr_age_sex predicted_hr_full],'/scratch/pn/uk_age_fits.csv')

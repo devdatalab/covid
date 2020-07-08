@@ -36,10 +36,15 @@ if "$fast" != "1" {
   do $ccode/b/gen_age_distribution
 }
 
-/* Process and generate HMIS data*/
+/* Process and generate HMIS distirct data*/
 do $ccode/b/create_hmis_yearly.do
 do $ccode/b/create_hmis_clean.do
 do $ccode/b/create_hmis_keys.do
+
+/* Process and generate HMIS subdistrict data*/
+do $ccode/b/create_hmis_subdistrict_yearly.do
+do $ccode/b/create_hmis_subdistrict_clean.do
+do $ccode/b/create_hmis_subdist_keys.do
 
 /* download latest district-level case data (runs in py3 conda env) */
 do $ccode/b/get_case_data

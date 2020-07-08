@@ -4,7 +4,7 @@
 // OBSOLETE-- WE FOUND A BETTER FILE
 // 
 // /* open the raw csv file */
-// import delimited using $covidpub/covid/csv/uk_demography.csv, clear
+// import delimited using $comocsv/uk_demography.csv, clear
 // 
 // /* split the age into a start and end */
 // gen agestart = real(substr(age, 1, strpos(age, "-") - 1))

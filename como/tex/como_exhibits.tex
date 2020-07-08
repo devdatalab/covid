@@ -1,7 +1,6 @@
 \documentclass[12pt,letterpaper]{article}
 \setcounter{page}{0}
 
-% \usepackage[a4paper,margin=1in,landscape]{geometry}
 \usepackage{mathtools} 
 \usepackage{bbm}
 \usepackage[multiple]{footmisc}
@@ -41,6 +40,7 @@
 % package for color-shared tables
 \usepackage[table]{xcolor}
 
+\usepackage{graphicx}
 % disable hyperlinks, which were breaking on appendix references
 % \usepackage[options]{nohyperref}
 
@@ -51,41 +51,58 @@
 %%%%%%%%%%%%%%%%%%%%%% 
 \begin{document}
 \date{June 2020}
-%  \maketitle
+\maketitle
+\clearpage
 
-  \section{Figures and Tables}
- 
-   \begin{table}[H]
-    \begin{center}
-     \caption{condition prevalences }
-     %\input{\covidpath/app_table_age_bin_prev}
-     \input{\covidpath/covid_como_agerisks.tex}
-     
-     \footnotesize{[table note]}
-    \end{center}
-   \end{table}
- 
-  \begin{table}[H]
-    \begin{center}
-    \caption{Prevalence of Conditions in Population and in OpenSAFELY}
-    %\input{\covidpath/app_table_os_vs_nhs}
-    \input{\covidpath/covid_como_oscompare.tex}
-    
-    \footnotesize{[table note]}
-    \end{center}
-  \end{table}
+\begin{figure}
+  \centering
+  \caption{{\footnotesize Prevalence of diabetes, hypertension, and
+      obesity in India and England.}}
+  \begin{tabular}{@{}p{0.48\linewidth}@{\quad}p{0.48\linewidth}@{}}
+    \subfigimg[width=\linewidth]{A) Diabetes}{\covidpath/diabetes.pdf} &
+    \subfigimg[width=\linewidth]{B) Hypertension}{\covidpath/hypertension.pdf} \\
+    \subfigimg[width=\linewidth]{C) Obesity}{\covidpath/obese.pdf} &
+  \end{tabular}
+\end{figure}
 
-  \clearpage
-  \begin{figure}[H]
-    \begin{center}
-    \caption{Prevalence of Conditions in Population and in OpenSAFELY}
-     \textbf{Age Interpolation: Fully-Adjusted Model}
-    
-    \includegraphics[scale=0.5]{\covidpath/age_interpolation_full}
-    
-    \footnotesize{[figure note]}
-    \end{center}
-  \end{figure}
+\clearpage
+
+\begin{figure}[H]
+  \begin{center}
+    \caption{Age-specific population relative risk of all health
+      conditions ($PRR_a$)}
+    \includegraphics[scale=1.0]{\covidpath/prr_health.pdf}
+  \end{center}
+\end{figure}
+
+\begin{figure}[H]
+  \begin{center}
+    \caption{Condition-specific population relative risk in India v. England}
+    \includegraphics[scale=0.7]{\covidpath/coefplot.pdf}
+  \end{center}
+\end{figure}
+
+\begin{figure}[H]
+  \begin{center}
+    \caption{Modelled age distribution of COVID-19 mortality}
+    \includegraphics[scale=1.0]{\covidpath/mort_density_full.pdf}
+  \end{center}
+\end{figure}
+
+\begin{table}[H]
+  \begin{center}
+    \caption{}
+    \input{\covidpath/covid_como_sumstats}
+  \end{center}
+\end{table}
+
+\begin{table}[H]
+  \begin{center}
+    \caption{}
+    \input{\covidpath/covid_como_sumhr}
+  \end{center}
+\end{table}
+
 
 \end{document}
 
