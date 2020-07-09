@@ -28,6 +28,7 @@ do $ccode/como/b/prep_hrs.do
 do $ccode/como/b/prep_pop_sex.do
 
 /* create age-level datasets for HR, prevalence, population, all with identical structures */
+/* THIS CREATES THE MAIN ANALYSIS FILE */
 do $ccode/como/b/prep_age_level_data.do
 
 /* create prevalence standard errors for bootstraps */

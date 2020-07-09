@@ -29,11 +29,33 @@ def retrieve_covid19india_case_data(url, output_fp):
     df["date"] = df["dateannounced"].apply(lambda x: datetime.datetime.strptime(x, "%d/%m/%Y"))
     df = df.sort_values(["date", "detectedstate", "detecteddistrict"]).reset_index(drop=True)
 
-    # get filename
-    fn = os.path.basename(url).replace(".json", ".csv")
+    # write the dataframe out as a csv
+    df.to_csv(os.path.join(output_fp, "covid19india_old_cases.csv"))
+
+    
+def retrieve_covid19india_deaths_data(url, output_fp):
+    """
+    url = specific url to api provided by covid19india (ex. "https://api.covid19india.org/deaths_recoveries.json")
+    output_fp = the filepath the final csv data is stored to, should be your scratch folder
+    """
+    # retrieve the json with all data
+    with urllib.request.urlopen(url) as _url:
+
+        # load the json
+        data = json.loads(_url.read().decode())
+
+        # get name of data sheet 
+        key = list(data.keys())[0]
+        
+        # convert the raw data to a dataframe
+        df =  pd.DataFrame.from_records(data[key])
+
+    # make date a python object
+    df["date"] = df["date"].apply(lambda x: datetime.datetime.strptime(x, "%d/%m/%Y"))
+    df = df.sort_values(["date", "state", "district"]).reset_index(drop=True)
 
     # write the dataframe out as a csv
-    df.to_csv(os.path.join(output_fp, fn))
+    df.to_csv(os.path.join(output_fp, "covid19india_old_deaths.csv"))
 
 
 def retrieve_covid19india_district_data(url, output_fp):
@@ -71,11 +93,13 @@ def retrieve_covid19india_district_data(url, output_fp):
             df_dist = df_dist.sort_values("date_obj").reset_index(drop=True)
 
             # count new cases
-            df_dist["cases"] = df_dist["confirmed"].diff()
+            # df_dist["cases"] = df_dist["confirmed"].diff()
+            # df_dist.loc[0, "cases"] = df_dist.loc[0, "confirmed"].copy()           
 
             # count new deaths
-            df_dist["death"] = df_dist["deceased"].diff()
-
+            # df_dist["death"] = df_dist["deceased"].diff()
+            # df_dist.loc[0, "death"] = df_dist.loc[0, "deceased"].copy()
+            
             # add this data to the master dataframe
             if df.empty:
                 df = df_dist.copy()

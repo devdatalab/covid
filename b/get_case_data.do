@@ -1,104 +1,172 @@
 /* Get the most up to date case data
-data source: https://covindia.com/
-direct link to api: https://v1.api.covindia.com/covindia-raw-data
+data source: www.covid19india.org
+direct links to api: https://api.covid19india.org/
 
-This file does the following steps for both case data and death data:
-1. Retrieves the most recent case data, labels variables, and saves a full stata file
-2. Creates a covid case data - pc11 district key
-3. Matches covid case data with pc11 state and districts
+1a. Retrieve pre-April 27 raw case data, aggregate to district-day
+1b. Retrieve pre-April 27 raw death data, aggregate to district-day
+2. Retrieve post-April 27 district-day data
+3. Create covid-LGD district keys
+4. Standardize all data to LGD districts
 */
 
-/********************************/
-/* COMBINED CASE AND DEATH DATA */
-/********************************/
 /* define lgd matching programs */
 qui do $ddl/covid/covid_progs.do
 qui do $ddl/tools/do/tools.do
 
-/* Added 05/05/2020: pull in case data from covindia.
-   Note: as of June 1 2020, covindia is defunct.  We now use covindia data up until April 27
-   then use covid19india (crowdsource) data following that date.  We retain the covindia data 
-   because the structure of the covindia2019 data changed April 27, making the older data 
-   more difficult to make compatible with the current data. */
-cd $ddl/covid
+/*******************************************/
+/* 1a. Retrieve the pre-April 27 case data */
+/*******************************************/
+/* call python function to retrieve the patient-level covid data */
+shell python -c "from b.retrieve_case_data import retrieve_covid19india_case_data; retrieve_covid19india_case_data('https://api.covid19india.org/raw_data.json', '$tmp')"
 
-/* 1. Retrieve the data from covindia up until April 27 */
+/* import the patient data we just pulled */
+import delimited using $tmp/covid19india_old_cases.csv, clear
 
-/* call python function to retrieve the district-date level covid data 
-   Update 06/15/2020: the API is totally defunct and the data is no longer available. 
-   We have archived the last data pull from May and stroed in $covidpub */
-// shell python -c "from b.retrieve_case_data import retrieve_covindia_case_data; retrieve_covindia_case_data('https://v1.api.covindia.com/covindia-raw-data', '$tmp')"
+/* create date object from date string */
+gen date2 = date(date, "YMD")
+drop date
+ren date2 date
+format date %td
 
-/* import the archived data */
-import delimited $covidpub/covid/raw/covindia-raw-data-archive.csv, clear varn(1)
+/* rename variables */
+ren detectedstate state
+ren detecteddistrict district
+ren numcases cases
 
-/* label variables - according to data definitions:
-   https://covindia-api-docs.readthedocs.io/en/latest/api-reference/ */
-label var date "date of case dd/mm/yyyy"
-label var time "time of the report hh:mm, if known"
-label var district "the name of the district"
-label var state "the name of the state"
-label var infected "the number of infected cases in this entry (report)"
-label var death "the number of deaths in this entry (report)"
-label var source "the source link for this entry (report)"
+/* ensure states are consistent across all entries */
+replace state = lower(state)
+replace district = lower(district)
 
-/* replace missind district code with missing */
-replace district = "" if district == "DIST_NA"
+/* replace missing districts */
+replace district = "" if district == "other state"
+replace district = "" if district == "other region"
+replace district = "" if district == "evacuees"
+replace district = "" if district == "italians"
 
-/* remove underscores from district names */
-replace district = subinstr(district, "_", " ", .)
+/* drop "correction for district count" - these sum to 0 and appear to be some bookkeeping mechanism to shift allocation of cases,
+   overall it's unclear how we should use these counts so we drop them (having no effect on the overall case count)  */
+drop if notes == "Correction for district count"
 
-/* make state and district lower case */
-replace district = trim(lower(district))
-replace state = trim(lower(state))
+/* only keep necessary informatoin */
+keep date state district cases
 
-/* replace state names to match cov19india */
-replace state = "andaman and nicobar islands" if state == "andaman and nicobar"
-replace state = "odisha" if state == "orissa"
+/* drop if missing date  */
+drop if mi(date)
 
-/* replace duplicate spellings of pauri garhwal */
-replace district = "pauri garhwal" if (district == "garhwal" | district == "garhwa") & state == "uttarakhand"
+/* drop if missing state- this is just one case that is missing both */
+drop if mi(state)
 
 /* correct internally inconsistent district names */
-synonym_fix district, synfile($ddl/covid/b/str/covid_district_fixes.txt) replace
+synonym_fix district, synfile($ddl/covid/b/str/cov19india_district_fixes.txt) replace
 
-/* create a numerical date field */
-gen date_num = date(date, "DMY")
+/* fill in not reported districts */
+replace district = "not reported" if mi(district)
 
-/* keep only data on or before April 26 2020, which has a date_num == 22031 */
-keep if date_num <= 22031
+/* collapse to district level */
+collapse (sum) cases, by(state district date)
 
-/* sort by district and date so we can calculate the running case and death total */
-sort state district date_num
+/* make it square */
+egen dgroup = group(state district)
+fillin date dgroup 
 
-/* rename to match the language we use in covid19india data */
-ren infected cases
-drop time source date_obj
+/* set as time series with dgroup */
+sort dgroup date
 
-/* count cumulative totals to match covid19india */
-bys state district (date_num) : gen cases_total = sum(cases)
-bys state district (date_num) : gen death_total = sum(death)
+/* fill in state, district, lgd names within dgroup 
+   to install xfill: net install xfill */
+xfill state district, i(dgroup)
+sort dgroup date
+drop dgroup _fillin
 
-/* restructure date to match cov19india */
-split date, p("/")
-replace date = date3 + "-" + date2 + "-" + date1
-drop date1 date2 date2
+/* save pre-April 27 case data */
+save $tmp/old_covid19_case_data, replace
 
-/* save data */
-save $tmp/covindia_raw_data, replace
+/********************************************/
+/* 1b. Retrieve the pre-April 27 death data */
+/********************************************/
+/* call python function to retrieve the deaths & recovered covid data */
+shell python -c "from b.retrieve_case_data import retrieve_covid19india_deaths_data; retrieve_covid19india_deaths_data('https://api.covid19india.org/deaths_recoveries.json', '$tmp')"
 
-/* keep only states and districts to create the covid-lgd key */
+/* import the patient data we just pulled */
+import delimited using $tmp/covid19india_old_deaths.csv, clear
+
+/* create date object from date string */
+gen date2 = date(date, "YMD")
+drop date
+ren date2 date
+format date %td
+
+/* ensure states are consistent across all entries */
+replace state = lower(state)
+replace district = lower(district)
+
+/* replace missing districts */
+replace district = "" if district == "other state"
+replace district = "" if district == "other region"
+replace district = "" if district == "evacuees"
+replace district = "" if district == "italians"
+
+/* keep only deceased patient status */
+keep if patientstatus == "Deceased"
+
+/* count everyone as a death */
+gen death = 1
+
+/* keep only necessary data */
+keep date state district death
+
+/* correct internally inconsistent district names */
+synonym_fix district, synfile($ddl/covid/b/str/cov19india_district_fixes.txt) replace
+
+/* fill in not reported districts */
+replace district = "not reported" if mi(district)
+
+/* collapse to district level */
+collapse (sum) death, by(state district date)
+
+/* make it square */
+egen dgroup = group(state district)
+fillin date dgroup 
+
+/* fill in state, district, lgd names within dgroup 
+   to install xfill: net install xfill */
+xfill state district, i(dgroup)
+drop dgroup _fillin
+
+/* merge the old case and death data */
+merge 1:1 state district date using $tmp/old_covid19_case_data
+drop _merge
+
+/* get the total case and death count - first create state-district groups*/
+egen dgroup = group(state district)
+
+/* ensure data is sorted by dgroup and date */
+sort dgroup date
+
+/* count the cumulative totals for deaths and cases */
+bys dgroup (date): gen death_total = sum(death)
+bys dgroup (date): gen cases_total = sum(cases)
+
+/* drop the daily counts of deaths and cases, keeping only the totals */
+drop dgroup death cases
+
+/* save old data */
+save $tmp/all_old_covid19_data, replace
+
+/* keep only the states and districts for the key */
 keep state district
-duplicates drop
+duplicates drop 
 
 /* drop if missing district */
-drop if mi(district)
+drop if district == "not reported"
 
-/* save the state and district list */
-sort state district
-save $covidpub/covid/covindia_state_district_list, replace
+/* save for the key */
+save $tmp/all_old_covid19_key, replace
 
-/* 2. Retrieve the data from covid19india for all dates April 27 onwards */
+/****************************************************/
+/* 2. Retrieve the post-April 27 district case data */
+/****************************************************/
+cd $ddl/covid
 
 /* define the url and pull the data files from covid19india */
 shell python -c "from b.retrieve_case_data import retrieve_covid19india_district_data; retrieve_covid19india_district_data('https://api.covid19india.org/districts_daily.json', '$tmp')"
@@ -106,25 +174,31 @@ shell python -c "from b.retrieve_case_data import retrieve_covid19india_district
 /* read in the data */
 import delimited using $tmp/covid19india_district_data.csv, clear
 
-/* create numerical date */
-gen date_num = date(date, "YMD")
+/* create date object from date string */
+gen date2 = date(date, "YMD")
+drop date
+ren date2 date
+format date %td
 drop if mi(date)
 
 /* drop the few datapoints before April 27, these are data entry errors */
-drop if date_num <= 22031
-sort date_num state district
+drop if date <= 22031
+sort state district date
 
 /* ensure states are consistent across all entries */
 replace state = lower(state)
 replace district = lower(district)
 
 /* split out dadra and nagar haveli & daman and diu, unkonwn district defaults to daman and diu */
-replace state = "daman and diu" if state == "dadra and nagar haveli and daman and diu" & (district == "daman" | district == "diu" | district == "unknown")
+replace state = "daman and diu" if state == "dadra and nagar haveli and daman and diu" & (district == "daman" | district == "diu" | district == "unknown" | district == "other state")
 replace state = "dadra and nagar haveli" if state == "dadra and nagar haveli and daman and diu" & district == "dadra and nagar haveli"
 
 /* replace unknown or unclassified districts with missing */
 replace state = "" if state == "state unassigned"
 replace district = "" if district == "unknown"
+replace district = "" if district == "other"
+replace district = "" if district == "others"
+replace district = "" if district == "ndrf-odrf"
 replace district = "" if district == "bsf camp"
 replace district = "" if district == "unassigned"
 replace district = "" if district == "airport quarantine"
@@ -147,23 +221,43 @@ drop v1 notes date_obj
 /* correct internally inconsistent district names */
 synonym_fix district, synfile($ddl/covid/b/str/cov19india_district_fixes.txt) replace
 
+/* fill in not reported districts */
+replace district = "not reported" if mi(district)
+
+/* collapse to district level */
+collapse (sum) cases_total death_total, by(state district date)
+
+/* make it square */
+egen dgroup = group(state district)
+fillin date dgroup 
+
+/* fill in state, district, lgd names within dgroup 
+   to install xfill: net install xfill */
+xfill state district, i(dgroup)
+sort dgroup date
+drop dgroup _fillin
+
+/* fill in the missing death and cases values with 0 (these are from preceding dates with no cases reported) */
+replace death_total = 0 if mi(death_total)
+replace cases_total = 0 if mi(cases_total)
+
 /* save data */
 save $tmp/covid19india_raw_data, replace
 
 /* keep only states and districts to create the covid-lgd key */
 keep state district
-duplicates drop
 
 /* drop if missing district */
-drop if mi(district)
+drop if district == "not reported"
+duplicates drop
 
 /* save the state and district list */
 sort state district
 save $covidpub/covid/covid19india_state_district_list, replace
 
-/*************************/
-/* Create covid-LGD keys */
-/*************************/
+/****************************/
+/* 3. Create covid-LGD keys */
+/****************************/
 /* import the lgd keys to match to */
 use $keys/lgd_district_key, clear
 
@@ -173,8 +267,8 @@ gen idu = lgd_state_name + "=" + lgd_district_name
 /* save for the merge */
 save $tmp/lgd_fmm, replace
 
-/* 1. covindia data */
-use $covidpub/covid/covindia_state_district_list, clear
+/* 3a. pre-April 27 data */
+use $tmp/all_old_covid19_key, clear
 
 /* gen covid state and district */
 gen covid_state_name = state
@@ -199,9 +293,9 @@ keep if match_source < 6
 /* save the key */
 keep covid_state_name covid_district_name lgd_state_id lgd_district_id lgd_district_name_using
 ren lgd_district_name_using lgd_district_name
-save $tmp/covindia_lgd_district_key, replace
+save $tmp/old_covid19_lgd_district_key, replace
 
-/* 2. covid19india data */
+/* 3b. post-April 27 data */
 use $covidpub/covid/covid19india_state_district_list, clear
 
 /* gen covid state and district */
@@ -230,13 +324,12 @@ keep covid_state_name covid_district_name lgd_state_id lgd_district_id lgd_distr
 ren lgd_district_name_using lgd_district_name
 save $tmp/covid19india_lgd_district_key, replace
 
+/*********************************/
+/* 4. Standardize all covid data */
+/*********************************/
+use $tmp/all_old_covid19_data, clear
 
-/**********************************************/
-/* merge the lgd districts into the case data */
-/**********************************************/
-use $tmp/covindia_raw_data, clear
-
-/* merge in lgd statea */
+/* merge in lgd states */
 ren state lgd_state_name
 merge m:1 lgd_state_name using $keys/lgd_state_key.dta, keep(match master)
 replace lgd_state_name = "not reported" if mi(lgd_state_name)
@@ -244,20 +337,20 @@ drop _merge
 
 /* merge in lgd districts */
 ren district covid_district_name
-merge m:1 lgd_state_id covid_district_name using $tmp/covindia_lgd_district_key, keep(match master) keepusing(lgd_state_id lgd_district_id lgd_district_name)
+merge m:1 lgd_state_id covid_district_name using $tmp/old_covid19_lgd_district_key, keep(match master) keepusing(lgd_state_id lgd_district_id lgd_district_name)
 drop _merge
 
 /* clarify missing districts as not reported */
 replace lgd_district_name = "not reported" if mi(lgd_district_name)
 
-/* save covindia data */
-save $tmp/covindia_matched_data, replace
+/* save old covid19 data */
+save $tmp/old_covid19_matched_data, replace
 
 /* covid19india data */
 use $tmp/covid19india_raw_data, clear
 ren state lgd_state_name
 
-/* merge in lgd statea */
+/* merge in lgd states */
 merge m:1 lgd_state_name using $keys/lgd_state_key.dta, keep(match master)
 replace lgd_state_name = "not reported" if mi(lgd_state_name)
 drop _merge
@@ -267,21 +360,16 @@ ren district covid_district_name
 merge m:1 lgd_state_id covid_district_name using $tmp/covid19india_lgd_district_key, keep(match master) keepusing(lgd_state_id lgd_district_id lgd_district_name)
 drop _merge
 
-/* clarify missing districts as not reported */
+/* clarify missing districts as not reported 
+   note: two reported districts in jammu and kashmir are not represented in LGD (muzaffarabad and mirpir), for now we put them under "not reported" */
 replace lgd_district_name = "not reported" if mi(lgd_district_name)
 
 /* append covindia data */
-append using $tmp/covindia_matched_data
-cap drop _merge
-drop active recovered
+append using $tmp/old_covid19_matched_data
 
 /* sum over any repeated districts */
-collapse (sum) cases death, by(date_num lgd_state_id lgd_district_id lgd_state_name lgd_district_name)
-sort date_num lgd_state_id lgd_district_id
-
-/* convert to stata date format */
-ren date_num date
-format date %dM_d,_CY
+collapse (sum) cases_total death_total, by(date lgd_state_id lgd_district_id lgd_state_name lgd_district_name)
+sort lgd_state_name lgd_district_name date
 
 /* label and clean up */
 label var date "case date"
@@ -291,10 +379,7 @@ label var date "case date"
 compress
 save $covidpub/covid/raw/covid_case_data_raw, replace
 
-
-/*******************************************************/
-/* create a square dataset with each district and year */
-/*******************************************************/
+/* ensure data is square with each district and day */
 use $covidpub/covid/raw/covid_case_data_raw, clear
 
 /* make it square */
@@ -311,17 +396,20 @@ xfill lgd_state_name lgd_district_name lgd_state_id lgd_district_id, i(dgroup)
 
 /* create cumulative sums of deaths and infections */
 sort dgroup day_number
-by dgroup: gen cum_deaths = sum(death)
-by dgroup: gen cum_cases = sum(cases)
+
+/* fill in missing total death and total cases with 0- these are days preceding the first reports for a given district */
+replace cases_total = 0 if mi(cases_total)
+replace death_total = 0 if mi(death_total)
 
 /* only save the cumulative counts */
 drop dgroup _fillin day_number
-ren cum_deaths total_deaths
-ren cum_cases total_cases
+
+/* rename variables to match standard names we are using */
+ren cases_total total_cases
+ren death_total total_deaths
 
 /* order and save */
-order lgd_state_id lgd_district_id date lgd_state_name lgd_district_name
-drop cases death
+order lgd_state_id lgd_district_id date lgd_state_name lgd_district_name date cases_total death_total
 compress
 save $covidpub/covid/covid_infected_deaths, replace
 export delimited using $covidpub/covid/csv/covid_infected_deaths.csv, replace

@@ -3,7 +3,7 @@
 /**********************************/
 
 /* Convert HR CSV to Stata */
-import delimited $covidpub/covid/csv/uk_nhs_hazard_ratios.csv, clear
+import delimited $comocsv/uk_nhs_hazard_ratios.csv, clear
 
 /* label variables */
 lab var hr_age_sex "hazard ratio age-sex adjusted"

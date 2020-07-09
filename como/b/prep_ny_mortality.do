@@ -1,7 +1,7 @@
 /********************************/
 /* prepare O/R from NY epi data */
 /********************************/
-import delimited using $covidpub/covid/csv/nystate_or.csv, varnames(1) clear
+import delimited using $comocsv/nystate_or.csv, varnames(1) clear
 
 /* bottom-code everything at 1. it's not plausible that these conditions are protective */
 foreach v of varlist * {
@@ -48,7 +48,7 @@ save $tmp/nystate_hr, replace
 /**************************************/
 /* prepare O/Rs from NY Cummings data */
 /**************************************/
-import delimited using $covidpub/covid/csv/ny_cummings.csv, varnames(1) clear
+import delimited using $comocsv/ny_cummings.csv, varnames(1) clear
 ren * hr_*
 
 expand 82

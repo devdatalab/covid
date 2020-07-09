@@ -147,7 +147,7 @@ save $tmp/hr_nycu, replace
 
 /* ***************************** */
 /* UK OpenSafely (age-invariant) */
-import delimited using $covidpub/covid/csv/uk_nhs_incidence.csv, clear
+import delimited using $comocsv/uk_nhs_incidence.csv, clear
 gen x = 1
 replace prevalence = prevalence / 100
 reshape wide prevalence, j(condition) i(x) string

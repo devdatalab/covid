@@ -1,6 +1,6 @@
 //global conditionlist hypertension diabetes copd asthma
 /* first import and calculate COPD rate, this is the only variable coming from its own source */
-import delimited using $iec/covid/covid/csv/copd_mclean_rates.csv, clear
+import delimited using $comocsv/copd_mclean_rates.csv, clear
 
 /* calculate the total population */
 gen pop_total = pop_female + pop_male
@@ -20,7 +20,7 @@ save $tmp/copd_uk_prev, replace
 global conditionlist diabetes_contr diabetes_uncontr hypertension_contr hypertension_uncontr hypertension_both asthma obese_1_2 obese_3
 
 /* import uk data */
-import delimited using $covidpub/covid/csv/uk_condition_prevalence.csv, varnames(1) clear
+import delimited using $comocsv/uk_condition_prevalence.csv, varnames(1) clear
 drop source v*
 
 /* reshape wide on conditions */
@@ -62,7 +62,7 @@ merge 1:1 age using $tmp/copd_uk_prev, nogen
 replace prev_copd = 0 if mi(prev_copd)
 
 /* old code:
-merge 1:1 age using $covidpub/covid/csv/uk_copd_prevalence, keepusing(prevalence) nogen
+merge 1:1 age using $comocsv/uk_copd_prevalence, keepusing(prevalence) nogen
 drop prev_copd
 ren prevalence prev_copd */
 

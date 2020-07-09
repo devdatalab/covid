@@ -37,7 +37,7 @@ save $tmp/india_pop, replace
 /********************************/
 /* UK population and male share */
 /********************************/
-import delimited using $covidpub/demography/csv/england_gender_age.csv, clear
+import delimited using $comocsv/england_gender_age.csv, clear
 gen male_share = male / total
 drop male female
 ren male_share male
