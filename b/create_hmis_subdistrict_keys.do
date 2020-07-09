@@ -9,13 +9,11 @@ This code creates a key to merge hmis data with pre-existing pc11_lgd keys in th
 
 Pending Issues:
 1. We match about 70% of all subdistricts over all years.
-2. Not all lgd subdistricts have pc11 counterparts
+2. Not all lgd subdistricts have pc11 counterparts. This needs to be fixed in the lgd_pc11 match
 3. The district key used to match with the subdistrict data has some Andhra Pradesh/Telangana errors
 the origin of which neeed to be checked out for the 511 subdistricts that don't match.
 
 */
-
-
 
 /**********************************************/
 /* 1. Create a key from hmis subdstrict data  */
