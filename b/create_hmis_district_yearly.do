@@ -43,7 +43,7 @@ local years: dir "$tmp/hmis/itemwise_monthly/district/" dirs "*"
 
 /* For every year of data: Convert every State's XML Data into csv using the .py script */
 foreach year in `years'{
-  shell python -c "from b.retrieve_case_data import read_hmis_csv; read_hmis_csv('`year'','$tmp')"
+  shell python -c "from b.retrieve_hmis_data import read_hmis_csv; read_hmis_csv('`year'','$tmp')"
 }
 
 /* Save all years in a macro by Looping over all years in district directory*/
@@ -206,7 +206,7 @@ cd $ddl/covid
 /* Loop over all years to extract .xls(xml) files to csv */
 local years: dir "$tmp/hmis/data_reporting_status" dirs "*-*"
 foreach year in `years'{
-  shell python -c "from b.retrieve_case_data import read_hmis_csv_hospitals; read_hmis_csv_hospitals('`year'','$tmp')"
+  shell python -c "from b.retrieve_hmis_data import read_hmis_csv_hospitals; read_hmis_csv_hospitals('`year'','$tmp')"
 }
 
 /* Loop over all csv files and append them into a .dta file */

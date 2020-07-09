@@ -16,6 +16,9 @@ We do the following in this :
 /***********************************************/
 /* Extract and group subdistrict level data at the state, and save state. csv files.*/
 
+/* Create a tmp directory for subdistrict data */
+cap mkdir $tmp/hmis/subdistrict
+
 /* Change directory to run python code */
 cd $ddl/covid
 
@@ -24,7 +27,7 @@ local years: dir "$tmp/hmis/itemwise_monthly/subdistrict/" dirs "*"
 
 /* For every year of data: Convert every State's XML Data into csv using the .py script */
 foreach year in `years'{
-  shell python -c "from b.retrieve_case_data import read_hmis_subdistrict_csv; read_hmis_subdistrict_csv('`year'','$tmp')"
+  shell python -c "from b.retrieve_hmis_data import read_hmis_subdistrict_csv; read_hmis_subdistrict_csv('`year'','$tmp')"
 }
 
 
@@ -193,9 +196,10 @@ foreach year in `years' {
     rename `v'  v_`varlabel'
   }
 
-  /* Remove the underscore at end of variable names */
-  ren (*_) (*)
-  
+  /* Remove the underscore at end of variable names
+   the capture takes care of the situation where*/
+  cap ren *_ *
+
   /* Save data */
   save $tmp/hmis/subdistrict/hmis_subdist_clean_`year', replace
   

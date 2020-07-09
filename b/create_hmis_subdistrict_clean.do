@@ -484,7 +484,7 @@ label var year_financial "Financial Year for whcih the data is reported"
 
 /* Get identifiers and renmaed variables to the front */
 order hm_*, alphabetic
-order state district year month category year_financial 
+order state district subdistrict year month category year_financial 
 
 /* Rename other variables to some extent */
 ren ev_* hm_ev_*

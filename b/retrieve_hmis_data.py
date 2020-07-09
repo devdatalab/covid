@@ -1,4 +1,3 @@
-
 from bs4 import BeautifulSoup
 import datetime
 import json
@@ -7,156 +6,6 @@ import os
 import urllib.request
 import requests
 from collections import Counter
-
-def retrieve_covid19india_case_data(url, output_fp):
-    """
-    url = specific url to api provided by covid19india (ex. "https://api.covid19india.org/raw_data.json")
-    output_fp = the filepath the final csv data is stored to, should be your scratch folder
-    """
-    # retrieve the json with all data
-    with urllib.request.urlopen(url) as _url:
-
-        # load the json
-        data = json.loads(_url.read().decode())
-
-        # get name of data sheet 
-        key = list(data.keys())[0]
-        
-        # convert the raw data to a dataframe
-        df =  pd.DataFrame.from_records(data[key])
-
-    # make date a python object
-    df["date"] = df["dateannounced"].apply(lambda x: datetime.datetime.strptime(x, "%d/%m/%Y"))
-    df = df.sort_values(["date", "detectedstate", "detecteddistrict"]).reset_index(drop=True)
-
-    # get filename
-    fn = os.path.basename(url).replace(".json", ".csv")
-
-    # write the dataframe out as a csv
-    df.to_csv(os.path.join(output_fp, fn))
-
-
-def retrieve_covid19india_district_data(url, output_fp):
-    """
-    """
-    # create empty dataframe to hold all results
-    df = pd.DataFrame()
-    
-    with urllib.request.urlopen(url) as _url:
-    
-        # load the json
-        data = json.loads(_url.read().decode())['districtsDaily']
-
-    # get state list
-    state_list = list(data.keys())
-
-    # cycle through each state
-    for state in state_list:
-
-        # get district list for this state
-        district_list = list(data[state].keys())
-
-        # cycle through districts
-        for dist in district_list:
-
-            # extract district dataframe
-            df_dist = pd.DataFrame.from_records(data[state][dist])
-
-            # set the state and district of this dataframe
-            df_dist["state"] = state
-            df_dist["district"] = dist
-
-            # parse dates
-            df_dist["date_obj"] = df_dist["date"].apply(lambda x: datetime.datetime.strptime(x, "%Y-%m-%d"))
-            df_dist = df_dist.sort_values("date_obj").reset_index(drop=True)
-
-            # count new cases
-            df_dist["cases"] = df_dist["confirmed"].diff()
-
-            # count new deaths
-            df_dist["death"] = df_dist["deceased"].diff()
-
-            # add this data to the master dataframe
-            if df.empty:
-                df = df_dist.copy()
-            else:
-                df = df.append(df_dist, sort=False)
-
-    df.to_csv(os.path.join(output_fp, "covid19india_district_data.csv"))
-
-
-def retrieve_covindia_case_data(url, output_fp):
-    """
-    url = specific url to api provided by covindia (ex. "https://v1.api.covindia.com/covindia-raw-data")
-    output_fp = the filepath the final csv data is stored to, should be your scratch folder
-    """
-    # retrieve the json with all data
-    with urllib.request.urlopen(url) as _url:
-
-        # load the json
-        data = json.loads(_url.read().decode())
-
-    # convert the raw data to a dataframe
-    df =  pd.DataFrame.from_records(data).T
-
-    # convert date to datetime
-    df["date_obj"] = df["date"].apply(lambda x: datetime.datetime.strptime(x, "%d/%m/%Y"))
-
-    # sort on date, state, and district
-    df = df.sort_values(["date_obj", "state", "district"])
-
-    # set index
-    df = df.set_index(["date", "state", "district"])
-
-    # extract filename from the url
-    fn = url.split("/")[-1]
-        
-    # write the dataframe out as a csv
-    df.to_csv(os.path.join(output_fp, f"{fn}.csv"))
-
-def retrieve_covindia_state_district_list(output_fp):
-    """
-    get the json of states and district used by covindia
-    """
-    url = "https://covindia-api-docs.readthedocs.io/en/latest/resources/covindia-resources-list.json"
-
-    # retrieve the json file
-    r = requests.get(url)
-
-    # read in the data
-    data = r.json()
-
-    # create empty dataframe to hold all states and districts
-    df = pd.DataFrame(columns=["state", "district"])
-
-    # cycle through dictionary 
-    for k, v in data.items():
-
-        # create a dataframe for this state
-        temp = pd.DataFrame(data[k], columns=["district"])
-        temp['state'] = k
-
-        # append this state to the complete dataframe
-        df = df.append(temp, sort=False)
-
-    # order the columns
-    df = df[["state", "district"]]
-
-    # write out the dataframe
-    df.to_csv(os.path.join(output_fp, "covindia_state_district_list.csv"), index=False)
-    
-def retrieve_state_case_data(output_fp):
-    """
-    Get official state level case data
-    """
-    url = "https://www.mohfw.gov.in/"
-    page = requests.get(url)
-    soup = BeautifulSoup(page.content, 'html.parser')
-    table = soup.find_all("table", {"class": "table table-striped"})[0]
-    df = pd.read_html(table.prettify())[0]
-
-    df.to_csv(os.path.join(output_fp, "covid_state_case_data.csv"))
-
 
 def read_hmis_csv(year, filepath):
     """
@@ -289,8 +138,7 @@ def read_hmis_csv(year, filepath):
             #Print success message
             print(f"Saved without errors in State {i.split('.')[0]} and year {year}")
         except:
-            print(f"Error in State File {i}")
-            print(f"Error in Year {year}")
+            print(f"Error in State File {i} and in year {year}")
     # drop the duplicates variables, for each state file with X districts the variables are repeated X times
     df_vars = df_vars.drop_duplicates()
     
