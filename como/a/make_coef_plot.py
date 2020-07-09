@@ -1,9 +1,9 @@
 import os
-import getpass
 import pandas as pd
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
+from shutil import copyfile
 
 mpl.rcParams['mathtext.fontset'] = 'custom'
 mpl.rcParams['mathtext.rm'] = 'Bitstream Vera Sans'
@@ -13,12 +13,8 @@ mpl.rcParams['mathtext.bf'] = 'Bitstream Vera Sans:bold'
 mpl.rc('font', **{'family': 'serif', 'serif': ['Computer Modern']})
 mpl.rc('text', usetex=True)
 
-# get filepath names
-username = getpass.getuser()
-homedir = os.path.expanduser("~")
-
 # read in the data
-df = pd.read_stata(os.path.join("/scratch", username, "coefs_to_plot.dta"))
+df = pd.read_stata(os.path.join(TMP, "coefs_to_plot.dta"))
 
 # drop gender from this plot of health conditions
 df = df.drop(df.loc[df["variable"] == "male_ratio"].index)
@@ -111,15 +107,19 @@ for p in ax.patches:
         ax.annotate(note, (p.get_width() - 3.5, p.get_y()+.1), fontsize=14, fontweight="bold", color="#383838")
 
 # format axes
-ax.set_xlim([-13.5,13.5])
+ax.set_xlim([-10.75,10.75])
 ax.set_ylim([-0.5,17.5])
 ax.set_xlabel("Percent Change", color="#383838", fontsize=14)
-ax.annotate("India", (5.5,17), color="Black", fontsize=14)
-ax.annotate("England", (-9,17), color="#e38800", fontsize=14)
+ax.annotate("India", (4.5,17), color="Black", fontsize=14)
+ax.annotate("England", (-7,17), color="#e38800", fontsize=14)
 ax.set_title("Percent Change of Population Relative Risk for each \n Health Condition in India Relative to England", fontsize=16, color="#383838")
 
 # save figure
-plt.savefig(os.path.join(homedir, "iec", "output", "covid", "coefplot.pdf"), bbox_inches="tight", dpi=150)
-# plt.savefig(os.path.join(homedir, "public_html", "png", "coefplot.png"), bbox_inches="tight", dpi=150)
+plt.savefig(os.path.join(IEC, "output", "covid", "coefplot.pdf"), bbox_inches="tight", dpi=150)
+
+# copy file for public html viewing
+home = os.path.expanduser("~")
+copyfile(os.path.join(IEC, "output", "covid", "coefplot.pdf"),
+         os.path.join(home, "public_html", "png", "coefplot.pdf"))
 
 plt.close("all")

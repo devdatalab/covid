@@ -309,6 +309,9 @@ def read_hmis_csv(year, filepath):
     
             # save the data to a csv
             df_all.to_csv(os.path.join(fp, f"{i.split('.')[0]}.csv"))
+
+            #Print success message
+            print(f"Saved without errors in State {i.split('.')[0]} and year {year}")
         except:
             print(f"Error in State File {i}")
             print(f"Error in Year {year}")
@@ -456,7 +459,6 @@ def read_hmis_subdistrict_csv(year, filepath):
     #Loop Over all States
     for i in filelist_state:
         try:
-        	    
             #get full filepath to district folders
             fp_dist = os.path.join(filepath, "hmis", "itemwise_monthly", "subdistrict", year, "A.Monthwise",
         	                       i)
@@ -576,7 +578,8 @@ def read_hmis_subdistrict_csv(year, filepath):
             df_vars_all.to_csv(os.path.join(fp_state, f"{i}_hmis_variable_definitions.csv"))
 
             # print success message
-            print(f"Saved {i}.csv for {year}")
+            print(f"Saved {i} data for {year}")
         except:
-            print(f"Error in year {year} and state {i}")
+            #Print Error message
+            print(f"Error in year {year} and file {i}")
        
