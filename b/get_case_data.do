@@ -404,6 +404,10 @@ replace death_total = 0 if mi(death_total)
 /* only save the cumulative counts */
 drop dgroup _fillin day_number
 
+/* rename variables to match standard names we are using */
+ren cases_total total_cases
+ren death_total total_deaths
+
 /* order and save */
 order lgd_state_id lgd_district_id date lgd_state_name lgd_district_name date cases_total death_total
 compress
