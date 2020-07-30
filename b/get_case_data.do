@@ -19,8 +19,9 @@ qui do $ddl/tools/do/tools.do
 /* call python function to retrieve the patient-level covid data */
 shell python -c "from b.retrieve_case_data import retrieve_covid19india_case_data; retrieve_covid19india_case_data('https://api.covid19india.org/raw_data.json', '$tmp')"
 
-/* import the patient data we just pulled */
-import delimited using $tmp/covid19india_old_cases.csv, clear
+/* import the patient data we just pulled (TL 7/30/2020: better luck parsing empty strings with insheet, oddly) */
+//import delimited using $tmp/covid19india_old_cases.csv, clear
+insheet using $tmp/covid19india_old_cases.csv, names clear
 
 /* create date object from date string */
 gen date2 = date(date, "YMD")
