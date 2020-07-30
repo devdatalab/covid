@@ -169,10 +169,11 @@ save $tmp/all_old_covid19_key, replace
 cd $ddl/covid
 
 /* define the url and pull the data files from covid19india */
-shell python -c "from b.retrieve_case_data import retrieve_covid19india_district_data; retrieve_covid19india_district_data('https://api.covid19india.org/districts_daily.json', '$tmp')"
+shell python -c "from b.retrieve_case_data import retrieve_covid19india_all_district_data; retrieve_covid19india_all_district_data('https://api.covid19india.org/v4/data-all.json', '$tmp')"
+
 
 /* read in the data */
-import delimited using $tmp/covid19india_district_data.csv, clear
+import delimited using $tmp/covid19india_district_data_new.csv, clear
 
 /* create date object from date string */
 gen date2 = date(date, "YMD")
@@ -189,12 +190,10 @@ sort state district date
 replace state = lower(state)
 replace district = lower(district)
 
-/* split out dadra and nagar haveli & daman and diu, unkonwn district defaults to daman and diu */
-replace state = "daman and diu" if state == "dadra and nagar haveli and daman and diu" & (district == "daman" | district == "diu" | district == "unknown" | district == "other state")
-replace state = "dadra and nagar haveli" if state == "dadra and nagar haveli and daman and diu" & district == "dadra and nagar haveli"
-
+/* unknown state codes */
+replace state = "" if state == "tt"
+replace state = "" if state == "un"
 /* replace unknown or unclassified districts with missing */
-replace state = "" if state == "state unassigned"
 replace district = "" if district == "unknown"
 replace district = "" if district == "other"
 replace district = "" if district == "others"
@@ -216,7 +215,7 @@ ren deceased death_total
 ren confirmed cases_total
 
 /* drop unneeded variables */
-drop v1 notes date_obj
+drop date_obj migrated recovered tested
 
 /* correct internally inconsistent district names */
 synonym_fix district, synfile($ddl/covid/b/str/cov19india_district_fixes.txt) replace
@@ -409,7 +408,7 @@ ren cases_total total_cases
 ren death_total total_deaths
 
 /* order and save */
-order lgd_state_id lgd_district_id date lgd_state_name lgd_district_name date cases_total death_total
+order lgd_state_id lgd_district_id date lgd_state_name lgd_district_name date total_cases total_deaths
 compress
 save $covidpub/covid/covid_infected_deaths, replace
 export delimited using $covidpub/covid/csv/covid_infected_deaths.csv, replace
