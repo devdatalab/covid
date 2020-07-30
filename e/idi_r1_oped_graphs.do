@@ -184,7 +184,13 @@ binscatter rel_amt_received_mean tdist_500 [aw = weight_hh], ci(model)
 graphout rel_distance
 
 /* Graph 5 */
-graph hbar (mean) agr_selldiff_none - agr_selldiff_police [aw = weight_hh], ascategory yvar(relabel(1 "No difficulty" 2 "Labor shortage" 3 "Transport Unavail" 4 "Markets closed" 5 "No demand" 6 "Travel distance too long" 7 " Police harrassment")) ylabel(0 (0.1) 0.6) bar(1, color(emerald))
+
+/* combine police harrassment and travel distances into other reasons */
+gen agr_selldiff_other = 0 if !mi(agr_selldiff_travel)
+replace agr_selldiff_other = 1 if agr_selldiff_travel == 1
+replace agr_selldiff_other = 1 if agr_selldiff_police == 1
+
+graph hbar (mean) agr_selldiff_none - agr_selldiff_demand agr_selldiff_other [aw = weight_hh], ascategory yvar(relabel(1 "No difficulty" 2 "Labor shortage" 3 "Transport Unavail" 4 "Markets closed" 5 "No demand" 6 "Other reasons")) ylabel(0 (0.1) 0.6) bar(1, color(emerald))
 graphout selldiff
 
 /* Not a graph but agriculture input changes result reported in oped */
@@ -197,5 +203,6 @@ sum pc_ag_land_change, d
 
 /* op-ed also reported 29% decline in perishable crop price */
 bys agr_crop_cat_prop: sum pc_agr_prc_change_holi
+
 
 

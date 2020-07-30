@@ -62,9 +62,6 @@ foreach prev in india uk_os uk_nhs uk_nhs_matched {
     gen prr_all = prr_health * hr_age * prr_male
     
     save $tmp/prr_`prev'_`hr', replace
-
-    /* save a version on iec for santosh */
-    export delimited using ~/iec/output/pn/prr_`prev'_`hr'.csv, replace
   }
 }
 
@@ -86,6 +83,13 @@ merge 1:1 age using $tmp/uk_pop, keep(master match) nogen keepusing(uk_pop)
 
 /* save an analysis file */
 save $tmp/como_analysis, replace
+
+/* export a file with prevalences, hazard ratios, and population for comoweb  */
+use $tmp/prr_india_full_cts, clear
+drop *_lnse_* *obeseI*
+merge 1:1 age using $tmp/india_pop, keep(master match) nogen keepusing(india_pop)
+export delimited using ~/iec/output/pn/comoweb_export.csv, replace
+
 
 /*****************************/
 /* compare density of deaths */
