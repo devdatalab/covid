@@ -1,7 +1,9 @@
 /*
 This do file creates graphs to explore hmis data.
-Index
 
+We want to go ahead and publish 1.
+
+Index
 1. Scaled Vaccinations/Services per hospital (For districts reporting in May)
 2. Scaled Vaccinations/Services per hospital (For districts reporting in June)
 3. Hospitals reporting over time [For all Districts reporting]
@@ -19,6 +21,10 @@ Index
 /*********************************************************************************/
 /* 1. Scaled Vaccinations/Services per hospital (For districts reporting in May) */
 /*********************************************************************************/
+
+/****************************/
+/* The graph to be pubished */
+/****************************/
 
 /* Graph Scaled Vaccinations Per Hospital Over time */
 /* Input Data */
@@ -75,12 +81,12 @@ twoway (line hm_vac_bcg month) ///
     (line hm_vac_sessions month) ///
     (line hm_hosp_total month), ///
     title("Vaccinations at Birth Per Hospital") ///
-    subtitle("For The `number_of_districts_vach_may' Districts That Reported in May") ///
     ytitle(" ")  ///
     xtitle("") ///
     xlabel(, valuelabels) ///
     ylabel(0(0.2)1) ///
-    legend(label(1 "BCG Vaccination") label(2 "Polio Vaccination") label(3 "Hepatitis B Vaccination") label(4 "Number of Vaccination Sessions") label(5 "Total Hospitals Reporting (For This Sample)") ) 
+    note("Sample: districts that reported in May. All numbers normalized proportional to January 2020." "Raw data available at github.com/devdatalab/covid") ///
+    legend( size(small) ring(0) pos(7) label(1 "BCG Vaccination") label(2 "Polio Vaccination") label(3 "Hepatitis B Vaccination") label(4 "Number of Vaccination Sessions") label(5 "Total Hospitals Reporting") ) 
     
 graphout vaccinations_per_hospital_may
 
