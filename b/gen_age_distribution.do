@@ -345,7 +345,7 @@ replace female = 0 if mi(female)
 gen total = 1
 
 /* collapse */
-collapse (sum) male female total, by(pc11_state_id pc11_district_id pc11_subdistrict_id pc11_town_id pc11_ward_id age)
+collapse (sum) male female total, by(pc11_state_id pc11_district_id pc11_subdistrict_id pc11_town_id pc11_ward_id slum age)
 
 /* save */
 save $tmp/maharashtra_ward_age_sex_pop, replace
