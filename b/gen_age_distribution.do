@@ -295,15 +295,34 @@ foreach level in district subdistrict {
 /* Get the Maharashtra ward-level names 
    Added 03/05/2020 */
 
+/* open the members data */
+use $secc/parsed_draft/dta/urban/maharashtra_members_clean, clear
+
+/* merge in the house_no variable */
+merge m:1 house_no using $secc/parsed_draft/tables/urban/members/maharashtra_house_no_clean_key, keep(match master)
+
+/* rename the raw_string to be house_no */
+drop house_no raw_id count _merge
+ren raw_string house_no
+
+/* save as a temp file */
+save $tmp/maharashtra_ubran_members, replace
+
 /* open the household data that has the slum variable */
 use $secc/parsed_draft/dta/urban/maharashtra_household_clean, clear
 
-/* merge in the household data to get slum */
-merge 1:m pc11_state_id pc11_district_id pc11_subdistrict_id pc11_ward_id pc11_block_id house_no draftlistid using $secc/parsed_draft/dta/urban/maharashtra_members_clean
+/* merge in the house_no variable */
+merge m:1 house_no using $secc/parsed_draft/tables/urban/household/maharashtra_house_no_clean_key, keep(match master)
+
+/* rename the raw_string to be house_no */
+drop house_no raw_id count _merge
+ren raw_string house_no
+
+/* merge the household and members data */
+merge 1:m pc11_state_id pc11_district_id pc11_subdistrict_id pc11_ward_id pc11_block_id house_no draftlistid using $tmp/maharashtra_ubran_members
 
 /* keep only those that were merged */
 keep if _merge == 3
-drop _merge
 
 /* keep only the variables we need */
 keep pc11* house_no draftlistid slum age sex birthyear
