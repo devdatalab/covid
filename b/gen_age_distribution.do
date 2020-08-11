@@ -363,8 +363,48 @@ gen female = 1 if sex == 2
 replace female = 0 if mi(female)
 gen total = 1
 
+/***************/
+/* Age Binning */
+/***************/
+/* create age bins */
+egen age_bin = cut(age), at(0(5)90)
+
+/* fill in the 85+ age bin */
+replace age_bin = 85 if age >= 85
+
+/* drop age */
+drop age
+
 /* collapse */
-collapse (sum) male female total, by(pc11_state_id pc11_district_id pc11_subdistrict_id pc11_town_id pc11_ward_id slum age)
+collapse (sum) male female total, by(pc11_state_id pc11_district_id pc11_subdistrict_id pc11_town_id pc11_ward_id slum age_bin)
+
+/* rename age bins */
+tostring age_bin, replace
+replace age_bin = "0-4" if age_bin == "0"
+replace age_bin = "5-9" if age_bin == "5"
+replace age_bin = "10-14" if age_bin == "10"
+replace age_bin = "15-19" if age_bin == "15"
+replace age_bin = "20-24" if age_bin == "20"
+replace age_bin = "25-29" if age_bin == "25"
+replace age_bin = "30-34" if age_bin == "30"
+replace age_bin = "35-39" if age_bin == "35"
+replace age_bin = "40-44" if age_bin == "40"
+replace age_bin = "45-49" if age_bin == "45"
+replace age_bin = "50-54" if age_bin == "50"
+replace age_bin = "55-59" if age_bin == "55"
+replace age_bin = "60-64" if age_bin == "60"
+replace age_bin = "65-69" if age_bin == "65"
+replace age_bin = "70-74" if age_bin == "70"
+replace age_bin = "75-79" if age_bin == "75"
+replace age_bin = "80-84" if age_bin == "80"
+replace age_bin = "85+" if age_bin == "85"
+
+/* label variables */
+label var age_bin "age bin"
+
+/* get total ward pop */
+bys pc11_state_id pc11_district_id pc11_subdistrict_id pc11_town_id pc11_ward_id: egen ward_pop = total(total)
+label var ward_pop "total population in the ward"
 
 /* save */
 save $tmp/maharashtra_ward_age_sex_pop, replace
