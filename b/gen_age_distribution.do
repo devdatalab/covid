@@ -291,3 +291,120 @@ foreach level in district subdistrict {
   }
 }
 
+
+/* Get the Maharashtra ward-level names 
+   Added 03/05/2020 */
+
+/* open the members data */
+use $secc/parsed_draft/dta/urban/maharashtra_members_clean, clear
+
+/* merge in the house_no variable */
+merge m:1 house_no using $secc/parsed_draft/tables/urban/members/maharashtra_house_no_clean_key, keep(match master)
+
+/* rename the raw_string to be house_no */
+drop house_no raw_id count _merge
+ren raw_string house_no
+
+/* save as a temp file */
+save $tmp/maharashtra_ubran_members, replace
+
+/* open the household data that has the slum variable */
+use $secc/parsed_draft/dta/urban/maharashtra_household_clean, clear
+
+/* merge in the house_no variable */
+merge m:1 house_no using $secc/parsed_draft/tables/urban/household/maharashtra_house_no_clean_key, keep(match master)
+
+/* rename the raw_string to be house_no */
+drop house_no raw_id count _merge
+ren raw_string house_no
+
+/* merge the household and members data */
+merge 1:m pc11_state_id pc11_district_id pc11_subdistrict_id pc11_ward_id pc11_block_id house_no draftlistid using $tmp/maharashtra_ubran_members
+
+/* keep only those that were merged */
+keep if _merge == 3
+
+/* keep only the variables we need */
+keep pc11* house_no draftlistid slum age sex birthyear
+
+/****************/
+/* Age Cleaning */
+/****************/
+/* create a clean age variable */
+gen age_clean = age
+
+/* assume that birthyears below 100 are actually the age, if the age is missing  */
+replace age_clean = birthyear if mi(age) & birthyear < 100
+replace birthyear = . if mi(age) & birthyear < 100
+
+/* assume the birthyears under 100 and ages over 1000 have been swapped */
+replace age_clean = birthyear if age > 1000 & birthyear < 100
+replace birthyear = age if age > 1000 & birthyear < 100
+
+/* assume birthyear is off by 1000 if less than 1900 */
+replace birthyear = birthyear + 100 if birthyear < 1900 & birthyear > 1800
+replace age_clean = 2012 - birthyear if age > 100
+
+/* replace age_clean with missing if it is unreasonable */
+replace age_clean = . if age_clean > 200
+
+/* replace age with age_clean */
+drop age birthyear
+ren age_clean age
+
+/* drop if missing age */
+drop if mi(age)
+drop if age < 0
+
+/* create male and female counts */
+gen male = 1 if sex == 1
+replace male = 0 if mi(male)
+gen female = 1 if sex == 2
+replace female = 0 if mi(female)
+gen total = 1
+
+/***************/
+/* Age Binning */
+/***************/
+/* create age bins */
+egen age_bin = cut(age), at(0(5)90)
+
+/* fill in the 85+ age bin */
+replace age_bin = 85 if age >= 85
+
+/* drop age */
+drop age
+
+/* collapse */
+collapse (sum) male female total, by(pc11_state_id pc11_district_id pc11_subdistrict_id pc11_town_id pc11_ward_id slum age_bin)
+
+/* rename age bins */
+tostring age_bin, replace
+replace age_bin = "0-4" if age_bin == "0"
+replace age_bin = "5-9" if age_bin == "5"
+replace age_bin = "10-14" if age_bin == "10"
+replace age_bin = "15-19" if age_bin == "15"
+replace age_bin = "20-24" if age_bin == "20"
+replace age_bin = "25-29" if age_bin == "25"
+replace age_bin = "30-34" if age_bin == "30"
+replace age_bin = "35-39" if age_bin == "35"
+replace age_bin = "40-44" if age_bin == "40"
+replace age_bin = "45-49" if age_bin == "45"
+replace age_bin = "50-54" if age_bin == "50"
+replace age_bin = "55-59" if age_bin == "55"
+replace age_bin = "60-64" if age_bin == "60"
+replace age_bin = "65-69" if age_bin == "65"
+replace age_bin = "70-74" if age_bin == "70"
+replace age_bin = "75-79" if age_bin == "75"
+replace age_bin = "80-84" if age_bin == "80"
+replace age_bin = "85+" if age_bin == "85"
+
+/* label variables */
+label var age_bin "age bin"
+
+/* get total ward pop */
+bys pc11_state_id pc11_district_id pc11_subdistrict_id pc11_town_id pc11_ward_id: egen ward_pop = total(total)
+label var ward_pop "total population in the ward"
+
+/* save */
+save $tmp/maharashtra_ward_age_sex_pop, replace
