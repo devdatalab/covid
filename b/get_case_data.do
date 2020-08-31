@@ -172,9 +172,8 @@ cd $ddl/covid
 /* define the url and pull the data files from covid19india */
 shell python -c "from b.retrieve_case_data import retrieve_covid19india_all_district_data; retrieve_covid19india_all_district_data('https://api.covid19india.org/v4/data-all.json', '$tmp')"
 
-
 /* read in the data */
-import delimited using $tmp/covid19india_district_data_new.csv, clear
+insheet using $tmp/covid19india_district_data_new.csv, clear
 
 /* create date object from date string */
 gen date2 = date(date, "YMD")
@@ -194,6 +193,7 @@ replace district = lower(district)
 /* unknown state codes */
 replace state = "" if state == "tt"
 replace state = "" if state == "un"
+
 /* replace unknown or unclassified districts with missing */
 replace district = "" if district == "unknown"
 replace district = "" if district == "other"
@@ -210,19 +210,24 @@ replace district = "" if district == "other region"
 replace district = "" if district == "italians"
 replace district = "" if district == "evacuees"
 replace district = "" if district == "railway quarantine"
+replace district = "" if district == "capf personnel"
+
+/* replace one incorrect state */
+replace state = "bihar" if state == "assam" & district == "kishanganj"
 
 /* rename variables to clarify meaning */
 ren deceased death_total
 ren confirmed cases_total
 
 /* drop unneeded variables */
-drop date_obj migrated recovered tested
+keep date state district cases_total death_total
 
 /* correct internally inconsistent district names */
 synonym_fix district, synfile($ddl/covid/b/str/cov19india_district_fixes.txt) replace
 
 /* fill in not reported districts */
 replace district = "not reported" if mi(district)
+replace state = "not reported" if mi(state)
 
 /* collapse to district level */
 collapse (sum) cases_total death_total, by(state district date)
@@ -415,7 +420,77 @@ save $covidpub/covid/covid_infected_deaths, replace
 export delimited using $covidpub/covid/csv/covid_infected_deaths.csv, replace
 
 /* save PC11-identified version --> need to adjust this 06/05/2020 */
-convert_ids, from_ids(lgd_state_id lgd_district_id) to_ids(pc11_state_id pc11_district_id) long(date) key($keys/lgd_pc11_district_key_weights.dta) weight_var(lgd_pc11_wt_pop) labels metadata_urls(https://docs.google.com/spreadsheets/d/e/2PACX-1vTKTuciRsUd6pk5kWhlMyhF85Iv5x04b0njSrWzCkaN5IeEZpBwwvmSdw-mUJOp215jBgv2NPMeTHXK/pub?gid=0&single=true&output=csv)
+drop lgd_state_name lgd_district_name
+
+/* for now this doesn't work becuase of the hierarchical matching issue (git issue #20 in tools) */
+// convert_ids, from_ids(lgd_state_id lgd_district_id) to_ids(pc11_state_id pc11_district_id) long(date) key($keys/lgd_pc11_district_key_weights.dta) weight_var(lgd_pc11_wt_pop) labels metadata_urls(https://docs.google.com/spreadsheets/d/e/2PACX-1vTKTuciRsUd6pk5kWhlMyhF85Iv5x04b0njSrWzCkaN5IeEZpBwwvmSdw-mUJOp215jBgv2NPMeTHXK/pub?gid=0&single=true&output=csv)
+
+/* run customized version of convert_ids to deal with the hierarchical matching issue */
+local from_ids lgd_state_id lgd_district_id
+local to_ids pc11_state_id pc11_district_id
+local long date
+local key $keys/lgd_pc11_district_key_weights.dta
+local weight_var lgd_pc11_wt_pop
+local metadata_urls "https://docs.google.com/spreadsheets/d/e/2PACX-1vTKTuciRsUd6pk5kWhlMyhF85Iv5x04b0njSrWzCkaN5IeEZpBwwvmSdw-mUJOp215jBgv2NPMeTHXK/pub?gid=0&single=true&output=csv"
+
+/* pull in aggregation specification */
+shell wget --no-check-certificate --output-document=$tmp/metadata_scrape.csv '`metadata_urls''
+qui aggmethod_globals_from_csv $tmp/metadata_scrape.csv, labels
+
+/* set variable list */
+unab variables : _all
+
+/* remove identifiers from the list */
+local variables : list variables - from_ids
+local variables : list variables - long
+
+/* save mean values for each variable into locals for validation */
+foreach var in `variables' {
+  qui sum `var'
+  local `var'_o = `r(mean)'
+}
+
+/* joinby state and district */
+qui joinby `from_ids' using `key', unmatched(master)
+drop _merge
+
+/* merge in pc11 state id's */
+merge m:1 lgd_state_id using $keys/lgd_pc11_state_key, keepusing(pc11_state_id) update
+drop if _merge == 2
+drop _merge
+
+/* fill in remaining missing i's as not reported */
+replace pc11_district_id = "999" if mi(pc11_district_id)
+replace pc11_state_id = "99" if mi(pc11_state_id)
+
+/* initialize a collapse string for instances where pc11 dists are aggregated to LGD (or vice versa) */
+local collapse_string
+
+/* conduct the weighting for all variables, using externally-defined globals. loop over calculated vars */
+foreach var in `variables' {
+  /* extract aggregation method into its own local */
+  local clean_method = lower("${`var'_}")
+  /* run the sum command - we know these are all sum, otherwise we would need to check
+     and run functions as is done in convert_ids in tools.do */
+  local collapse_string `collapse_string' (`clean_method') `var'
+}
+
+/* fill the weighted variable with 1 if missing */
+replace `weight_var' = 1 if mi(`weight_var')
+
+/* collapse to specified IDs. use iweights; aweights normalize
+   group weights to sum to Ni, which we don't want */
+collapse_save_labels
+collapse `collapse_string' [iw = `weight_var'], by(`to_ids' `long')
+collapse_apply_labels
+
+/* check old and new values */
+foreach var in `variables' {
+  qui sum `var'
+  local newmean = `r(mean)'
+  if !inrange(`newmean', ``var'_o' * .8, ``var'_o' * 1.2) disp "WARNING: `var' has changed more than 20% from original value (``var'_o' -> `newmean')"
+}
+  
 order pc11*, first
 save $covidpub/covid/pc11/covid_infected_deaths_pc11, replace
 export delimited using $covidpub/covid/csv/covid_infected_deaths_pc11.csv, replace
