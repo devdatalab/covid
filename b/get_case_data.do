@@ -17,10 +17,11 @@ qui do $ddl/tools/do/tools.do
 /* 1a. Retrieve the pre-April 27 case data */
 /*******************************************/
 /* call python function to retrieve the patient-level covid data */
-shell python -c "from b.retrieve_case_data import retrieve_covid19india_case_data; retrieve_covid19india_case_data('https://api.covid19india.org/raw_data.json', '$tmp')"
+pyfunc retrieve_covid19india_case_data("https://api.covid19india.org/raw_data.json", "$tmp"), i(from retrieve_case_data import retrieve_covid19india_case_data) f("$ddl/covid/b")
+
+// shell python -c "from b.retrieve_case_data import retrieve_covid19india_case_data; retrieve_covid19india_case_data('https://api.covid19india.org/raw_data.json', '$tmp')"
 
 /* import the patient data we just pulled (TL 7/30/2020: better luck parsing empty strings with insheet, oddly) */
-//import delimited using $tmp/covid19india_old_cases.csv, clear
 insheet using $tmp/covid19india_old_cases.csv, names clear
 
 /* create date object from date string */
@@ -86,7 +87,9 @@ save $tmp/old_covid19_case_data, replace
 /* 1b. Retrieve the pre-April 27 death data */
 /********************************************/
 /* call python function to retrieve the deaths & recovered covid data */
-shell python -c "from b.retrieve_case_data import retrieve_covid19india_deaths_data; retrieve_covid19india_deaths_data('https://api.covid19india.org/deaths_recoveries.json', '$tmp')"
+pyfunc retrieve_covid19india_deaths_data("https://api.covid19india.org/deaths_recoveries.json", "$tmp"), i(from retrieve_case_data import retrieve_covid19india_deaths_data) f("$ddl/covid/b")
+
+//shell python -c "from b.retrieve_case_data import retrieve_covid19india_deaths_data; retrieve_covid19india_deaths_data('https://api.covid19india.org/deaths_recoveries.json', '$tmp')"
 
 /* import the patient data we just pulled */
 import delimited using $tmp/covid19india_old_deaths.csv, clear
@@ -170,7 +173,9 @@ save $tmp/all_old_covid19_key, replace
 cd $ddl/covid
 
 /* define the url and pull the data files from covid19india */
-shell python -c "from b.retrieve_case_data import retrieve_covid19india_all_district_data; retrieve_covid19india_all_district_data('https://api.covid19india.org/v4/data-all.json', '$tmp')"
+pyfunc retrieve_covid19india_all_district_data("https://api.covid19india.org/v4/data-all.json", "$tmp"), i(from retrieve_case_data import retrieve_covid19india_all_district_data) f("$ddl/covid/b")
+
+//shell python -c "from b.retrieve_case_data import retrieve_covid19india_all_district_data; retrieve_covid19india_all_district_data('https://api.covid19india.org/v4/data-all.json', '$tmp')"
 
 /* read in the data */
 insheet using $tmp/covid19india_district_data_new.csv, clear
@@ -191,8 +196,15 @@ replace state = lower(state)
 replace district = lower(district)
 
 /* unknown state codes */
-replace state = "" if state == "tt"
 replace state = "" if state == "un"
+
+/* drop the state totals to ensure our dataset is unique on state-district
+   without state totals mixed into the long district data */
+drop if state == "tt"
+
+/* fix Daman and Diu State names */
+replace state = "daman and diu" if (district == "daman") & (state == "dadra and nagar haveli")
+replace state = "daman and diu" if (district == "diu") & (state == "dadra and nagar haveli")
 
 /* replace unknown or unclassified districts with missing */
 replace district = "" if district == "unknown"
@@ -211,6 +223,7 @@ replace district = "" if district == "italians"
 replace district = "" if district == "evacuees"
 replace district = "" if district == "railway quarantine"
 replace district = "" if district == "capf personnel"
+replace district = "" if district == "state pool"
 
 /* replace one incorrect state */
 replace state = "bihar" if state == "assam" & district == "kishanganj"
