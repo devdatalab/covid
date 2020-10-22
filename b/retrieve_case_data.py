@@ -109,6 +109,103 @@ def retrieve_covid19india_district_data(url, output_fp):
     df.to_csv(os.path.join(output_fp, "covid19india_district_data.csv"))
 
 
+def retrieve_covid19india_all_district_data(url, output_fp):
+    """
+    url = 'https://api.covid19india.org/v4/data-all.json'
+    """
+    # create empty dataframe to hold all results
+    df = pd.DataFrame()
+    
+    with urllib.request.urlopen(url) as _url:
+    
+        # load the json
+        data = json.loads(_url.read().decode())
+
+        # get state list
+        date_list = list(data.keys())
+
+        for date in date_list:
+            # only parse for post April 26
+            if int(date.split("-")[1]) < 4:
+                continue
+            if (int(date.split("-")[1]) == 4) & (int(date.split("-")[2]) <= 26):
+                continue
+
+            state_list = list(data[date].keys())
+            for state in state_list:
+                if "districts" in list(data[date][state]):
+                    districts = list(data[date][state]["districts"].keys())
+                else:
+                    districts = ["Unknown"]
+                    data[date][state]["districts"] = data[date][state]
+                    data[date][state]["districts"]["Unknown"] = data[date][state]
+                    
+                for dist in districts:
+
+                    # if the district does not report the number of cases, skip it
+                    if "total" not in list(data[date][state]["districts"][dist].keys()):
+                        continue
+                                                                
+                    # set the data frame values
+                    temp = pd.DataFrame.from_records(
+                        data[date][state]["districts"][dist]["total"],
+                        index=[0]
+                    )
+                    temp.loc[0, "date"] = date
+                    temp.loc[0, "state"] = state
+                    temp.loc[0, "district"] = dist
+
+                    # append to master data, reset index
+                    df = df.append(temp, sort=False).reset_index(drop=True)
+
+    df["date_obj"] = df["date"].apply(lambda x: datetime.datetime.strptime(x, "%Y-%m-%d"))
+    df = df.sort_values(["date_obj", "state", "district"]).reset_index(drop=True)
+
+    df = df.replace({
+        "state": {
+            "AN": "andaman and nicobar islands",
+            "AP": "andhra pradesh",
+            "AR": "arunachal pradesh",
+            "AS": "assam",
+            "BR": "bihar",
+            "CH": "chandigarh",
+            "CT": "chhattisgarh",
+            "DL": "delhi",
+            "DN": "dadra and nagar haveli",
+            "GA": "goa",
+            "GJ": "gujarat",
+            "HP": "himachal pradesh",
+            "HR": "haryana",
+            "JH": "jharkhand",
+            "JK": "jammu and kashmir",
+            "KA": "karnataka",
+            "KL": "kerala",
+            "LA": "ladakh",
+            "MH": "maharashtra",
+            "ML": "meghalaya",
+            "MN": "manipur",
+            "MP": "madhya pradesh",
+            "MZ": "mizoram",
+            "NL": "nagaland",
+            "OR": "odisha",
+            "PB": "punjab",
+            "PY": "puducherry",
+            "RJ": "rajasthan",
+            "SK": "sikkim",
+            "TG": "telangana",
+            "TN": "tamil nadu",
+            "TR": "tripura",
+            "TT": "tt",
+            "UN": "un", 
+            "UP": "uttar pradesh",
+            "UT": "uttarakhand",
+            "WB": "west bengal",
+            }
+        }
+    )
+    df.to_csv(os.path.join(output_fp, "covid19india_district_data_new.csv"), index=False)
+    return df
+
 def retrieve_covindia_case_data(url, output_fp):
     """
     url = specific url to api provided by covindia (ex. "https://v1.api.covindia.com/covindia-raw-data")
