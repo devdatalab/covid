@@ -60,7 +60,7 @@ sort age
 twoway ///
     (line prr_h_india_full_cts age, lwidth(medthick) lcolor(black)) ///
     (line prr_h_uk_nhs_matched_full_cts age, lwidth(medthick) lcolor(orange)), ///
-    ytitle("Aggregate Population Relative Risk from Population Helath", size(medsmall)) xtitle("Age", size(medsmall)) ///
+    ytitle("Population Relative Risk of COVID-19 Mortality", size(medsmall)) xtitle("Age", size(medsmall)) ///
     legend(lab(1 "India") lab(2 "England") ring(0) pos(5) cols(1) size(small) symxsize(5) bm(tiny) region(lcolor(black))) ///
     name(prr_health, replace)  ylabel(1(.5)3) 
 graphout prr_health, pdf
