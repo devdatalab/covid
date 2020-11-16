@@ -3,10 +3,11 @@
 
 /* Generating a seedfile for appending */
 clear
+cap mkdir $tmp/agmark
 save $tmp/agmark/agmark_new.dta, replace emptyok
 
 /* Loop over all the csv files. Change the loop in a way to loop over all the files */
-forval i = 1/13 {
+forval i = 1/18 {
 	import delimited $covidpub/agmark/raw/Agmark_`i'.csv, encoding(ISO-8859-1) clear
 	
 	*Rename all variables
