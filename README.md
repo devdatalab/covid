@@ -30,6 +30,16 @@ continue to provide and develop this service. If you are interested in
 funding more rapid development of this data platform, please contact
 us at covid@devdatalab.org.
 
+Please cite these data as the "SHRUG COVID platform", referring to the SHRUG paper:   
+```
+@unpublished{ almn2020,
+author = {Asher, Sam and Lunt, Tobias and Matsuura, Ryu and Novosad, Paul},
+  note = {World Bank Economic Review (Revise and Resubmit)},
+  title = {{The Socioeconomic High-resolution Rural-Urban Geographic Dataset on India (SHRUG)}},
+  year = {2020}
+  }
+```
+
 <p align="center"><a target="_blank" href="https://www.dropbox.com/sh/y949ncp39towulf/AABs8_dECTzr38GdS7BneTH7a?dl=0"><img src="https://raw.githubusercontent.com/devdatalab/covid/master/assets/download_button.png"/></a></p>
 
 ## Data Folder Structure and Metadata
