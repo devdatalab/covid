@@ -7,19 +7,24 @@ foreach v of varlist i_* u_* {
   replace `v' = `v' * 100
 }
 
+set scheme s1color
+grstyle init
+grstyle set mesh, horizontal
+
 /* diabetes comparison */
 twoway ///
     (line i_diabetes_uncontr age, lwidth(thick) lcolor(gs2) lpattern(solid)) ///
     (line i_diabetes_contr   age, lwidth(thick) lcolor(gs2) lpattern(-))     ///
     (line u_diabetes_uncontr age, lwidth(thick) lcolor(orange) lpattern(solid)) ///
     (line u_diabetes_contr   age, lwidth(thick) lcolor(orange) lpattern(-)) ///
-    , name(diabetes, replace) xtitle("Age", size(large)) ytitle("Prevalence (%)", size(large)) xlabel(, labsize(medium)) ylabel(, labsize(medium)) ///
-    legend(size(large) rows(2) symxsize(5) bm(tiny) ///
+    , name(diabetes, replace) xtitle("Age", size(medlarge)) ytitle("Prevalence (%)", size(medlarge)) title("A) Diabetes", size(large)) xlabel(20(20)100, labsize(medium) labcolor(black)) ylabel(0(5)20, labsize(medium) labcolor(black)) ///
+    legend(size(medlarge) rows(2) symxsize(5) bm(tiny) nobox region(lstyle(none)) ///
     lab(1 "Uncontrolled (India)") ///
     lab(2 "Controlled (India)") ///
     lab(3 "Uncontrolled (England)") ///
     lab(4 "Controlled (England)"))
-graphout diabetes, pdf
+
+// graphout diabetes, pdf
 
 /* hypertension comparison */
 twoway ///
@@ -27,26 +32,26 @@ twoway ///
     (line i_hypertension_contr   age, lwidth(thick) lcolor(gs2) lpattern(-))     ///
     (line u_hypertension_uncontr age, lwidth(thick) lcolor(orange) lpattern(solid)) ///
     (line u_hypertension_contr   age, lwidth(thick) lcolor(orange) lpattern(-))     ///
-    , name(hypertension, replace) xtitle("Age", size(large)) ytitle("Prevalence (%)", size(large)) xlabel(, labsize(medium)) ylabel(, labsize(medium)) ///
-    legend(size(large) rows(2) symxsize(5) bm(tiny) ///
+    , name(hypertension, replace) xtitle("Age", size(medlarge)) ytitle("Prevalence (%)", size(medlarge)) title("B) Hypertension", size(large)) xlabel(20(20)100, labsize(medium) labcolor(black)) ylabel(0(10)50, labsize(medium) labcolor(black)) ///
+    legend(size(medlarge) rows(2) symxsize(5) bm(tiny) nobox region(lstyle(none)) ///
     lab(1 "Uncontrolled (India)") ///
     lab(2 "Controlled (India)") ///
     lab(3 "Uncontrolled (England)") ///
     lab(4 "Controlled (England)"))
-graphout hypertension, pdf
+// graphout hypertension, pdf
 
 /* obesity comparison */
 twoway ///
     (line i_obese age, lwidth(thick) lcolor(gs2) lpattern(solid)) ///
     (line u_obese age, lwidth(thick) lcolor(orange) lpattern(solid)) ///
-    , name(obese, replace) xtitle("Age", size(large)) ytitle("Prevalence (%)", size(large)) xlabel(, labsize(medium)) ylabel(, labsize(medium)) ///
-    legend(size(large) rows(1) symxsize(5) bm(tiny) ///
+    , name(obese, replace) xtitle("Age", size(medlarge)) ytitle("Prevalence (%)", size(medlarge)) title("C) Obesity", size(large)) xlabel(20(20)100, labsize(medium) labcolor(black)) ylabel(0(10)40, labsize(medium) labcolor(black)) ///
+    legend(size(medlarge) rows(1) symxsize(5) bm(tiny) nobox region(lstyle(none)) ///
     lab(1 "India") ///
     lab(2 "England"))
-graphout obese, pdf
+// graphout obese, pdf
 
-graph combine diabetes hypertension obese, rows(2)
-graphout biomarker_uk_india
+graph combine diabetes hypertension obese, col(1) rows(3) graphregion(color(white)) xsize(4) ysize(9)
+graphout three_prevalences, pdf
 
 /***********************************************/
 /* plot combined risk of all health conditions */
