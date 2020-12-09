@@ -1,3 +1,4 @@
+/* import raw GBD data */
 import delimited using $health/gbd/ihme-gbd.csv, clear
 
 /* confirm we got the data we want */
@@ -16,7 +17,7 @@ replace agestart = -90 if age == "Age-standardized"
 replace ageend = -90 if age == "Age-standardized"
 drop age
 
-/* rename variable names for consistency with our other stuff */
+/* rename variable names for consistency with our other data */
 ren val prevalence
 ren location country
 ren cause condition
@@ -105,5 +106,8 @@ ren tmp_* gbd_*
 ren upper_* *_upper
 ren lower_* *_lower
 
+/* save england data */
 savesome if country == "England" using $health/gbd/gbd_nhs_conditions_uk, replace
+
+/* save india data */
 savesome if country == "India" using $health/gbd/gbd_nhs_conditions_india, replace

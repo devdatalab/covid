@@ -1,4 +1,3 @@
-//global conditionlist hypertension diabetes copd asthma
 /* first import and calculate COPD rate, this is the only variable coming from its own source */
 import delimited using $comocsv/copd_mclean_rates.csv, clear
 
@@ -19,7 +18,7 @@ save $tmp/copd_uk_prev, replace
 /* create full condition list */
 global conditionlist diabetes_contr diabetes_uncontr hypertension_contr hypertension_uncontr hypertension_both asthma obese_1_2 obese_3
 
-/* import uk data */
+/* import england data */
 import delimited using $comocsv/uk_condition_prevalence.csv, varnames(1) clear
 drop source v*
 
@@ -76,5 +75,5 @@ ren prev_copd prev_chronic_resp_dz
 
 ren prev* uk_prev*
 
-/* save uk prevalences */
+/* save england prevalences */
 save $tmp/uk_prevalences, replace
