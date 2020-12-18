@@ -2,7 +2,7 @@
 /* POPULATION WEIGHTS */
 /**********************/
 
-/* open the population data */
+/* open the district level population data */
 use $pc11/pc11_pca_district_clean, clear
 
 /* calculate total state and national population */

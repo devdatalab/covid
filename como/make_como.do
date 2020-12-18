@@ -1,4 +1,3 @@
-
 /*********************/
 /* data construction */
 /*********************/
@@ -22,7 +21,7 @@ do $ccode/como/b/prep_england_prevalence.do
 do $ccode/como/b/prep_hrs.do
 
 /* prep NY odds ratios of death */
-// do $ccode/como/b/prep_ny_mortality.do
+do $ccode/como/b/prep_ny_mortality.do
 
 /* prep india and UK sex ratios and populations */
 do $ccode/como/b/prep_pop_sex.do

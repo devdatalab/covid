@@ -63,7 +63,7 @@ replace sex = sex_comb if mi(sex) & !mi(sex_comb)
 /* drop if missing age or sex */
 drop if mi(age) | mi(sex) | sex == 3
 
-/* drop missing age and those under 18 */
+/* drop those under 18 */
 drop if age < 18
 
 /* SAMPLE */

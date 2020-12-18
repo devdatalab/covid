@@ -30,6 +30,16 @@ continue to provide and develop this service. If you are interested in
 funding more rapid development of this data platform, please contact
 us at covid@devdatalab.org.
 
+Please cite these data as the "SHRUG COVID platform", referring to the SHRUG paper:   
+```
+@unpublished{ almn2020,
+author = {Asher, Sam and Lunt, Tobias and Matsuura, Ryu and Novosad, Paul},
+  note = {World Bank Economic Review (Revise and Resubmit)},
+  title = {{The Socioeconomic High-resolution Rural-Urban Geographic Dataset on India (SHRUG)}},
+  year = {2020}
+  }
+```
+
 <p align="center"><a target="_blank" href="https://www.dropbox.com/sh/y949ncp39towulf/AABs8_dECTzr38GdS7BneTH7a?dl=0"><img src="https://raw.githubusercontent.com/devdatalab/covid/master/assets/download_button.png"/></a></p>
 
 ## Data Folder Structure and Metadata
@@ -46,7 +56,7 @@ in a `csv/` subfolder in each path, while PC11 identified data are in a `pc11/` 
 |             | Modeled age-structured based fatality rate predictions                            | `estimates/(sub)district_age_dist_cfr`       |                                                                                                                                                  |
 | hospitals/  | District-level public hospital/clinic bed and doctor counts from DLHS             | `hospitals/dlhs4_hospitals_dist`             | [Link](https://docs.google.com/spreadsheets/d/e/2PACX-1vR8pkaS86ZlwcSe0ljKyL6wR_YOGE380JrHgAhG5Z66Oq1WtD4xtsJCsdCt-yAv8Qw0X74twBeIQ9of/pubhtml#) |
 |             | (Sub)district-level public hospital/clinic bed and doctor counts from Pop Census  | `hospitals/pc_hospitals_(sub)dist`           | [Link](https://docs.google.com/spreadsheets/d/e/2PACX-1vTpGgFszhHhMlzh-ePv3tRj5Arpv7uyicPPDgkCS7-Ms3nE6OvofQWBFuOxOWBPtELzSmBFttxvLc20/pubhtml)  |
-|             | District- and town/village-level hospital public/private hospital employment (EC) | `hospitals/ec_hospitals_(dist,tv)`           | [Link](https://docs.google.com/spreadsheets/d/e/2PACX-1vTpGgFszhHhMlzh-ePv3tRj5Arpv7uyicPPDgkCS7-Ms3nE6OvofQWBFuOxOWBPtELzSmBFttxvLc20/pubhtml)  |
+|             | District- and town/village-level hospital public/private hospital employment (EC) | `hospitals/ec_hospitals_(dist,tv)`           | [Link](https://docs.google.com/spreadsheets/d/1h6G4vYL3lvy4Bi8DTY3pMT2-5aVWOBoxAm3plx4M7qQ/edit?usp=sharing)  |
 | migration/  | District-level temporary and permanent migration data             | `migration/district_migration`             | [Link](https://docs.google.com/spreadsheets/d/e/2PACX-1vTu79uiVKSFv8c1oZvx7WARrWXSfbwfLakiukoezDaH0spMM_MQalkm5fr4bnkBQVNRs2aiU7x41oi3/pubhtml)|
 |             | District-level temporary and permanent migration data (PC11 identified)  | `migration/pc11/district_migration_pc11`           | [Link](https://docs.google.com/spreadsheets/d/e/2PACX-1vTu79uiVKSFv8c1oZvx7WARrWXSfbwfLakiukoezDaH0spMM_MQalkm5fr4bnkBQVNRs2aiU7x41oi3/pubhtml)  |
 | agmark/  | Farm product data reported by different Mandis (Markets) across India.             | `agmark/agmark_clean`             | [Link](https://docs.google.com/spreadsheets/d/e/2PACX-1vSL5i735NyXaopzylr31_UjjS7NRUYWgcdNZi41Kvw8wUuHF1gDkyPKxA-tYMFnGTTOWdB-zPjJT6T3/pubhtml)|
