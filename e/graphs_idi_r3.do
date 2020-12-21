@@ -79,7 +79,7 @@ estimates store Mandi
 
 la var pc11_vd_mrkt "Village has regular mandis"
 
-coefplot Road Mandi, drop(_cons) xline(0) scheme(plottig) levels(90) legend(label(1 "Village has a road", 2 "Village has weekly mandis", 3 "Distance to nearest city")) xtitle("Outcome: Whether cultivator decided to shift selling location this year", size(small) margin(medium)) recast(bar)
+coefplot Road Mandi, drop(_cons) yline(0) scheme(plottig) levels(90) legend(label(1 "Village has a road", 2 "Village has weekly mandis", 3 "Distance to nearest city"))  recast(bar) vertical ytitle("Outcome: Whether cultivators shifted selling location in 2020", size(small))
 graphout infra
 
 /* Harvest outlook */
