@@ -1,4 +1,3 @@
-
 from bs4 import BeautifulSoup
 import datetime
 import json
@@ -56,6 +55,17 @@ def retrieve_covid19india_deaths_data(url, output_fp):
 
     # write the dataframe out as a csv
     df.to_csv(os.path.join(output_fp, "covid19india_old_deaths.csv"))
+
+
+def retrieve_covid19india_all_district_csv(url, output_fp):
+    """
+    03/16/21: in checking the API again, data is now released in csv format for april 26 onwards
+    at the district level. this function pulls and stores the data from that csv.
+    url: "https://api.covid19india.org/csv/latest/districts.csv"
+    """
+    with urllib.request.urlopen(url) as _url:
+        df = pd.read_csv(_url)
+    df.to_csv(os.path.join(output_fp, "covid19india_district_data_new.csv"), index=False)
 
 
 def retrieve_covid19india_district_data(url, output_fp):

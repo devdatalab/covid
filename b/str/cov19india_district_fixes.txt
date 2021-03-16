@@ -6,6 +6,7 @@ y.s.r.,y s r,andhra pradesh
 spsr nellore,s.p.s. nellore,andhra pradesh
 spsr nellore,sri potti sriramulu nellore,andhra pradesh
 dibang valley,upper dibang valley,arunachal pradesh
+papum pare,capital complex,arunachal pradesh
 south salmara mancachar,south salmara mankachar,assam
 aurangabad,aurangabad bihar,bihar
 purbi champaran,purba champaran,bihar
@@ -35,6 +36,7 @@ baramulla,baramula,jammu and kashmir
 bandipora,bandipore,jammu and kashmir
 budgam,badgam,jammu and kasmir
 koderma,kodarma,jharkhand
+saraikela kharsawan,saraikela,jharkhand
 bengaluru urban,bengaluru,karnataka
 ahmednagar,ahmadnagar,maharashtra
 beed,bid,maharashtra

@@ -173,9 +173,8 @@ save $tmp/all_old_covid19_key, replace
 cd $ddl/covid
 
 /* define the url and pull the data files from covid19india */
-pyfunc retrieve_covid19india_all_district_data("https://api.covid19india.org/v4/data-all.json", "$tmp"), i(from retrieve_case_data import retrieve_covid19india_all_district_data) f("$ddl/covid/b")
-
-//shell python -c "from b.retrieve_case_data import retrieve_covid19india_all_district_data; retrieve_covid19india_all_district_data('https://api.covid19india.org/v4/data-all.json', '$tmp')"
+pyfunc retrieve_covid19india_all_district_csv("https://api.covid19india.org/csv/latest/districts.csv", "$tmp"), i(from retrieve_case_data import retrieve_covid19india_all_district_csv) f("$ddl/covid/b")
+// pyfunc retrieve_covid19india_all_district_csv("https://api.covid19india.org/v4/data-all.json", "$tmp"), i(from retrieve_case_data import retrieve_covid19india_all_district_data) f("$ddl/covid/b")
 
 /* read in the data */
 insheet using $tmp/covid19india_district_data_new.csv, clear
@@ -203,8 +202,9 @@ replace state = "" if state == "un"
 drop if state == "tt"
 
 /* fix Daman and Diu State names */
-replace state = "daman and diu" if (district == "daman") & (state == "dadra and nagar haveli")
-replace state = "daman and diu" if (district == "diu") & (state == "dadra and nagar haveli")
+replace state = "daman and diu" if (district == "daman") & (state == "dadra and nagar haveli and daman and diu")
+replace state = "daman and diu" if (district == "diu") & (state == "dadra and nagar haveli and daman and diu")
+replace state = "dadra and nagar haveli" if (district == "dadra and nagar haveli") & (state == "dadra and nagar haveli and daman and diu")
 
 /* replace unknown or unclassified districts with missing */
 replace district = "" if district == "unknown"
@@ -349,7 +349,7 @@ use $tmp/all_old_covid19_data, clear
 
 /* merge in lgd states */
 ren state lgd_state_name
-merge m:1 lgd_state_name using $keys/lgd_state_key.dta, keep(match master)
+merge m:1 lgd_state_name using $keys/lgd_state_key, keep(match master)
 replace lgd_state_name = "not reported" if mi(lgd_state_name)
 drop _merge
 
