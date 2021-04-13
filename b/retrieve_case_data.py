@@ -2,11 +2,26 @@ from bs4 import BeautifulSoup
 import datetime
 import json
 import pandas as pd
+import io
 import os
 import urllib.request
 import requests
 from collections import Counter
 
+
+def retrieve_covid19india_vaccination(url, output_fp):
+    """
+    url: http://api.covid19india.org/csv/latest/cowin_vaccine_data_districtwise.csv
+    """
+    # pull in data from the url
+    s = requests.get(url).content
+
+    # read in the data to a dataframe, decoding the utf-8 encoding 
+    df = pd.read_csv(io.StringIO(s.decode('utf-8')))
+
+    # save as a csv to the outputpath
+    df.to_csv(os.path.join(output_fp, "covid19india_vaccination_data.csv"), index=False)
+    
 def retrieve_covid19india_case_data(url, output_fp):
     """
     url = specific url to api provided by covid19india (ex. "https://api.covid19india.org/raw_data.json")
