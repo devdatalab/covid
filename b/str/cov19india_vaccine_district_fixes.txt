@@ -1,0 +1,65 @@
+master,lgd_district_name,lgd_state_name
+dohad,dahod,gujarat
+east nimar,khandwa,madhya pradesh
+y.s.r.,y.s.r. kadapa,andhra pradesh
+spsr nellore,s.p.s. nellore,andhra pradesh
+spsr nellore,sri potti sriramulu nellore,andhra pradesh
+dibang valley,upper dibang valley,arunachal pradesh
+papum pare,capital complex,arunachal pradesh
+south salmara mancachar,south salmara mankachar,assam
+aurangabad,aurangabad bihar,bihar
+purbi champaran,purba champaran,bihar
+purbi champaran,west champaran,bihar
+pashchim champaran,east champaran,bihar
+kaimur (bhabua),kaimur,bihar
+kaimur (bhabua),kaimur bhabua,bihar
+madhepura,madhopura,bihar
+bemetara,bametara,chhattisgarh
+bilaspur,bilaspur cg,chhattisgarh
+dantewada,dakshin bastar dantewada,chhattisgarh
+gariyaband,gariaband,chhattisgarh
+janjgir-champa,janjgir champa,chhattisgarh
+kabirdham,kabeerdham,chhattisgarh
+uttar bastar kanker,uttar bastar kanker,chhattisgarh
+bilaspur,gaurela pendra marwahi,chhattisgarh
+ahmadabad,ahmedabad,gujarat
+sabar kantha,sabarkantha,gujarat
+panch mahals,panchmahal,gujarat
+mehsana,mahesana,gujarat
+kachchh,kutch,gujarat
+chota udaipur,chhota udaipur,gujarat
+banas kantha,banaskantha,gujarat
+charkhi dadri,charki dadri,haryana
+shopiyan,shupiyan,jammu and kashmir
+baramulla,baramula,jammu and kashmir
+bandipora,bandipore,jammu and kashmir
+budgam,badgam,jammu and kasmir
+koderma,kodarma,jharkhand
+saraikela kharsawan,saraikela,jharkhand
+bengaluru urban,bengaluru,karnataka
+ahmednagar,ahmadnagar,maharashtra
+beed,bid,maharashtra
+raigarh,raigad,maharashtra
+gondiya,gondia,maharashtra
+buldhana,buldana,maharashtra
+deogarh,debagarh,odisha
+baleshwar,balasore,odisha
+jajapur,jajpur,odisha
+ferozepur,firozpur,punjab
+dholpur,dhaulpur,rajasthan
+chittaurgarh,chittorgarh,rajasthan
+west district,west sikkim,sikkim
+east district,east sikkim,sikkim
+north district,north sikkim,sikkim
+south district,south sikkim,sikkim
+the nilgiris,nilgiris,tamil nadu
+jayashankar bhupalapally,jayashankar,tamil nadu
+kumuram bheem asifabad,komaram bheem,tamil nadu
+kanniyakumari,kanyakumari,tamil nadu
+jangoan,jangaon,telangana
+jagitial,jagtial,telangana
+mahrajganj,maharajganj,uttar pradesh
+kheri,lakhimpur kheri,uttar pradesh
+barabanki,bara banki,uttar pradesh
+medinipur east,purba medinipur,west bengal
+

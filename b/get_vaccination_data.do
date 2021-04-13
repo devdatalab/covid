@@ -1,5 +1,3 @@
-http://api.covid19india.org/csv/latest/cowin_vaccine_data_districtwise.csv
-
 /* define lgd matching programs */
 qui do $ddl/covid/covid_progs.do
 qui do $ddl/tools/do/tools.do
@@ -57,4 +55,76 @@ la var v7_ "trans vac"
 la var v8_ "total covaxin"
 la var v9_ "total covishied"
 
-save $tmp/vaccines_fixed, replace
+save $tmp/vaccines_clean, replace
+
+/****************/
+/* match to LGD */
+/****************/
+use $tmp/vaccines_clean, clear
+
+/* drop extra variables */
+drop district_key state_code
+
+/* create lgd_state variable to merge */
+gen lgd_state_name = lower(state)
+
+/* fix dadra and nager haveli and daman and diu */
+replace lgd_state_name = "dadra and nagar haveli" if district == "Dadra and Nagar Haveli"
+replace lgd_state_name = "daman and diu" if (district == "Daman") | (district == "Diu")
+
+/* merge in lgd state id */
+merge m:1 lgd_state_name using $keys/lgd_state_key, keepusing(lgd_state_id) keep(match master) nogen
+
+/* now create an lgd_district variable to merge */
+gen lgd_district_name = lower(district)
+
+/* fix misspellings and name changes */
+synonym_fix lgd_district_name, synfile($ddl/covid/b/str/cov19india_vaccine_district_fixes.txt) replace
+
+/* save */
+save $tmp/temp, replace
+
+/* run masala merge */
+keep lgd_state_name lgd_district_name
+duplicates drop
+masala_merge lgd_state_name using $keys/lgd_district_key, s1(lgd_district_name) minbigram(0.2) minscore(0.6) outfile($tmp/vaccine_lgd_district)
+
+/* keep master matches */
+keep if match_source < 7
+
+/* drop unneeded variables */
+keep lgd_state_name lgd_district_name_using lgd_district_name_master
+
+/* merge data back in */
+ren lgd_district_name_master lgd_district_name
+merge 1:m lgd_state_name lgd_district_name using $tmp/temp
+drop _merge
+
+/* now replace the district name with the lgd key name */
+drop lgd_district_name
+ren lgd_district_name_using lgd_district_name
+
+/* ensure that it is it square */
+egen dgroup = group(lgd_state_name lgd_district_name)
+fillin date dgroup
+drop dgroup _fillin
+
+/* clean final variables */
+forvalues i=0/9 {
+
+  /* convert to numerical  */
+  destring v`i'_, replace
+
+  /* get the new name from the label */
+  local newname: var lab v`i'
+  local newname = subinstr("`newname'", " ", "_", .)
+
+  /* rename the variable */
+  ren v`i'_ `newname'
+}
+
+/* fix spelling */
+ren female_vc female_vac
+
+/* save data */
+save $covidpub/covid/covid_vaccination, replace
