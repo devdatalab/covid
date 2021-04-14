@@ -1,4 +1,5 @@
 import os
+import numpy as np
 import pandas as pd
 import getpass
 import datetime
@@ -65,4 +66,4 @@ state_total.plot.bar(y='vac_rate', ax=ax)
 ax.set_ylabel("Vaccination Rate", fontsize=12)
 ax.set_xlabel("State", fontsize=12)
 
-plt.savefig(os.path.expanduser("~/public_html/png/state_vac_rate.png", bbox_inches="tight"))
+plt.savefig(os.path.expanduser("~/public_html/png/state_vac_rate.png"), bbox_inches="tight")
