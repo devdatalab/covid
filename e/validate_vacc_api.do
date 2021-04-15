@@ -1,3 +1,5 @@
+/* Clean, process and validate district-level vaccination data from covid19india */
+
 /* Import district-level vaccination data from covid19india API */
 import delimited "https://api.covid19india.org/csv/latest/cowin_vaccine_data_districtwise.csv", clear
 
@@ -121,7 +123,7 @@ replace daily_sites = total_sites if daily_sites == .
 
 ***************************************************
 
-* drop today's observations since updated data will reflect by tomorrow
+* drop today's observations since updated data will reflect tomorrow
  
 drop if edate == 22384
 
@@ -167,15 +169,3 @@ foreach i of var * {
 gen total_`i' = sum(`i')
 
 }
-
-
-***************************************************
-
-/* Visualizations */
-
-twoway (area total_covaxin edate, sort) (area total_covishield edate, sort fcolor(%50)), xtitle(Date) legend(order(1 "Covaxin" 2 "Covishield") cols(2) position(6)) title("Covishield v/s Covaxin") note("Source: covid19india.org") 
-
-twoway (area total_vac_male edate, sort) (area total_vac_female edate, sort fcolor(%50)), xtitle(Date) legend(order(1 "Males" 2 "Females") cols(2) position(6)) title("Vaccination by Gender") note("Source: covid19india.org") 
-
-
-
