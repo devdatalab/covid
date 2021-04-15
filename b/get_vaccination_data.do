@@ -129,8 +129,11 @@ ren female_vc female_vac
 /* rename variables */
 ren total_covishied total_covishield
 
+/* collapse to state-district-date: this sums over a couple duplicated lgd districts, 
+districts that have been created since the lgd */
+collapse (sum) total_* *_dose_* *_vac (first) state cowinkey district, by(lgd_state_id lgd_state_name lgd_district_name date)
+
 /* format */
-drop sno
 order lgd*id lgd*
 
 /* fix labels */
@@ -151,26 +154,3 @@ la var total_covishield "Total Covishield doses administered"
 /* save data */
 save $covidpub/covid/covid_vaccination, replace
 
-/* get district population */
-use $pc11/pc11u_pca_district_clean.dta, clear
-
-/* append the rural data */
-append using $pc11/pc11r_pca_district_clean
-
-/* collapse to district for some variables*/
-collapse (sum) pc11_pca_tot_p pc11_pca_p_sc pc11_pca_p_lit, by(pc11_state_id pc11_state_name pc11_district_id pc11_district_name)
-
-/* merge in lgd-pc11 district weights */
-merge 1:m pc11_state_id pc11_district_id using $keys/lgd_pc11_district_key_weights.dta, keep(match master) nogen
-
-/* find lgd district value using weights*/
-gen lgd_pca_tot_p = pc11_pca_tot_p * pc11_lgd_wt_pop
-gen lgd_pca_p_sc = pc11_pca_p_sc * pc11_lgd_wt_pop
-gen lgd_pca_p_lit = pc11_pca_p_lit * pc11_lgd_wt_pop
-
-/* keep only the lgd indicators */
-keep lgd*
-drop lgd_district_version lgd_district_name_local
-
-/* save */
-save $tmp/lgd_pca_district_pop, replace

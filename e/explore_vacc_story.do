@@ -22,12 +22,7 @@ sort date_fmt
 keep if date == "12042021"
 
 /* generate count of total vaccination */
-egen tot_vacc= rowtotal(total_covaxin total_covishied)
-
-/* duplicates */
-duplicates tag lgd_state_name lgd_district_name, gen(tag)
-replace tag = 0 if lgd_district_name == lower(cowinkey)
-keep if tag == 0
+egen tot_vacc= rowtotal(total_covaxin total_covishield)
 
 /* get ids */
 merge m:1 lgd_state_name using $keys/lgd_state_key, keepusing(lgd_state_id) keep(match) nogen
@@ -46,18 +41,31 @@ forval i = 50 (5) 85 {
   replace tot_old = tot_old + age_`i'_t
 }
 
+/* save full age data temporarily */
+tempfile tempdata
+save `tempdata'
+
+/* collapse to the entire country */
 gen group = 1
 collapse (sum) tot_old pc11_pca_tot_t, by(group) 
-gen share = tot_old/
+gen share = tot_old/pc11_pca_tot_t
+
+/* display the country wide fraction of below 45 year olds  */
+qui sum share
+local tot_share = `r(mean)' * 100
+local tot_share: di %5.2f `tot_share'
+disp_nice "Total share of 45+ in India: `tot_share' %"
+
+/* open back the full data */
+use `tempdata', clear
+
+/* collapse to pc11 districts */
+collapse (sum) tot_old pc11_pca_tot_t, by(pc11_state_id pc11_district_id) 
+gen share = tot_old/pc11_pca_tot_t
 keep tot_old pc11*id
 
-/* get lgd ids - note 10 districts get dropped in the process */
-/* bc i dont know how to handle the weights for them */
-convert_ids, from_ids(pc11_state_id pc11_district_id) to_ids(lgd_state_id lgd_district_id) key($keys/lgd_pc11_district_key_weights.dta) weight_var(pc11_lgd_wt_pop)
-
-/* drop 10 districts that were split between pc11 and lgd */
-duplicates tag lgd_state_id lgd_district_id , gen(tag)
-keep if tag == 0
+/* get lgd ids */
+convert_ids, from_ids(pc11_state_id pc11_district_id) to_ids(lgd_state_id lgd_district_id) key($keys/lgd_pc11_district_key_weights.dta) weight_var(pc11_lgd_wt_pop) globals_from_csv($ccode/b/pc11_lgd_metadata.csv)
 
 /* merge with district vaccinaton data */
 merge 1:1 lgd_state_id lgd_district_id using $tmp/district_vacc, nogen keep(match using)
@@ -75,10 +83,11 @@ save $tmp/vacc_eligible, replace
 
 use $tmp/district_vacc, clear
 
-convert_ids, to_ids(pc11_state_id pc11_district_id) from_ids(lgd_state_id lgd_district_id) key($keys/lgd_pc11_district_key_weights.dta) weight_var(lgd_pc11_wt_pop)
+// convert_ids, to_ids(pc11_state_id pc11_district_id) from_ids(lgd_state_id lgd_district_id) key($keys/lgd_pc11_district_key_weights.dta) weight_var(lgd_pc11_wt_pop) 
 
-save $tmp/vacc_all, replace
+//save $tmp/vacc_all, replace
 
+/* save some states */
 savesome if lgd_state_name == "maharashtra" using $tmp/vacc_mah, replace
 savesome if lgd_state_name == "delhi" using $tmp/vacc_del, replace
 savesome if lgd_state_name == "karnataka" using $tmp/vacc_ka, replace
@@ -99,7 +108,7 @@ use $covidpub/covid/covid_vaccination, clear
 keep if date == "12042021"
 
 /* generate count of total vaccination */
-egen tot_vacc = rowtotal(total_covaxin total_covishied)
+egen tot_vacc = rowtotal(total_covaxin total_covishield)
 
 /* combine daman diu and dadra and nagar haveli */
 replace lgd_state_name = "dadra and nagar haveli and daman and diu" if inlist(lgd_state_name , "daman and diu", "dadra and nagar haveli")
