@@ -73,68 +73,56 @@ gen vacc_hc = tot_vacc/(ec_num_hosp_priv + ec_num_hosp_gov)
 
 save $tmp/vacc_eligible, replace
 
+use $tmp/district_vacc, clear
+
+convert_ids, to_ids(pc11_state_id pc11_district_id) from_ids(lgd_state_id lgd_district_id) key($keys/lgd_pc11_district_key_weights.dta) weight_var(lgd_pc11_wt_pop)
+
+save $tmp/vacc_all, replace
+
+savesome if lgd_state_name == "maharashtra" using $tmp/vacc_mah, replace
+savesome if lgd_state_name == "delhi" using $tmp/vacc_del, replace
+savesome if lgd_state_name == "karnataka" using $tmp/vacc_ka, replace
+
 /*************************************/
-/* 2. State-wise weekly vaccinations */
+/* 2. State-wise vacc perk */
 /*************************************/
+
+insheet using $ddl/covid/e/pop_estimates_21.csv, clear                                                                                 
+ren state_name lgd_state_name                                                                                                                                                                             
+replace lgd_state_name = subinstr(lgd_state_name , "&", "and", .)                                                                      
+save $tmp/pop_est_21, replace                                      
 
 /* bring in district wise vaccinatoin data */
 use $covidpub/covid/covid_vaccination, clear
 
-/* work with the date variable */
-gen day = substr(date, 1, 2)
-gen month = substr(date, 3, 2)
-gen year = "2021"
-destring day month year, replace
-gen date_fmt = mdy(month, day, year)
-format date_fmt %td
-
-/* sort data by date */
-sort date_fmt
-
-/* create week indicator */
-gen week = date_fmt if dow(date_fmt) == 1
-replace week = week[_n-1] if mi(week)
-format week %td
-
-/* drop most recent week since its incomplete */
-drop if week == mdy(04, 12, 2021)
+/* keep most recent date */
+keep if date == "12042021"
 
 /* generate count of total vaccination */
 egen tot_vacc = rowtotal(total_covaxin total_covishied)
 
-/* keep only weekly data */
-keep if week == date_fmt
+/* combine daman diu and dadra and nagar haveli */
+replace lgd_state_name = "dadra and nagar haveli and daman and diu" if inlist(lgd_state_name , "daman and diu", "dadra and nagar haveli")
+replace lgd_state_name = "andaman and nicobar" if lgd_state_name == "andaman and nicobar islands"
 
-/* generate weekly requirement in each district from cdf */
-sort lgd_state_name lgd_district_name week
+/* collapse to state level */
+collapse (sum) tot_vacc, by(lgd_state_name)
 
-/* gen week_tot */
-group lgd_state_name lgd_district_name 
-gen week_tot = tot_vacc[_n] - tot_vacc[_n-1] if llgroup[_n] == llgroup[_n-1]
-drop if week_tot == .
+/* get 2021 population */
+merge 1:1 lgd_state_name using $tmp/pop_est_21, keep(match)
 
-/* generate weekly sum */
-bys lgd_state_name week: egen week_sum = total(week_tot)
-destring week_sum, replace
+/* replace a state name  */
+replace lgd_state_name = "dnh & daman-diu" if lgd_state_name == "dadra and nagar haveli and daman and diu"
 
-/* collapse weekly vaccines used to state level */
-format week_sum %10.0f
+/* create vacc per k */
+gen perk_denom = pop_2021_est/1000
+gen vacc_perk = tot_vacc/perk_denom
 
-/* collapse to week level */
-collapse (mean) week_sum, by(lgd_state_name week)
-
-/* save week level data */
-save $tmp/vacc_state_week, replace
-
-/* collapse */
-collapse (mean) week_sum, by(lgd_state_name)
-
-/* sort by value */
-sort week_sum
-
-/* outsheet */
-outsheet using $tmp/vacc.csv, replace comma
-
-/* save */
-save $tmp/vacc_state, replace
-
+/* bar graph */
+set scheme pn
+sort vacc_perk
+gen axis = _n
+labmask axis, values(lgd_state_name)
+graph hbar (asis) vacc_perk, over(axis, label(labsize(vsmall))) ytitle("Vaccinations per 1000 people", margin(medium)) ylabel(0 (20) 300) ///
+    note("Population data - 2020 estimates from UIDAI")
+graphout vacc_perk

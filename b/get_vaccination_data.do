@@ -126,6 +126,28 @@ forvalues i=0/9 {
 /* fix spelling */
 ren female_vc female_vac
 
+/* rename variables */
+ren total_covishied total_covishield
+
+/* format */
+drop sno
+order lgd*id lgd*
+
+/* fix labels */
+la var date "Date"
+la var state "state name from COWIN dashboard"
+la var cowinkey "district key from COWIN dashboard"
+la var district "district name from COWIN dashboard"
+la var total_individuals_registered "Total individuals registered"
+la var total_sessions_conducted "Total sessions conducted"
+la var first_dose_admin "First doses administered"
+la var second_dose_admin "Second doses administered"
+la var male_vac "Number of males vaccinated"
+la var female_vac "Number of females vaccinated"
+la var trans_vac "Number of trans individuals vaccinated"
+la var total_covaxin "Total Covaxin doses administered"
+la var total_covishield "Total Covishield doses administered"
+
 /* save data */
 save $covidpub/covid/covid_vaccination, replace
 
