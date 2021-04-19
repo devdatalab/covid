@@ -140,5 +140,4 @@ fillin date dgroup
 drop dgroup _fillin
 
 /* save data */
-save $tmp/covid_vaccination.csv, replace
-
+export delimited using "$tmp/covid_vaccination.csv", replace
