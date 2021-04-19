@@ -62,4 +62,4 @@ mahrajganj,maharajganj,uttar pradesh
 kheri,lakhimpur kheri,uttar pradesh
 barabanki,bara banki,uttar pradesh
 medinipur east,purba medinipur,west bengal
-
+tuticorin,thoothukkudi,tamil nadu
