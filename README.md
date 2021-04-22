@@ -125,6 +125,13 @@ You can download the data here:
 
 [![Download Data](assets/download_button.png)](https://www.dropbox.com/sh/y949ncp39towulf/AABs8_dECTzr38GdS7BneTH7a?dl=0)
 
+## Programmatic Downloading
+
+While we don't have a real API for these data (yet), you can access all files and directories programmatically using `curl` or `wget`. To do this, follow the dropbox links and right-click on the file or folder you wish to access, and copy the link location. Use this link location with `curl` or `wget`, e.g. ```curl -L https://www.dropbox.com/sh/y949ncp39towulf/AADbSeZWSG1xjPHXNMTyhmoba/covid?dl=0 > download.zip```
+
+To directly access data on vaccines, deaths, and cases, you can use the direct links below:
+
+
 ## Bugs / Requests
 
 If you come across bugs in the data or have a specific data request
