@@ -356,6 +356,14 @@ drop _merge
 /* merge in lgd districts */
 ren district covid_district_name
 merge m:1 lgd_state_id covid_district_name using $tmp/old_covid19_lgd_district_key, keep(match master) keepusing(lgd_state_id lgd_district_id lgd_district_name)
+
+/* check that all districts not matched from the source data are missing */
+qui count if _merge == 1 & !mi(lgd_district_name)
+local unmatched_districts = `r(N)'
+if `unmatched_districts' > 0 {
+  disp_nice "`unmatched_districts' districts unmatched in the pre-April 27 case data. These districts must be matched to LGD before proceeding."
+  exit 9
+}
 drop _merge
 
 /* clarify missing districts as not reported */
@@ -376,6 +384,14 @@ drop _merge
 /* merge in lgd districts */
 ren district covid_district_name
 merge m:1 lgd_state_id covid_district_name using $tmp/covid19india_lgd_district_key, keep(match master) keepusing(lgd_state_id lgd_district_id lgd_district_name)
+
+/* check that all districts not matched from the source data are missing */
+qui count if _merge == 1 & !mi(lgd_district_name)
+local unmatched_districts = `r(N)'
+if `unmatched_districts' > 0 {
+  disp_nice "`unmatched_districts' districts unmatched in the post-April 27 case data. These districts must be matched to LGD before proceeding."
+  exit 9
+}
 drop _merge
 
 /* clarify missing districts as not reported 

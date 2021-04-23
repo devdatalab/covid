@@ -111,11 +111,19 @@ keep lgd_state_name lgd_district_name
 duplicates drop
 masala_merge lgd_state_name using $keys/lgd_district_key, s1(lgd_district_name) minbigram(0.2) minscore(0.6) outfile($tmp/vaccine_lgd_district)
 
+/* check that all districts were matched to LGD */
+qui count if match_source == 6
+local unmatched_districts = `r(N)'
+if `unmatched_districts' > 0 {
+  disp_nice "`unmatched_districts' districts from the vaccination data are unmatched. These districts must be matched to LGD before proceeding."
+  exit 9
+}
+
 /* keep master matches */
 keep if match_source < 7
 
 /* drop unneeded variables */
-keep lgd_state_name lgd_district_name_using lgd_district_name_master
+keep lgd_state_name lgd_district_name_using lgd_district_name_master lgd_district_id
 
 /* merge data back in */
 ren lgd_district_name_master lgd_district_name
@@ -145,10 +153,7 @@ ren v9_ total_covishield
 
 /* collapse to state-district-date: this sums over a couple duplicated lgd districts, 
 districts that have been created since the lgd */
-collapse (sum) total_* *_dose_* *_vac (first) state district, by(lgd_state_id lgd_state_name lgd_district_name date)
-
-/* format */
-order lgd*id lgd*
+collapse (sum) total_* *_dose_* *_vac (first) state district, by(lgd_state_id lgd_state_name lgd_district_name lgd_district_id date)
 
 /* fix labels */
 la var date "Date"
@@ -163,6 +168,27 @@ la var female_vac "Number of females vaccinated"
 la var trans_vac "Number of trans individuals vaccinated"
 la var total_covaxin "Total Covaxin doses administered"
 la var total_covishield "Total Covishield doses administered"
+
+/* work with the date variable */
+tostring date, replace
+gen day = substr(date, 1, 2)
+gen month = substr(date, 3, 2)
+gen year = "2021"
+destring date, replace
+
+/* create date object for sorting */
+destring day month year, replace
+gen date_fmt = mdy(month, day, year)
+format date_fmt %td
+
+/* sort */
+sort lgd_state_id lgd_district_id date_fmt
+
+/* order */
+order lgd_state_id lgd_state_name lgd_district_id lgd_district_name date 
+
+/* drop extra variables */
+drop month day year date_fmt
 
 /* save data */
 save $covidpub/covid/covid_vaccination, replace
