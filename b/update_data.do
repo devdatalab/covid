@@ -6,11 +6,11 @@ import delimited using $covidpub/covid/csv/covid_infected_deaths.csv, clear
 
 /* check last date */
 quietly {
-generate date_fmt = date(date, "DMY")
-egen latest_date = max(date_fmt)
-lab var latest_date "Last Day in the data:"
-format latest_date %td
-noi tab latest_date
+  gen date_fmt = date(date, "DMY")
+  egen latest_date = max(date_fmt)
+  lab var latest_date "Last Day in the data:"
+  format latest_date %td
+  noi tab latest_date
 }
 
 
@@ -34,26 +34,18 @@ import delimited using $covidpub/covid/csv/covid_vaccination.csv, clear
 
 /* check last date */
 quietly {
-tostring date, replace
-gen day = substr(date, 1, 2)
-gen month = substr(date, 3, 2)
-gen year = "2021"
-destring date, replace
-
-/* create date object for sorting */
-destring day month year, replace
-gen date_fmt = mdy(month, day, year)
-format date_fmt %td
-egen latest_date = max(date_fmt)
-lab var latest_date "Last Day in the data:"
-format latest_date %td
-noi tab latest_date
+  gen date_fmt = date(date, "DMY")
+  egen latest_date = max(date_fmt)
+  lab var latest_date "Last Day in the data:"
+  format latest_date %td
+  noi tab latest_date
 }
 
 /* run checks */
 is_unique lgd_state_id lgd_state_name lgd_district_name date
 
-/* check that data is square */gen n = 1
+/* check that data is square */
+gen n = 1
 bys lgd_state_id lgd_state_name lgd_district_name: egen num_days = total(n)
 qui distinct num_days
 local square_check =  `r(ndistinct)'
