@@ -161,6 +161,7 @@ la var state "state name from COWIN dashboard"
 la var district "district name from COWIN dashboard"
 la var total_individuals_registered "Total individuals registered"
 la var total_sessions_conducted "Total sessions conducted"
+la var total_sites "Total sites where vaccine is administered"
 la var first_dose_admin "First doses administered"
 la var second_dose_admin "Second doses administered"
 la var male_vac "Number of males vaccinated"
@@ -174,7 +175,6 @@ tostring date, replace
 gen day = substr(date, 1, 2)
 gen month = substr(date, 3, 2)
 gen year = "2021"
-destring date, replace
 
 /* create date object for sorting */
 destring day month year, replace
@@ -185,10 +185,86 @@ format date_fmt %td
 sort lgd_state_id lgd_district_id date_fmt
 
 /* order */
-order lgd_state_id lgd_state_name lgd_district_id lgd_district_name date 
+order lgd_state_id lgd_state_name lgd_district_id lgd_district_name date_fmt
 
 /* drop extra variables */
-drop month day year date_fmt
+drop month day year date
+
+/* rename date_fmt */
+ren date_fmt date
+
+/*************************/
+/* Flag bad daily counts */
+/*************************/
+/*  print the value from Mahe district in Puducherry as an example to see what bad values we are flagging:
+list lgd_state_name lgd_district_name date total_covishield if lgd_district_name == "mahe"
+
+note that we are not replacing total values, just flagging days that we suspect were data entry errors.  */
+
+/* do for total covishield and covaxin values */
+foreach var in covishield covaxin {
+  qui {
+    disp_nice "Checking total_`var'"
+
+    /* FIRST check for values that are anomalously large compared to the days before and after them.
+       these are data entry errors we want to flag and replace in our subsequent logic checking first differences.
+       see 14apr2021 in Mahe district for an exmple of the values we are flagging
+    */
+    bys lgd_state_id lgd_district_id: gen `var'_previous = (total_`var' - total_`var'[_n-1]) / total_`var'[_n-1]
+    bys lgd_state_id lgd_district_id: gen `var'_next = (total_`var' - total_`var'[_n+1]) / total_`var'[_n+1]
+
+    /* if a value is more than 100% of the value before AND after it, we want to flag it */
+    gen bad_flg_`var' = 1 if `var'_previous > 1 & `var'_next > 1 & !mi(`var'_previous) & !mi(`var'_next)
+
+    /* create a temporary variable to manipulate the data */
+    gen temp = total_`var'
+
+    /* replace temp with the previous day's value if it's one of these flagged values */
+    replace temp = temp[_n-1] if bad_flg_`var' == 1
+
+    /* SECOND: calculate first differences to flag days that have values lower than the day before
+     see 13apr2021 in Mahe district for an exmple of the values we are flagging */
+    
+    /* make a counter */
+    local counter = 1
+
+    /* while this counter is not 0, we have strange daily totals reported */
+    while `counter' != 0 {
+    
+      /* calculate the first differences */
+      cap drop daily_temp
+      bys lgd_state_id lgd_district_id: gen daily_temp = temp - temp[_n-1]
+      replace daily_temp = temp if daily_temp == .
+
+      /* add all bad obs to the flagged variable */
+      replace bad_flg_`var' = 1 if daily_temp < 0
+
+      /* identify the flagged observations that haven't been resolbed*/
+      cap drop bad_flg_still
+      gen bad_flg_still = 1 if daily_temp < 0
+
+      /* replace bad obs with the previous day */
+      replace temp = temp[_n-1] if bad_flg_still == 1
+  
+      /* count how many bad flags there are */
+      count if bad_flg_still == 1
+      local counter = `r(N)'
+
+      /* if the counter is 0, it's done- display the number of flagged observations */
+      if `counter' == 0 {
+        count if bad_flg_`var' == 1
+        noi disp_nice "`var' done. `r(N)' observations flagged in bad_flg_`var'."
+      }
+    }
+    
+  /* drop the temporary variables */
+  drop temp bad_flg_still daily_temp `var'_next `var'_previous
+  }
+}
+
+/* label flags */
+lab var bad_flg_covishield "Likely data entry error in covishield total for this day in this district"
+lab var bad_flg_covaxin "Likely data entry error in covaxin total for this day in this distrct"
 
 /* save data */
 save $covidpub/covid/covid_vaccination, replace
