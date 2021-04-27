@@ -13,11 +13,11 @@ quietly {
   noi tab latest_date
 }
 
-
 /* run checks */
 is_unique lgd_state_id lgd_state_name lgd_district_name date
 
-/* check that data is square */gen n = 1
+/* check that data is square */
+gen n = 1
 bys lgd_state_id lgd_state_name lgd_district_name: egen num_days = total(n)
 qui distinct num_days
 local square_check =  `r(ndistinct)'
@@ -63,5 +63,5 @@ if `num_days' < 97 {
 }
 
 /* rclone just the two data files to dropbox */
-shell rclone copy --progress ~/iec/covid/covid/csv/covid_infected_deaths.csv my_remote:SamPaul/covid_data/covid/csv/covid_infected_deaths.csv
-shell rclone copy --progress ~/iec/covid/covid/csv/covid_vaccination.csv my_remote:SamPaul/covid_data/covid/csv/covid_vaccination.csv
+shell rclone copyto --progress ~/iec/covid/covid/csv/covid_infected_deaths.csv my_remote:SamPaul/covid_data/covid/csv/covid_infected_deaths.csv
+shell rclone copyto --progress ~/iec/covid/covid/csv/covid_vaccination.csv my_remote:SamPaul/covid_data/covid/csv/covid_vaccination.csv
