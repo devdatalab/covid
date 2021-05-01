@@ -1,6 +1,7 @@
 /* this file updates just the case count and vaccination data, the most frequently updated files on our platform. */
 
 /* get new case data */
+setc covid
 do $ccode/b/get_case_data.do
 import delimited using $covidpub/covid/csv/covid_infected_deaths.csv, clear
 
