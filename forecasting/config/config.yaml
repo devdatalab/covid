@@ -1,0 +1,27 @@
+---
+# config file for COVID forecasting site
+
+# define globals shared across Python and Stata
+globals:
+    ccode: ~/ddl/rural-data-platform
+    cdata: ~/iec/covid/forecasting
+    shrug: ~/iec1/shrug
+    metadata_fn: ~/iec/rural_platform/gsheet_metadata
+    mbtoken_tile: ${MBTOKEN_TILE}
+    mbtoken_web: ${MBTOKEN_WEB}
+    arddp_gsheet: https://docs.google.com/spreadsheets/d/e/2PACX-1vSEGmY8L3tMU9dnSfUODJJ0GBTUfA3dhwXn9gmYCSBlGKJoh8jNd2P6siJtfyC2mJsY7y5zxP7BeIdJ/pub?gid=1517113052&single=true&output=csv
+
+    # NOTE: the $TMP global refers to the environment variable, not the $tmp Stata global.
+    data_out: ${TMP}
+    web_out: ~/ddl/ddl_web
+
+# define Stata programs to be run for this project
+#stata: 
+#       do ~/ddl/foo/foo_programs.do
+
+# list folders with Python functions to be added to the python path for easy use
+python: 
+    ~/ddl/tools/py/geospatialtools
+
+    
+

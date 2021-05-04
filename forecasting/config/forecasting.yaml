@@ -1,0 +1,10 @@
+channels:
+  - defaults
+  - conda-forge
+dependencies:
+  - python=3
+  - requests
+  - boto3
+  - git=2
+  - numpy
+  - pandas

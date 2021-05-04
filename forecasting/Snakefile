@@ -1,0 +1,121 @@
+# Master build management file for rural data portal datasets.
+
+##########
+# CONFIG #
+##########
+
+# imports
+import os
+
+# set master config file with paths and globals
+configfile: 'config/config.yaml'
+
+# pull paths from ENV vars
+envvars:
+    'IEC',
+    'IEC1',
+    'TMP'
+    
+# set paths, leveraging settings in the config file
+CODE=os.path.expanduser(config['globals']['ccode'])
+DATA=os.path.expanduser(config['globals']['cdata'])
+MBTOKEN_TILE=os.path.expanduser(config['globals']['mbtoken_tile'])
+TMP=os.path.expanduser(os.environ['TMP'])
+IEC=os.path.expanduser(os.environ['IEC'])
+IEC1=os.path.expanduser(os.environ['IEC1'])
+
+
+#########
+# RULES #
+#########
+
+# master rule to define the final output
+rule all:
+    input:
+        f'{TMP}/tileset_push.log',
+        os.path.expanduser('~/ddl/ddl-web/main/static/main/assets/other/rural_portal_metadata.js'),
+        f'{TMP}/canal-command.mbtiles',
+        f'{TMP}/data_push.log'
+
+## create tabular data tables of predicted variables (from Anup et al), identified to pc11 dists
+# rule process_predicted_data:
+# FILL THIS IN WHEN WE HAVE API ACCESS!!!
+#    output:
+#        f'{DATA}/pred_data.dta',
+
+## create data tables for all other DDL covid data to display in district popups
+#rule process_ddl_data:
+#    input:
+#        DEPENDENCIES?
+#        f'{CODE}/b/process_ddl_data.do'
+#    output:
+#        f'{DATA}/ddl_data.dta',
+#    shell: f'stata -b {CODE}/b/process_ddl_data.do '
+
+## merge DDL and predicted data
+# WRITE THIS FILE WHEN API ACCESS FIGURED OUT
+#rule merge_ddl_pred_data:
+#    input:
+#        rules.process_predicted_data.output,        
+#        rules.process_ddl_data.output,        
+#        f'{CODE}/b/merge_ddl_pred_data.do'
+#    output:
+#        f'{DATA}/merged_data.dta',
+#    shell: f'stata -b {CODE}/b/merge_ddl_pred_data.do '
+
+# creation of geojson from tabular district data
+rule dist_data_to_geojson:
+    input:
+        rules.merge_ddl_pred_data.output,        
+        f'{IEC1}/gis/pc11/pc11-district-simplified.shp',
+        f'{CODE}/b/dist_data_to_geojson.py'
+    output:
+        f'{IEC}/rural_platform/district.geojson',
+    conda: 'config/forecasting_spatial.yaml'
+    shell: f'python {CODE}/b/dist_data_to_geojson.py '
+
+# creation of vector tileset from geojson
+rule create_vector_tileset:
+    input:
+        rules.dist_data_to_geojson.output,
+        f'{CODE}/b/create_vector_tileset.sh'
+    output: f'{TMP}/covid_data.mbtiles'
+    shell: 'source {CODE}/b/create_vector_tileset.sh'
+
+# upload of mbtiles to mapbox studio
+rule push_vector_tileset:
+    input:
+        rules.create_vector_tileset.output,
+        f'{CODE}/b/push_vector_tileset.py',
+    log: f'{TMP}/tileset_push.log'
+    conda: 'config/forecasting.yaml'
+    shell: f'python {CODE}/b/push_vector_tileset.py --file {rules.create_vector_tileset.output} --token {MBTOKEN_TILE} > {{log}}'
+
+           
+########
+# TODO #
+########
+
+# Add API endpoint access / processing of predicted data
+# FIXME: more elegantly pull env vars to snakefile
+
+
+
+############
+# COMMANDS #
+############
+
+# running
+#snakemake --cores 4 --use-conda
+#snakemake --cores 4
+
+# dry run:
+#snakemake -n
+
+# viewing DAG:
+#snakemake --forceall --dag | dot -Tpdf > ~/public_html/png/dag.pdf
+#snakemake --forceall --rulegraph | dot -Tpdf > ~/public_html/png/dag.pdf
+
+# Report
+# note: snakemake --report ~/public_html/report.html
+# viewable here: https://caligari.dartmouth.edu/~lunt/report.html
