@@ -64,7 +64,9 @@ def table_geodataframe_join(poly_in, join_id, fp_table, fp_out=""):
     tab_data = import_tabular_data(fp_table)
 
     # execute the merge
-    joined = poly_in.merge(tab_data, on=join_id, how='left')
+    #    joined = poly_in.merge(tab_data, on=join_id, how='left')
+    # inner join removes district polygons wihtout data rather than keeping empty geometries
+    joined = poly_in.merge(tab_data, on=join_id, how='inner')
 
     # convert any categorical columns to string (breaks to_file gpd method)
     for column in joined.select_dtypes(include='category').columns: joined[column] = joined[column].astype('string') 
