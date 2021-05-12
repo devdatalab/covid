@@ -84,7 +84,7 @@ upload_id = json_data['id']
 # check upload status
 response = requests.get(f'https://api.mapbox.com/uploads/v1/devdatalab/{upload_id}', params=params)
 
-# assert there are no errors
+# assert there are no errors in the response
 json_data = response.json() if response and response.status_code == 200 else None
 error = json_data['error']
 assert not error
