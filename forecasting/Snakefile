@@ -1,4 +1,4 @@
-# Master build management file for rural data portal datasets.
+# Master build management file for covid forecasting datasets.
 
 ##########
 # CONFIG #
@@ -14,12 +14,13 @@ configfile: 'config/config.yaml'
 envvars:
     'IEC',
     'IEC1',
-    'TMP'
+    'TMP',
+    'MBTOKEN_TILE'
     
 # set paths, leveraging settings in the config file
 CODE=os.path.expanduser(config['globals']['ccode'])
 DATA=os.path.expanduser(config['globals']['cdata'])
-MBTOKEN_TILE=os.path.expanduser(config['globals']['mbtoken_tile'])
+MBTOKEN_TILE=os.path.expanduser(os.environ['MBTOKEN_TILE'])
 TMP=os.path.expanduser(os.environ['TMP'])
 IEC=os.path.expanduser(os.environ['IEC'])
 IEC1=os.path.expanduser(os.environ['IEC1'])
@@ -33,44 +34,58 @@ IEC1=os.path.expanduser(os.environ['IEC1'])
 rule all:
     input:
         f'{TMP}/tileset_push.log',
-        os.path.expanduser('~/ddl/ddl-web/main/static/main/assets/other/rural_portal_metadata.js'),
-        f'{TMP}/canal-command.mbtiles',
+        f'{TMP}/covid_data.mbtiles',
         f'{TMP}/data_push.log'
 
-## create tabular data tables of predicted variables (from Anup et al), identified to pc11 dists
-# rule process_predicted_data:
-# FILL THIS IN WHEN WE HAVE API ACCESS!!!
-#    output:
-#        f'{DATA}/pred_data.dta',
+# pull predicted data from google cloud
+rule pull_predicted_data:
+    input:
+        f'{CODE}/b/pull_predicted_data.sh',
+        f'{CODE}/b/pull_predicted_data_helper.py'
+    conda: 'config/forecasting.yaml'
+    log: f'{TMP}/data_pull.log'
+    shell: f'source {CODE}/b/pull_predicted_data.sh {CODE}/predictions_credential.json {CODE}/b/pull_predicted_data_helper.py {DATA}/all_rt_estimates > {{log}}'
 
-## create data tables for all other DDL covid data to display in district popups
-#rule process_ddl_data:
-#    input:
-#        DEPENDENCIES?
-#        f'{CODE}/b/process_ddl_data.do'
-#    output:
-#        f'{DATA}/ddl_data.dta',
-#    shell: f'stata -b {CODE}/b/process_ddl_data.do '
+# create tabular data tables of predicted variables (from Anup et al), identified to pc11 dists
+# UPDATE WHEN WE HAVE API ACCESS
+# UPDATE TO WILDCARD CSVS
+rule process_predicted_data:
+    input:
+        f'{DATA}/all_rt_estimates/WB_district_Rt.csv',
+        f'{TMP}/data_pull.log',
+        f'{CODE}/b/assemble_csvs.do'
+    output:
+        f'{DATA}/pred_data.dta',
+    shell: f'stata -b {CODE}/b/assemble_csvs.do '
 
-## merge DDL and predicted data
-# WRITE THIS FILE WHEN API ACCESS FIGURED OUT
-#rule merge_ddl_pred_data:
-#    input:
-#        rules.process_predicted_data.output,        
-#        rules.process_ddl_data.output,        
-#        f'{CODE}/b/merge_ddl_pred_data.do'
-#    output:
-#        f'{DATA}/merged_data.dta',
-#    shell: f'stata -b {CODE}/b/merge_ddl_pred_data.do '
+# create data tables for all other DDL covid data to display in district popups
+rule process_ddl_data:
+    input:
+        f'{IEC}/covid/hospitals/pc11/pc_hospitals_dist_pc11.dta',
+        f'{CODE}/b/process_ddl_data.do'
+    output:
+        f'{DATA}/ddl_data.dta',
+    shell: f'stata -b {CODE}/b/process_ddl_data.do '
+
+# merge DDL and predicted data
+# UPDATE THIS FILE WHEN API ACCESS FIGURED OUT
+rule merge_ddl_pred_data:
+    input:
+        rules.process_predicted_data.output,        
+        rules.process_ddl_data.output,        
+        f'{CODE}/b/merge_ddl_pred_data.do'
+    output:
+        f'{DATA}/merged_data.dta',
+    shell: f'stata -b {CODE}/b/merge_ddl_pred_data.do '
 
 # creation of geojson from tabular district data
 rule dist_data_to_geojson:
     input:
         rules.merge_ddl_pred_data.output,        
-        f'{IEC1}/gis/pc11/pc11-district-simplified.shp',
+        f'{DATA}/pc11-district-simplified-mapshaper.shp',
         f'{CODE}/b/dist_data_to_geojson.py'
     output:
-        f'{IEC}/rural_platform/district.geojson',
+        f'{DATA}/district.geojson',
     conda: 'config/forecasting_spatial.yaml'
     shell: f'python {CODE}/b/dist_data_to_geojson.py '
 
@@ -82,13 +97,21 @@ rule create_vector_tileset:
     output: f'{TMP}/covid_data.mbtiles'
     shell: 'source {CODE}/b/create_vector_tileset.sh'
 
+# zip and upload datafile to dropbox
+rule push_public_data:
+    input:
+        rules.merge_ddl_pred_data.output,        
+        f'{CODE}/b/push_public_data.sh'
+    log: f'{TMP}/data_push.log'
+    shell: f'source {CODE}/b/push_public_data.sh > {{log}}'
+
 # upload of mbtiles to mapbox studio
 rule push_vector_tileset:
     input:
         rules.create_vector_tileset.output,
-        f'{CODE}/b/push_vector_tileset.py',
-    log: f'{TMP}/tileset_push.log'
+        f'{CODE}/b/push_vector_tileset.py'
     conda: 'config/forecasting.yaml'
+    log: f'{TMP}/tileset_push.log'
     shell: f'python {CODE}/b/push_vector_tileset.py --file {rules.create_vector_tileset.output} --token {MBTOKEN_TILE} > {{log}}'
 
            
@@ -97,6 +120,7 @@ rule push_vector_tileset:
 ########
 
 # Add API endpoint access / processing of predicted data
+# alternative to filling in latest date (filter choropleth server side by max date differentially)
 # FIXME: more elegantly pull env vars to snakefile
 
 
@@ -112,9 +136,13 @@ rule push_vector_tileset:
 # dry run:
 #snakemake -n
 
+# run a single job
+#snakemake -R --until pull_predicted_data --cores 4 --use-conda
+
 # viewing DAG:
 #snakemake --forceall --dag | dot -Tpdf > ~/public_html/png/dag.pdf
 #snakemake --forceall --rulegraph | dot -Tpdf > ~/public_html/png/dag.pdf
+# viewable here: https://caligari.dartmouth.edu/~lunt/png/dag.pdf
 
 # Report
 # note: snakemake --report ~/public_html/report.html
