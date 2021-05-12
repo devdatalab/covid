@@ -74,3 +74,7 @@ gen rt_pred_100x = 100 * rt_pred
 
 /* final output for predictions data */
 save ~/iec/covid/forecasting/pred_data, replace
+
+/* we need to push the `recent' string to the web app. save to a JS object for push to AWS */
+cap rm ~/iec/covid/forecasting/pred_metadata.js
+append_to_file using ~/iec/covid/forecasting/pred_metadata.js , s(`"predMeta='[{"most_recent":"`recent'"}]'"')
