@@ -6,5 +6,4 @@ dependencies:
   - requests
   - boto3
   - git=2
-  - numpy
-  - pandas
+  - google-cloud-storage
