@@ -79,8 +79,8 @@ def table_geodataframe_join(poly_in, join_id, fp_table, fp_out=""):
 # District data #
 #################
 
-# read in district shapefile
-dist_poly = import_vector_data('~/iec1/gis/pc11/pc11-district-simplified.shp')
+# read in district shapefile simplified on mapshaper.org
+dist_poly = import_vector_data('~/iec/covid/forecasting/pc11-district-simplified-mapshaper.shp')
 
 # remove unnecessary fields to lighten the vector tileset
 dist_clean = dist_poly.drop(columns=['pc11_s_id'])
