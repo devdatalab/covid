@@ -1,3 +1,5 @@
 .ipynb_checkpoints/
 __pycache__
-
+forecasting/predictions_credential.json
+forecasting/.snakemake/
+forecasting/*.log
