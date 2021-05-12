@@ -35,6 +35,7 @@ rule all:
     input:
         f'{TMP}/tileset_push.log',
         f'{TMP}/covid_data.mbtiles',
+        f'{TMP}/push_pred_data.log',
         f'{TMP}/data_push.log'
 
 # pull predicted data from google cloud
@@ -53,10 +54,20 @@ rule process_predicted_data:
     input:
         f'{DATA}/all_rt_estimates/WB_district_Rt.csv',
         f'{TMP}/data_pull.log',
-        f'{CODE}/b/assemble_csvs.do'
+        f'{CODE}/b/process_predicted_data.do'
     output:
         f'{DATA}/pred_data.dta',
-    shell: f'stata -b {CODE}/b/assemble_csvs.do '
+        f'{DATA}/pred_metadata.js',
+    shell: f'stata -b {CODE}/b/process_predicted_data.do '
+
+# creation of geojson from tabular district data
+rule push_predicted_metadata:
+    input:
+        rules.process_predicted_data.output,        
+    log:
+        f'{TMP}/push_pred_data.log',
+    conda: 'config/forecasting.yaml'
+    shell: f'python {CODE}/b/push_predicted_metadata.py --file {DATA}/pred_metadata.js > {{log}}'
 
 # create data tables for all other DDL covid data to display in district popups
 rule process_ddl_data:
