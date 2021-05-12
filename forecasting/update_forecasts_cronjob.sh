@@ -16,8 +16,8 @@ curl -X POST -H 'Content-type: application/json' --data '{"text":":building_cons
 cd /scratch/`whoami`
 
 # run update script with basic error handling
-printf "\nbegin update build: ~/ddl/covid/forecasting/b/Snakemake\n"
-snakemake --directory $HOME/ddl/covid/forecasting/b/ --cores 4 --use-conda || curl -X POST -H 'Content-type: application/json' --data '{"text":":rotating_light: FAILURE: auto-update of COVID data had non-zero exit status"}' https://hooks.slack.com/services/$SLACKKEY && exit 0
+printf "\nbegin update build: ~/ddl/covid/forecasting/Snakemake\n"
+snakemake --directory $HOME/ddl/covid/forecasting/ --snakefile $HOME/ddl/covid/forecasting/Snakefile --cores 4 --use-conda || curl -X POST -H 'Content-type: application/json' --data '{"text":":rotating_light: FAILURE: auto-update of COVID data had non-zero exit status"}' https://hooks.slack.com/services/$SLACKKEY
 
 # if we don't have an error, send a slack
 curl -X POST -H 'Content-type: application/json' --data '{"text":":not-a-dumpster-fire: Successful update of COVID data!"}' https://hooks.slack.com/services/$SLACKKEY
