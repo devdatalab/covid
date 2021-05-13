@@ -99,7 +99,7 @@ rule dist_data_to_geojson:
     shell: f'python {CODE}/b/dist_data_to_geojson.py '
 
 # creation of vector tileset from geojson
-rule create_vector_tileset:
+rule create_vector_tileset_dev:
     input:
         rules.dist_data_to_geojson.output,
         f'{CODE}/b/create_vector_tileset.sh'
