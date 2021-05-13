@@ -33,4 +33,4 @@ s3 = boto3.resource('s3')
 # execute AWS command to push the new zip file to S3.
 # This requires your aws cli be configured properly, and depends on the current bucket subdirectory configuration
 data = open(pushfile, 'rb')
-s3.Bucket('shrug-assets-ddl').put_object(Key='static/main/assets/other/' + fname, Body=data)
+s3.Bucket('shrug-assets-ddl').put_object(Key='static/main/assets/other/' + fname, Body=data, ACL='public-read')
