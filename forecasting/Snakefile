@@ -48,7 +48,6 @@ rule pull_predicted_data:
     shell: f'source {CODE}/b/pull_predicted_data.sh {CODE}/predictions_credential.json {CODE}/b/pull_predicted_data_helper.py {DATA}/all_rt_estimates > {{log}}'
 
 # create tabular data tables of predicted variables (from Anup et al), identified to pc11 dists
-# UPDATE WHEN WE HAVE API ACCESS
 # UPDATE TO WILDCARD CSVS
 rule process_predicted_data:
     input:
@@ -79,7 +78,6 @@ rule process_ddl_data:
     shell: f'stata -b {CODE}/b/process_ddl_data.do '
 
 # merge DDL and predicted data
-# UPDATE THIS FILE WHEN API ACCESS FIGURED OUT
 rule merge_ddl_pred_data:
     input:
         rules.process_predicted_data.output,        
