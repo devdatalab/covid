@@ -12,6 +12,7 @@ import boto3
 parser = argparse.ArgumentParser()
 parser.add_argument("--token", type=str)
 parser.add_argument("--file", type=str)
+parser.add_argument("--tilesetname", type=str)
 args = parser.parse_args()
 
 
@@ -37,7 +38,7 @@ key = json_data['key']
 
 # define username and vector tileset name
 username = 'devdatalab'
-tileset_name = 'covid-forecasting'
+tileset_name = f'{args.tilesetname}'
 
 
 ##########################

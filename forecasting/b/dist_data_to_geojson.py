@@ -3,9 +3,6 @@
 # depends on py_spatial env (run from snakemake)
 
 
-# FIXME: automate this so it works in batch mode, not just interactive shells
-# (with ddl/config/.python_profile.py)
-
 ############
 # Preamble #
 ############
@@ -14,10 +11,18 @@
 import sys, os, importlib
 sys.path.insert(0, os.path.expanduser("~/ddl/tools/py"))
 from geospatialtools.utils import import_vector_data
-
 import geopandas as gpd
 import pandas as pd
+import argparse
 
+# initialize args
+parser = argparse.ArgumentParser()
+parser.add_argument("--intable", type=str)
+parser.add_argument("--inshp", type=str)
+parser.add_argument("--outfile", type=str)
+args = parser.parse_args()
+
+# define tabular import fn
 def import_tabular_data(fp):
     """
     Reads in tabular data with file extension checks
@@ -80,12 +85,9 @@ def table_geodataframe_join(poly_in, join_id, fp_table, fp_out=""):
 #################
 
 # read in district shapefile simplified on mapshaper.org
-dist_poly = import_vector_data('~/iec/covid/forecasting/pc11-district-simplified-mapshaper.shp')
-
-# remove unnecessary fields to lighten the vector tileset
-dist_clean = dist_poly.drop(columns=['pc11_s_id'])
+dist_poly = import_vector_data(f'{args.inshp}')
 
 # run the join
 print("initiating district-level join")
-table_geodataframe_join(poly_in=dist_clean, join_id='pc11_d_id', fp_table='~/iec/covid/forecasting/merged_data.dta', fp_out=os.path.expanduser('~/iec/covid/forecasting/district.geojson'))
+table_geodataframe_join(poly_in=dist_poly, join_id='lgd_d_id', fp_table=f'{args.intable}', fp_out=os.path.expanduser(f'{args.outfile}'))
 

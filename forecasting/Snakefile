@@ -20,6 +20,7 @@ envvars:
 # set paths, leveraging settings in the config file
 CODE=os.path.expanduser(config['globals']['ccode'])
 DATA=os.path.expanduser(config['globals']['cdata'])
+TILESET_NAME=os.path.expanduser(config['globals']['tileset_name'])
 MBTOKEN_TILE=os.path.expanduser(os.environ['MBTOKEN_TILE'])
 TMP=os.path.expanduser(os.environ['TMP'])
 IEC=os.path.expanduser(os.environ['IEC'])
@@ -35,12 +36,13 @@ rule all:
     input:
         f'{TMP}/tileset_push.log',
         f'{TMP}/covid_data.mbtiles',
-        f'{TMP}/push_pred_data.log',
-        f'{TMP}/data_push.log'
+        f'{TMP}/push_pred_data.log'
 
 # pull predicted data from google cloud
+# rerun_indicator gets `touch`ed from cronjob to trigger pipeline execution
 rule pull_predicted_data:
     input:
+        f'{TMP}/rerun_indicator.txt',
         f'{CODE}/b/pull_predicted_data.sh',
         f'{CODE}/b/pull_predicted_data_helper.py'
     conda: 'config/forecasting.yaml'
@@ -71,7 +73,7 @@ rule push_predicted_metadata:
 # create data tables for all other DDL covid data to display in district popups
 rule process_ddl_data:
     input:
-        f'{IEC}/covid/hospitals/pc11/pc_hospitals_dist_pc11.dta',
+        f'{IEC}/covid/hospitals/pc_hospitals_dist.dta',
         f'{CODE}/b/process_ddl_data.do'
     output:
         f'{DATA}/ddl_data.dta',
@@ -91,12 +93,12 @@ rule merge_ddl_pred_data:
 rule dist_data_to_geojson:
     input:
         rules.merge_ddl_pred_data.output,        
-        f'{DATA}/pc11-district-simplified-mapshaper.shp',
+        f'{DATA}/district-simplified-mapshaper.shp',
         f'{CODE}/b/dist_data_to_geojson.py'
     output:
-        f'{DATA}/district.geojson',
+        f'{DATA}/district.geojson'
     conda: 'config/forecasting_spatial.yaml'
-    shell: f'python {CODE}/b/dist_data_to_geojson.py '
+    shell: f'python {CODE}/b/dist_data_to_geojson.py --intable {rules.merge_ddl_pred_data.output} --inshp {DATA}/district-simplified-mapshaper.shp --outfile {{output}}'
 
 # creation of vector tileset from geojson
 rule create_vector_tileset:
@@ -106,14 +108,6 @@ rule create_vector_tileset:
     output: f'{TMP}/covid_data.mbtiles'
     shell: 'source {CODE}/b/create_vector_tileset.sh'
 
-# zip and upload datafile to dropbox
-rule push_public_data:
-    input:
-        rules.merge_ddl_pred_data.output,        
-        f'{CODE}/b/push_public_data.sh'
-    log: f'{TMP}/data_push.log'
-    shell: f'source {CODE}/b/push_public_data.sh > {{log}}'
-
 # upload of mbtiles to mapbox studio
 rule push_vector_tileset:
     input:
@@ -121,18 +115,9 @@ rule push_vector_tileset:
         f'{CODE}/b/push_vector_tileset.py'
     conda: 'config/forecasting.yaml'
     log: f'{TMP}/tileset_push.log'
-    shell: f'python {CODE}/b/push_vector_tileset.py --file {rules.create_vector_tileset.output} --token {MBTOKEN_TILE} > {{log}}'
+    shell: f'python {CODE}/b/push_vector_tileset.py --file {rules.create_vector_tileset.output} --token {MBTOKEN_TILE} --tilesetname {TILESET_NAME} > {{log}}'
 
            
-########
-# TODO #
-########
-
-# Add API endpoint access / processing of predicted data
-# alternative to filling in latest date (filter choropleth server side by max date differentially)
-# FIXME: more elegantly pull env vars to snakefile
-
-
 
 ############
 # COMMANDS #

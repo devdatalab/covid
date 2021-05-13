@@ -9,6 +9,7 @@ import json
 import requests
 import argparse
 import boto3
+import os
 
 # initialize args
 parser = argparse.ArgumentParser()
