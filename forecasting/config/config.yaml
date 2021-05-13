@@ -4,8 +4,8 @@
 # define globals shared across Python and Stata
 globals:
     ccode: ~/ddl/covid/forecasting
-    cdata: ~/iec/covid/forecasting/dev
-    tileset_name: covid-forecasting-dev
+    cdata: ~/iec/covid/forecasting
+    tileset_name: covid-forecasting
 
 # list folders with Python functions to be added to the python path for easy use
 python: 
