@@ -10,5 +10,5 @@
 # format may change in the future."
 
 # create district tileset with zoom range defined (cost saver)
-~/iec/local/share/tippecanoe/tippecanoe --force -z8 -Z5 -o $TMP/covid_data.mbtiles --read-parallel --coalesce-smallest-as-needed --detect-shared-borders --generate-ids $IEC/covid/forecasting/dev/district.geojson
+~/iec/local/share/tippecanoe/tippecanoe --force -z8 -Z5 -o $TMP/covid_data.mbtiles --read-parallel --coalesce-smallest-as-needed --detect-shared-borders --generate-ids $1
 
