@@ -36,7 +36,11 @@ rule all:
     input:
         f'{TMP}/tileset_push.log',
         f'{TMP}/covid_data.mbtiles',
+#        rules.push_pred_metadata.log,
+#        rules.push_pred_data.log,
+#        rules.test_merged_data.log,
         f'{TMP}/push_pred_metadata.log',
+        f'{TMP}/test_merged_data.log',
         f'{TMP}/push_pred_data.log'
 
 # pull predicted data from google cloud
@@ -62,15 +66,6 @@ rule process_predicted_data:
         f'{DATA}/pred_metadata.js',
     shell: f'stata -b {CODE}/b/process_predicted_data.do '
 
-# creation of geojson from tabular district data
-rule push_predicted_metadata:
-    input:
-        rules.process_predicted_data.output,        
-    log:
-        f'{TMP}/push_pred_metadata.log',
-    conda: 'config/forecasting.yaml'
-    shell: f'python {CODE}/b/push_predicted_metadata.py --file {DATA}/pred_metadata.js > {{log}}'
-
 # create data tables for all other DDL covid data to display in district popups
 rule process_ddl_data:
     input:
@@ -90,10 +85,31 @@ rule merge_ddl_pred_data:
         f'{DATA}/merged_data.dta',
     shell: f'stata -b {CODE}/b/merge_ddl_pred_data.do '
 
+# test basic data quality
+rule test_merged_data:
+    input:
+        rules.merge_ddl_pred_data.output,        
+        f'{CODE}/b/test_merged_data.py'
+    log:
+        f'{TMP}/test_merged_data.log'
+    conda: 'config/forecasting_spatial.yaml'
+    shell: f'python {CODE}/b/test_merged_data.py > {{log}}'
+
+# creation of geojson from tabular district data
+rule push_predicted_metadata:
+    input:
+        rules.process_predicted_data.output,        
+        rules.test_merged_data.log,        
+    log:
+        f'{TMP}/push_pred_metadata.log',
+    conda: 'config/forecasting.yaml'
+    shell: f'python {CODE}/b/push_predicted_metadata.py --file {DATA}/pred_metadata.js > {{log}}'
+
 # push data for public access
 rule push_public_data:
     input:
         rules.merge_ddl_pred_data.output,        
+        rules.test_merged_data.log,        
         f'{CODE}/b/merge_ddl_pred_data.do'
     log:
         f'{TMP}/push_pred_data.log'
@@ -144,7 +160,7 @@ rule push_vector_tileset:
 #snakemake -R --until pull_predicted_data --cores 4 --use-conda
 
 # viewing DAG:
-#snakemake --forceall --dag | dot -Tpdf > ~/public_html/png/dag.pdf
+#snakemake --dag | dot -Tpdf > ~/public_html/png/dag.pdf
 #snakemake --forceall --rulegraph | dot -Tpdf > ~/public_html/png/dag.pdf
 # viewable here: https://caligari.dartmouth.edu/~lunt/png/dag.pdf
 

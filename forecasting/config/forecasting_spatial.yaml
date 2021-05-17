@@ -19,5 +19,6 @@ dependencies:
   - rasterio=1
   - rasterstats=0.14
   - shapely=1
+  - yaml
   - pip:
     - topojson
