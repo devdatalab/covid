@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 # set this up with the following cron command (executes at 1030AM daily):
-# $ crontab -l
+# $ crontab -e
 # $ 30 10 * * * source $HOME/.bashrc; touch $TMP/rerun_indicator.txt; $HOME/ddl/covid/forecasting/update_forecasts_cronjob.sh
 
 # depends on slack messaging hook in env variable SLACKKEY
