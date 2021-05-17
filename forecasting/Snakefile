@@ -116,7 +116,7 @@ rule create_vector_tileset:
         rules.dist_data_to_geojson.output,
         f'{CODE}/b/create_vector_tileset.sh'
     output: f'{TMP}/covid_data.mbtiles'
-    shell: 'source {CODE}/b/create_vector_tileset.sh'
+    shell: 'source {CODE}/b/create_vector_tileset.sh {rules.dist_data_to_geojson.output}'
 
 # upload of mbtiles to mapbox studio
 rule push_vector_tileset:
