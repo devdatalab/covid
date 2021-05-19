@@ -1,12 +1,10 @@
 channels:
-  - anaconda
   - conda-forge
   - defaults
 dependencies:
-  - python=3
-  - gdal
+  - python>=3.7
   - geos
-  - geopandas
+  - geopandas=0.9
   - geotiff=1
   - git=2
   - haversine=0.4
@@ -14,11 +12,12 @@ dependencies:
   - numpy=1
   - pandas=1
   - proj=6
-  - pygeos=0.7
+  - pygeos=0.8
   - pysal=2
   - rasterio=1
   - rasterstats=0.14
   - shapely=1
-  - yaml
+  - pyyaml
+  - pip
   - pip:
     - topojson

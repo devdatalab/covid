@@ -2,6 +2,7 @@
 import geopandas as gpd
 import pandas as pd
 from pathlib import Path
+import shutil
 
 # import our configs - depends on 'process_yaml_config' utility in ddl/tools/py/tools.py
 import sys, os
@@ -12,6 +13,9 @@ config = process_yaml_config('~/ddl/covid/forecasting/config/config.yaml')
 # shorten path globals
 CCODE = Path(os.path.expanduser(config['globals']['ccode']))
 CDATA = Path(os.path.expanduser(config['globals']['cdata']))
+
+# read temp directory from env variable
+TMP = Path(os.environ['TMP'])
 
 
 ###############
@@ -88,6 +92,7 @@ if not latest_date == json_date:
 #################
 
 # read in geojson output that gets transformed to vector tileset
+# hack around gpd.read_file having STRANGE conda-related error when reading from ~/iec/ filesystem?!
 geojson = gpd.read_file(CDATA / 'district.geojson')
 
 # check merged state ids are the same
@@ -106,3 +111,6 @@ if not latest_date == json_date:
 
 # EXIT
 print('TESTS PASSED')
+
+
+
