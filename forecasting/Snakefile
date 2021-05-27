@@ -35,7 +35,7 @@ IEC1=os.path.expanduser(os.environ['IEC1'])
 rule all:
     input:
         f'{TMP}/tileset_push.log',
-        f'{TMP}/covid_data.mbtiles',
+#        f'{TMP}/covid_data.mbtiles',
 #        rules.push_pred_metadata.log,
 #        rules.push_pred_data.log,
 #        rules.test_merged_data.log,
@@ -62,8 +62,11 @@ rule process_predicted_data:
         f'{TMP}/data_pull.log',
         f'{CODE}/b/process_predicted_data.do'
     output:
-        f'{DATA}/pred_data.dta',
-        f'{DATA}/pred_metadata.js',
+        f'{DATA}/pred_data_district.dta',
+        f'{DATA}/pred_data_state.dta',
+        f'{DATA}/pred_data_district.csv',
+        f'{DATA}/pred_data_state.csv',
+        f'{DATA}/pred_data_rt_choropleth.dta',
     shell: f'stata -b {CODE}/b/process_predicted_data.do '
 
 # create data tables for all other DDL covid data to display in district popups
@@ -82,19 +85,30 @@ rule merge_ddl_pred_data:
         rules.process_ddl_data.output,        
         f'{CODE}/b/merge_ddl_pred_data.do'
     output:
-        f'{DATA}/merged_data.dta',
+        f'{DATA}/merged_data_district.dta',
     shell: f'stata -b {CODE}/b/merge_ddl_pred_data.do '
 
-# creation of geojson from tabular district data
+# creation of geojson from full tabular district data (all dates X rt, etc) for the plots
 rule dist_data_to_geojson:
     input:
         rules.merge_ddl_pred_data.output,        
         f'{DATA}/district-simplified-mapshaper.shp',
-        f'{CODE}/b/dist_data_to_geojson.py'
+        f'{CODE}/b/data_to_geojson.py'
     output:
         f'{DATA}/district.geojson'
     conda: 'config/forecasting_spatial.yaml'
-    shell: f'python {CODE}/b/dist_data_to_geojson.py --intable {rules.merge_ddl_pred_data.output} --inshp {DATA}/district-simplified-mapshaper.shp --outfile {{output}}'
+    shell: f'python {CODE}/b/data_to_geojson.py --intable {rules.merge_ddl_pred_data.output} --inshp {DATA}/district-simplified-mapshaper.shp --outfile {{output}}'
+
+# creation of geojson from latest Rt observation by district, for the choropleth
+rule map_data_to_geojson:
+    input:
+        rules.process_predicted_data.output,        
+        f'{DATA}/district-simplified-mapshaper.shp',
+        f'{CODE}/b/data_to_geojson.py'
+    output:
+        f'{DATA}/district-map.geojson'
+    conda: 'config/forecasting_spatial.yaml'
+    shell: f'python {CODE}/b/data_to_geojson.py --intable {DATA}/pred_data_rt_choropleth.dta --inshp {DATA}/district-simplified-mapshaper.shp --outfile {{output}}'
 
 # test basic data quality
 rule test_merged_data:
@@ -107,15 +121,15 @@ rule test_merged_data:
     conda: 'config/forecasting_spatial.yaml'
     shell: f'python {CODE}/b/test_merged_data.py > {{log}}'
 
-# creation of geojson from tabular district data
-rule push_predicted_metadata:
-    input:
-        rules.process_predicted_data.output,        
-        rules.test_merged_data.log,        
-    log:
-        f'{TMP}/push_pred_metadata.log',
-    conda: 'config/forecasting.yaml'
-    shell: f'python {CODE}/b/push_predicted_metadata.py --file {DATA}/pred_metadata.js > {{log}}'
+## creation of geojson from tabular district data
+#rule push_predicted_metadata:
+#    input:
+#        rules.process_predicted_data.output,        
+#        rules.test_merged_data.log,        
+#    log:
+#        f'{TMP}/push_pred_metadata.log',
+#    conda: 'config/forecasting.yaml'
+#    shell: f'python {CODE}/b/push_predicted_metadata.py --file {DATA}/pred_metadata.js > {{log}}'
 
 # push data for public access
 rule push_public_data:
@@ -132,9 +146,10 @@ rule create_vector_tileset:
     input:
         rules.test_merged_data.log,        
         rules.dist_data_to_geojson.output,
+        rules.map_data_to_geojson.output,
         f'{CODE}/b/create_vector_tileset.sh'
     output: f'{TMP}/covid_data.mbtiles'
-    shell: 'source {CODE}/b/create_vector_tileset.sh {rules.dist_data_to_geojson.output}'
+    shell: 'source {CODE}/b/create_vector_tileset.sh {rules.dist_data_to_geojson.output} {rules.map_data_to_geojson.output}'
 
 # upload of mbtiles to mapbox studio
 rule push_vector_tileset:
@@ -169,3 +184,7 @@ rule push_vector_tileset:
 # Report
 # note: snakemake --report ~/public_html/report.html
 # viewable here: https://caligari.dartmouth.edu/~lunt/report.html
+
+# running on Discovery cluster - SLURM
+# depends on profile set in ~/.config/snakemake/slurm/config.yaml (contact Toby for help)
+# snakemake --profile slurm
