@@ -48,6 +48,7 @@ assert `r(ndistinct)' == `r(N)'
 /* final output for dist data */
 drop state district
 order lgd* dates, first
+drop t_*
 save $cdata/pred_data_district, replace
 
 /* CSV version */
@@ -93,11 +94,16 @@ gen tmp = string(lgd_state_id,"%02.0f")
 drop lgd_state_id
 ren tmp lgd_state_id 
 
+/* same basic assertion */
+distinct lgd_state_id dates, joint
+assert `r(ndistinct)' == `r(N)'
+
 /* minimal cleanup here */
 drop state
 order lgd* dates, first
 
 /* final output for state data */
+drop t_*
 save $cdata/pred_data_state, replace
 
 /* CSV version */
