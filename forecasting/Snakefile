@@ -121,16 +121,6 @@ rule test_merged_data:
     conda: 'config/forecasting_spatial.yaml'
     shell: f'python {CODE}/b/test_merged_data.py > {{log}}'
 
-## creation of geojson from tabular district data
-#rule push_predicted_metadata:
-#    input:
-#        rules.process_predicted_data.output,        
-#        rules.test_merged_data.log,        
-#    log:
-#        f'{TMP}/push_pred_metadata.log',
-#    conda: 'config/forecasting.yaml'
-#    shell: f'python {CODE}/b/push_predicted_metadata.py --file {DATA}/pred_metadata.js > {{log}}'
-
 # push data for public access
 rule push_public_data:
     input:
