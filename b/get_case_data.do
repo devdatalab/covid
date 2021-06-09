@@ -372,6 +372,25 @@ drop _merge
 /* clarify missing districts as not reported */
 replace lgd_district_name = "not reported" if mi(lgd_district_name)
 
+/* make it square */
+egen dgroup = group(lgd_state_name lgd_district_name)
+fillin date dgroup 
+
+/* set as time series with dgroup */
+sort dgroup date
+by dgroup: egen day_number = seq()
+
+/* fill in state, district, lgd names within dgroup 
+   to install xfill: net install xfill */
+xfill lgd_state_name lgd_district_name lgd_state_id lgd_district_id, i(dgroup)
+
+/* create cumulative sums of deaths and infections */
+sort dgroup day_number
+
+/* fill in missing total death and total cases with 0- these are days preceding the first reports for a given district */
+replace cases_total = 0 if mi(cases_total)
+replace death_total = 0 if mi(death_total)
+
 /* save old covid19 data */
 save $tmp/old_covid19_matched_data, replace
 
@@ -400,6 +419,25 @@ drop _merge
 /* clarify missing districts as not reported 
    note: two reported districts in jammu and kashmir are not represented in LGD (muzaffarabad and mirpir), for now we put them under "not reported" */
 replace lgd_district_name = "not reported" if mi(lgd_district_name)
+
+/* make it square */
+egen dgroup = group(lgd_state_name lgd_district_name)
+fillin date dgroup 
+
+/* set as time series with dgroup */
+sort dgroup date
+by dgroup: egen day_number = seq()
+
+/* fill in state, district, lgd names within dgroup 
+   to install xfill: net install xfill */
+xfill lgd_state_name lgd_district_name lgd_state_id lgd_district_id, i(dgroup)
+
+/* create cumulative sums of deaths and infections */
+sort dgroup day_number
+
+/* fill in missing total death and total cases with 0- these are days preceding the first reports for a given district */
+replace cases_total = 0 if mi(cases_total)
+replace death_total = 0 if mi(death_total)
 
 /* append covindia data */
 append using $tmp/old_covid19_matched_data
@@ -433,10 +471,6 @@ xfill lgd_state_name lgd_district_name lgd_state_id lgd_district_id, i(dgroup)
 
 /* create cumulative sums of deaths and infections */
 sort dgroup day_number
-
-/* fill in missing total death and total cases with 0- these are days preceding the first reports for a given district */
-replace cases_total = 0 if mi(cases_total)
-replace death_total = 0 if mi(death_total)
 
 /* only save the cumulative counts */
 drop dgroup _fillin day_number
