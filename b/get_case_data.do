@@ -179,6 +179,9 @@ pyfunc retrieve_covid19india_all_district_csv("https://api.covid19india.org/csv/
 /* read in the data */
 insheet using $tmp/covid19india_district_data_new.csv, clear
 
+/* replace delhi district with missing because this is really state level data */
+replace district = "" if state == "Delhi" & district == "Delhi"
+
 /* create date object from date string */
 gen date2 = date(date, "YMD")
 drop date
