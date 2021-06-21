@@ -34,3 +34,15 @@ do $ddl/covid/b/clean_bihar_mort
 /* Andhra Pradesh */
 do $ddl/covid/b/clean_ap_mort
 
+/**********************************/
+/* PART II: Append processed data */
+/**********************************/
+
+clear
+
+/* append all processed data in PART I */
+foreach i in mort_ap mort_assam mort_bbmp mort_bihar mort_chennai mort_ghmc mort_kolkata mort_mp {
+
+  append using $tmp/`i'.dta, force
+
+}
