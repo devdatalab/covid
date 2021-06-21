@@ -73,4 +73,4 @@ la var year "Year"
 la var death "Total Death"
 
 /* save clean dataset unique on district-month-year */
-save $tmp/mort_assam.dta
+save $tmp/mort_assam.dta, replace
