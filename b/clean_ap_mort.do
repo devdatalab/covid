@@ -1,6 +1,6 @@
-/******************************/
-/* Clean Bihar mortality data */
-/******************************/
+/***************************************/
+/* Clean Andhra Pradesh mortality data */
+/***************************************/
 
 /* load covid programs */
 qui do $ddl/covid/covid_progs.do
@@ -11,15 +11,15 @@ global month "01 02 03 04 05 06 07 08 09 10 11 12"
 
 foreach j in $year {
 
-  /* conditional global for 2021 since data is only available till May */
+  /* conditional global for 2021 since data is only available till June */
   if `j' == 2021 {
-    global month = "01 02 03 04 05"
+    global month = "01 02 03 04 05 06"
   }
 
   foreach i in $month {
 
     /* import raw data */
-    import excel "$covidpub/mortality/raw/bihar/`j'_`i'.xlsx", sheet("Monitoring Report") cellrange(A4:P45) clear
+    import excel "$covidpub/mortality/raw/andhra_pradesh/MonitoringReport-AP-`j'`i'-`j'`i'.xlsx", sheet("Monitoring Report") cellrange(A4:P20) clear
 
     /* basic cleaning - keep relevant vars and rename */
     keep A B E F G
@@ -32,11 +32,11 @@ foreach j in $year {
     ren G death_trans
 
     /* generate vars for state, month, year */
-    gen state = "Bihar"
+    gen state = "Andhra Pradesh"
     gen month = `i'
     gen year = `j'
 
-    save $tmp/bihar_`i'_`j', replace
+    save $tmp/ap_`i'_`j', replace
 
   }
 }
@@ -50,12 +50,12 @@ global month "01 02 03 04 05 06 07 08 09 10 11 12"
 foreach j in $year {
 
   if `j' == 2021 {
-    global month = "01 02 03 04 05"
+    global month = "01 02 03 04 05 06"
   }
 
   foreach i in $month {
 
-    append using $tmp/bihar_`i'_`j'.dta
+    append using $tmp/ap_`i'_`j'.dta
 
   }
 }
@@ -70,5 +70,5 @@ egen deaths = rowtotal(death_*)
 drop death_* id
 order state district deaths month year
 
-/* save clean file to scratch */
-save $tmp/mort_bihar.dta, replace
+/* save clean data to scratch */
+save $tmp/mort_ap.dta, replace
