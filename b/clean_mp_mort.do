@@ -62,4 +62,4 @@ foreach j in $year {
 }
 
 /* save clean dataset unique on district-month-year */
-save $tmp/mort_mp.dta
+save $tmp/mort_mp.dta, replace
