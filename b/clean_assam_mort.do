@@ -48,7 +48,7 @@ foreach j in $year {
   gen year = "`j'"
 
   /* rename and order variables */
-  ren death_ death
+  ren death_ deaths
   order state district month year death sex
 
   save "$tmp/assam_`j'" , replace 
@@ -64,13 +64,13 @@ foreach j in $year {
 
 }
 
-collapse (sum) death, by(state district month year)
+collapse (sum) deaths, by(state district month year)
 
 la var state "State"
 la var district "District"
 la var month "Month"
 la var year "Year"
-la var death "Total Death"
+la var deaths "Total Death"
 
 /* save clean dataset unique on district-month-year */
 save $tmp/mort_assam.dta, replace
