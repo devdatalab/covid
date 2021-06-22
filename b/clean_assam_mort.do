@@ -64,13 +64,17 @@ foreach j in $year {
 
 }
 
+/* collapse on district-month-year */
 collapse (sum) deaths, by(state district month year)
 
+/* label and destring numeric vars */
 la var state "State"
 la var district "District"
 la var month "Month"
 la var year "Year"
 la var deaths "Total Death"
+
+destring year, replace
 
 /* save clean dataset unique on district-month-year */
 save $tmp/mort_assam.dta, replace

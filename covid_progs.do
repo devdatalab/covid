@@ -269,3 +269,33 @@ prog def str_month
 end
 
 /** END program str_month ***********/
+
+/*************************************************************************/
+/* program float_month: convert months in string (lowercase) to numeric  */
+/*************************************************************************/
+cap prog drop float_month
+prog def float_month
+
+  syntax, string(string)
+  
+  qui {
+    replace `string' = "1" if `string' == "january" 	 
+    replace `string' = "2" if `string' == "february"	 
+    replace `string' = "3" if `string' == "march" 		 
+    replace `string' = "4" if `string' == "april" 		 
+    replace `string' = "5" if `string' == "may" 		 
+    replace `string' = "6" if `string' == "june" 		 
+    replace `string' = "7" if `string' == "july" 		 
+    replace `string' = "8" if `string' == "august" 
+    replace `string' = "9" if `string' == "september"	 
+    replace `string' = "10" if `string' == "october" 	 
+    replace `string' = "11" if `string' == "november" 	 
+    replace `string' = "12" if `string' == "december" 	 
+    
+    destring `string', replace
+    
+    assert (`string' >= 1 & `string' <= 12)
+  }
+  
+end
+/** END program float_month ***********/
