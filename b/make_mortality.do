@@ -37,6 +37,9 @@ do $ddl/covid/b/clean_bihar_mort
 /* Andhra Pradesh */
 do $ddl/covid/b/clean_ap_mort
 
+/* Uttar Pradesh */
+do $ddl/covid/b/clean_up_mort
+
 /**********************************/
 /* PART II: Append processed data */
 /**********************************/
@@ -44,7 +47,7 @@ do $ddl/covid/b/clean_ap_mort
 clear
 
 /* append all processed data in PART I */
-foreach i in mort_ap mort_assam mort_bbmp mort_bihar mort_chennai mort_ghmc mort_kolkata mort_mp {
+foreach i in mort_ap mort_assam mort_bbmp mort_bihar mort_chennai mort_ghmc mort_kolkata mort_mp mort_up {
 
   append using $tmp/`i'.dta, force
 
@@ -66,6 +69,7 @@ gen lgd_district_name = lower(district)
 /* manually change some district names for masala-merge */
 replace lgd_district_name = "y.s.r" if lgd_district_name == "ysr kadapa"
 replace lgd_district_name = "kamrup metro" if lgd_district_name == "kamrup( m)"
+replace lgd_district_name = "bhadohi" if lgd_district_name == "sant ravidas nagar (bhadohi)"
 
 /* save temp file */
 save $tmp/mort_tmp, replace
@@ -110,9 +114,15 @@ float_month, string(month)
 la var lgd_state_name "LGD State name"
 la var state "State"
 la var district "District"
-la var deaths "Total Deaths"
+la var deaths "Total reported deaths - CRS"
 la var month "Month"
 la var year "Year"
 
+/* drop redundant LGD variables */
+drop lgd_district_version lgd_district_name_local
+
+/* order variables */
+order lgd_state_id lgd_district_id lgd_state_name lgd_district_name state district
+
 /* save final dataset */
-save $covidpub/mortality/district_mort, replace
+save $covidpub/mortality/district_mort_month, replace
