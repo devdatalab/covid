@@ -1,44 +1,57 @@
 /* This makefile runs all the data construction steps for district-level mortality data */
 
-/* globals that need to be set:
+/* globals that need to be set (use setc covid):
 $tmp -- a temporary folder
 $ccode -- this root folder for this repo
 $covidpub -- processed data used as inputs for COVID variable construction
 */
 
-/* load covid programs */
-do $ddl/covid/covid_progs.do
+/***** TABLE OF CONTENTS *****/
+/* PART I: Clean raw data */
+/* PART II: Append processed data */
+/* Part III: Link states and districts to LGD codes and PC11 districts */
+/* PART IV: Final cleaning */
 
 /**************************/
 /* PART I: Clean raw data */
 /**************************/
 
+/* 1(a). District-Level */
+
 /* West Bengal (district level data only available for Kolkata (KMDC)) */
-do $ddl/covid/b/clean_kmdc_mort
+do $ccode/b/clean_kmdc_mort
 
 /* Karnataka (district level data only available for Bangalore (BBMP)) */
-do $ddl/covid/b/clean_bbmp_mort
+do $ccode/b/clean_bbmp_mort
 
 /* Telangana (district level data only available for Hyderabad (GHMC)) */
-do $ddl/covid/b/clean_ghmc_mort
+do $ccode/b/clean_ghmc_mort
 
-/* Tamil Nadu (district level data only available for Chennai */
-do $ddl/covid/b/clean_chennai_mort
+/* Tamil Nadu (district level data only available for Chennai) */
+do $ccode/b/clean_chennai_mort
 
 /* Madhya Pradesh */
-do $ddl/covid/b/clean_mp_mort
+do $ccode/b/clean_mp_mort
 
 /* Assam */
-do $ddl/covid/b/clean_assam_mort
+do $ccode/b/clean_assam_mort
 
 /* Bihar */
-do $ddl/covid/b/clean_bihar_mort
+do $ccode/b/clean_bihar_mort
 
 /* Andhra Pradesh */
-do $ddl/covid/b/clean_ap_mort
+do $ccode/b/clean_ap_mort
 
 /* Uttar Pradesh */
-do $ddl/covid/b/clean_up_mort
+do $ccode/b/clean_up_mort
+
+/* Odisha */
+do $ccode/b/clean_odisha_mort
+
+/* 1(b). State-level */
+
+/* clean data for Karnataka, Kerala and Tamil Nadu */
+do $ccode/b/clean_state_mort
 
 /**********************************/
 /* PART II: Append processed data */
@@ -46,24 +59,24 @@ do $ddl/covid/b/clean_up_mort
 
 clear
 
-/* append all processed data in PART I */
+/* append all processed data in PART I - use force option to resolve any string-float inconsistencies */
 foreach i in mort_ap mort_assam mort_bbmp mort_bihar mort_chennai mort_ghmc mort_kolkata mort_mp mort_up {
 
   append using $tmp/`i'.dta, force
 
 }
 
-/**************************************************/
-/* PART III: Link to LGD codes and PC11 districts */
-/**************************************************/
+/***********************************************************************/
+/* Part III: Link states and districts to LGD codes and PC11 districts */
+/***********************************************************************/
 
-/* create lgd_state variable to merge */
+/* create LGD state name variable to merge */
 gen lgd_state_name = lower(state)
 
 /* merge in lgd state id */
 merge m:1 lgd_state_name using $keys/lgd_state_key, keepusing(lgd_state_id) keep(match master) nogen
 
-/* now create an lgd_district variable to merge */
+/* now create an LGD district name variable to merge */
 gen lgd_district_name = lower(district)
 
 /* manually change some district names for masala-merge */
@@ -71,7 +84,7 @@ replace lgd_district_name = "y.s.r" if lgd_district_name == "ysr kadapa"
 replace lgd_district_name = "kamrup metro" if lgd_district_name == "kamrup( m)"
 replace lgd_district_name = "bhadohi" if lgd_district_name == "sant ravidas nagar (bhadohi)"
 
-/* save temp file */
+/* save temp file containing names for masala merge */
 save $tmp/mort_tmp, replace
 
 /* run masala merge */
@@ -81,9 +94,16 @@ masala_merge lgd_state_name using $keys/lgd_district_key, s1(lgd_district_name) 
 
 /* check that all districts were matched to LGD */
 count if match_source == 6
-di "`r(N)' districts were unmatched"
+if `r(N)' != 0 {
+  disp_nice "`r(N)' LGD districts were unmatched"
+}
 
-/* keep master matches */
+count if match_source != 6
+if `r(N)' != 0 {
+  disp_nice "`r(N)' LGD districts matched"
+}
+
+/* keep master matches - only those names that matched from the master data */
 keep if match_source < 7
 
 /* drop redundant variables */
@@ -124,5 +144,62 @@ drop lgd_district_version lgd_district_name_local
 /* order variables */
 order lgd_state_id lgd_district_id lgd_state_name lgd_district_name state district
 
-/* save final dataset */
+/* save final dataset unique on district-month-year */
 save $covidpub/mortality/district_mort_month, replace
+
+/*****************************************/
+/* Now save the following datasets:      */
+/* 1. Dataset unique on district-year    */
+/* 2. Dataset unique on state-month-year */
+/* 3. Dataset unique on state-year       */
+/*****************************************/
+
+/* 1. District-year */
+
+/* collapse on year to obtain dataset unique on district-year */
+collapse (sum) deaths, by(lgd_state_id lgd_district_id lgd_state_name lgd_district_name state district year pc11_state_id pc11_district_id pc11_district_name)
+
+/* append Odisha mortality data which is unique on district-year */
+append using $tmp/mort_odisha
+
+order lgd_state_id lgd_district_id lgd_state_name lgd_district_name state district deaths year
+
+la var deaths "Total reported deaths - CRS"
+
+/* save dataset unique on district-year */
+save $covidpub/mortality/district_mort_year, replace
+
+/* 2. State-month-year */
+
+use $covidpub/mortality/district_mort_month, replace
+
+/* drop states for which we don't have data for all districts - Telangana (only Hyderabad), West Bengal (only Kolkata), Tamil Nadu (only Chennai) and Karnataka (only Bangalore) */
+drop if (state == "Telangana" | state == "West Bengal" | state == "Tamil Nadu" | state == "Karnataka")
+
+/* collapse on state-month-year */
+collapse (sum) deaths, by(lgd_state_id lgd_state_name state month year pc11_state_id)
+
+/* append state-month-year data */
+append using $tmp/mort_states
+
+/* label and order variables */
+la var deaths "Total reported deaths - CRS"
+order lgd_* state deaths month year
+
+/* save dataset unique on state-month-year */
+save $covidpub/mortality/state_mort_month, replace
+
+/* 3. State-year */
+
+/* collapse on state-year */
+collapse (sum) deaths, by(lgd_state_id lgd_state_name state year pc11_state_id)
+
+/* add odisha year totals */
+append using $tmp/mort_odisha_state
+
+/* label and rename variables */
+la var deaths "Total reported deaths - CRS"
+order lgd_* state deaths year
+
+/* save dataset unique on state-year */
+save $covidpub/mortality/state_mort_year, replace
