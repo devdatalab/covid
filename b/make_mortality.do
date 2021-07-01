@@ -146,6 +146,9 @@ order lgd_state_id lgd_district_id lgd_state_name lgd_district_name state distri
 
 /* save final dataset unique on district-month-year */
 save $covidpub/mortality/district_mort_month, replace
+export delimited using $covidpub/mortality/csv/district_mort_month.csv, replace
+drop lgd*
+export delimited using $covidpub/mortality/pc11/pc11_district_mort_month.csv, replace
 
 /*****************************************/
 /* Now save the following datasets:      */
@@ -168,6 +171,9 @@ la var deaths "Total reported deaths - CRS"
 
 /* save dataset unique on district-year */
 save $covidpub/mortality/district_mort_year, replace
+export delimited using $covidpub/mortality/csv/district_mort_year.csv, replace
+drop lgd*
+export delimited using $covidpub/mortality/pc11/pc11_district_mort_year.csv, replace
 
 /* 2. State-month-year */
 
@@ -188,6 +194,11 @@ order lgd_* state deaths month year
 
 /* save dataset unique on state-month-year */
 save $covidpub/mortality/state_mort_month, replace
+export delimited using $covidpub/mortality/csv/state_mort_month.csv, replace
+preserve
+drop lgd*
+export delimited using $covidpub/mortality/pc11/pc11_state_mort_month.csv, replace
+restore
 
 /* 3. State-year */
 
@@ -203,3 +214,6 @@ order lgd_* state deaths year
 
 /* save dataset unique on state-year */
 save $covidpub/mortality/state_mort_year, replace
+export delimited using $covidpub/mortality/csv/state_mort_year.csv, replace
+drop lgd*
+export delimited using $covidpub/mortality/pc11/pc11_state_mort_year.csv, replace
