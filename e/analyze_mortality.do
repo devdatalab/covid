@@ -148,3 +148,63 @@ foreach i in `outcome' {
 
   }
 }
+
+/***********************/
+/* Additional analysis */
+/***********************/
+
+/* 1. underreporting multiplier */
+sum ur_multiplier, det
+kdensity ur_multiplier
+graphout ur_kdensity, pdf
+
+/* plot graphs */
+twoway (lfit ur_multiplier  urban_p) (scatter ur_multiplier urban_p), legend(off) ytitle("Underreporting Multiplier") name(ur1, replace)
+
+/* plot graphs */
+twoway (lfit ur_multiplier  urban_p) (scatter ur_multiplier urban_p ) if ur_multiplier > -200 & ur_multiplier < 250, legend(off) ytitle("Underreporting Multiplier") name(ur2, replace) note("Outliers are dropped from sample")
+
+binscatter ur_multiplier urban_p, control(cons_pc pov_rate cases high_ed) xtitle(% Urban Population) ytitle("Underreporting Multiplier") note("Controlled for consumption, education, poverty rate and case counts", size(vsmall)) name(ur3, replace) ylabel(0(20)100)
+
+binscatter ur_multiplier urban_p if ur_multiplier > -200 & ur_multiplier < 250, control(cons_pc pov_rate cases high_ed) xtitle(% Urban Population) ytitle("Underreporting Multiplier ") note("Controlled for consumption, education, poverty rate and case counts; dropped outliers", size(vsmall)) ylabel(0(20)100) name(ur4, replace)
+
+graph combine ur1 ur2 ur3 ur4, col(2)
+graphout ur_multiplier_combined, pdf
+
+/* regressions */
+eststo ur_add_1: reghdfe ur_multiplier urban_p, noabsorb // uncontrolled spec
+eststo ur_add_2: reghdfe ur_multiplier urban_p if ur_multiplier > -200 & ur_multiplier < 250, noabsorb // uncontrolled spec; drop outliers
+
+eststo ur_add_3: reghdfe ur_multiplier urban_p cons_pc pov_rate high_ed cases, noabsorb // controlled spec
+eststo ur_add_4: reghdfe ur_multiplier urban_p cons_pc pov_rate high_ed cases if ur_multiplier > -200 & ur_multiplier < 250, noabsorb // dropped outliers in controlled spec
+eststo ur_add_5: reghdfe ur_multiplier urban_p cons_pc pov_rate high_ed cases if ur_multiplier > -200 & ur_multiplier < 250, absorb(lgd_state_id) // controlled spec with state fixed effects and dropped outliers
+
+esttab ur_add_* using $out/ur_reg_add.html, r2 label replace
+
+/* excess deaths */
+sum excess_deaths, det
+kdensity excess_deaths
+graph hbox excess_deaths, over(state, sort(excess_deaths)) // huge variation within and across states, UP in particular
+graphout box_ed, pdf
+
+/* plot graphs */
+twoway (lfit excess_deaths  urban_p) (scatter excess_deaths urban_p), legend(off) ytitle("Excess Deaths") name(ed1, replace)
+
+twoway (lfit excess_deaths  urban_p) (scatter excess_deaths urban_p ) if excess_deaths > -10000, legend(off) ytitle("Excess Deaths") name(ed2, replace) note("Outliers are dropped from sample")
+
+binscatter excess_deaths urban_p, control(cons_pc pov_rate cases high_ed) xtitle(% Urban Population) ytitle("Excess Deaths") note("Controlled for consumption, education, poverty rate and case counts", size(vsmall)) name(ed3, replace)
+
+binscatter excess_deaths urban_p if excess_deaths > -10000 , control(cons_pc pov_rate cases high_ed) xtitle(% Urban Population) ytitle("Excess Deaths") note("Controlled for consumption, education, poverty rate and case counts; dropped outliers", size(vsmall)) name(ed4, replace)
+
+graph combine ed1 ed2 ed3 ed4, col(2)
+graphout excess_deaths_combined, pdf
+
+/* regressions */
+eststo ed_add_1: reghdfe excess_deaths urban_p, noabsorb // uncontrolled spec
+eststo ed_add_2: reghdfe excess_deaths urban_p if excess_deaths > -10000, noabsorb // uncontrolled spec; drop outliers
+
+eststo ed_add_3: reghdfe excess_deaths urban_p cons_pc pov_rate high_ed cases, noabsorb // controlled spec
+eststo ed_add_4: reghdfe excess_deaths urban_p cons_pc pov_rate high_ed cases if excess_deaths > -10000, noabsorb // dropped outliers in controlled spec
+eststo ed_add_5: reghdfe excess_deaths urban_p cons_pc pov_rate high_ed cases if excess_deaths > -10000, absorb(lgd_state_id) // controlled spec with state fixed effects and dropped outliers
+
+esttab ed_add_* using $out/ed_reg_add.html, r2 label replace
