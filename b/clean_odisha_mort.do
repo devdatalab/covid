@@ -5,7 +5,7 @@
 /* to be appended with district-year mortality dataset */
 
 /* import raw data */
-import excel "$covidpub/mortality/raw/Odisha Analysis.xlsx", sheet("CRS") cellrange(B5:N34) clear
+import excel "$covidpub/private/mortality/raw/Odisha Analysis.xlsx", sheet("CRS") cellrange(B5:N34) clear
 
 /* drop redundant variables and rename them for reshape */
 drop F G H I K L M

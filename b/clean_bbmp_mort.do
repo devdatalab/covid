@@ -3,7 +3,7 @@
 /*****************************************/
 
 /* import raw data */
-import excel "$covidpub/mortality/raw/Karnataka, BBMP deaths data.xlsx", sheet("Sheet1") cellrange(A24:D37) clear
+import excel "$covidpub/private/mortality/raw/Karnataka, BBMP deaths data.xlsx", sheet("Sheet1") cellrange(A24:D37) clear
 
 /* drop redundant obs and rename vars for reshape */
 drop in 1

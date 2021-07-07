@@ -147,8 +147,10 @@ order lgd_state_id lgd_district_id lgd_state_name lgd_district_name state distri
 /* save final dataset unique on district-month-year */
 save $covidpub/mortality/district_mort_month, replace
 export delimited using $covidpub/mortality/csv/district_mort_month.csv, replace
+preserve
 drop lgd*
 export delimited using $covidpub/mortality/pc11/pc11_district_mort_month.csv, replace
+restore
 
 /*****************************************/
 /* Now save the following datasets:      */

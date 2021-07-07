@@ -208,3 +208,4 @@ eststo ed_add_4: reghdfe excess_deaths urban_p cons_pc pov_rate high_ed cases if
 eststo ed_add_5: reghdfe excess_deaths urban_p cons_pc pov_rate high_ed cases if excess_deaths > -10000, absorb(lgd_state_id) // controlled spec with state fixed effects and dropped outliers
 
 esttab ed_add_* using $out/ed_reg_add.html, r2 label replace
+

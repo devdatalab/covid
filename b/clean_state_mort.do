@@ -14,7 +14,7 @@
 /****************/
 
 /* import raw data */
-import excel "$covidpub/mortality/raw/kerala.xlsx", sheet("Sheet2") cellrange(A3:H14) clear
+import excel "$covidpub/private/mortality/raw/kerala.xlsx", sheet("Sheet2") cellrange(A3:H14) clear
 
 /* rename variables for reshape */
 ren A month
@@ -46,7 +46,7 @@ save $tmp/mort_kerala, replace
 /*******************/
 
 /* import raw data */
-import excel "$covidpub/mortality/raw/Karnataka, BBMP deaths data.xlsx", sheet("Sheet1") cellrange(A4:H15) clear
+import excel "$covidpub/private/mortality/raw/Karnataka, BBMP deaths data.xlsx", sheet("Sheet1") cellrange(A4:H15) clear
 
 /* rename variables for reshape */
 ren A month
@@ -75,7 +75,7 @@ save $tmp/mort_karnataka, replace
 /********************/
 
 /* import raw data */
-import excel "$covidpub/mortality/raw/crs_tamil_nadu.xlsx", sheet("Monthwise occurrence of Deaths") cellrange(A4:E15) clear
+import excel "$covidpub/private/mortality/raw/crs_tamil_nadu.xlsx", sheet("Monthwise occurrence of Deaths") cellrange(A4:E15) clear
 
 /* rename variables for reshape */
 ren A month
@@ -138,4 +138,3 @@ order lgd_* deaths month year pc11_*
 
 /* save clean dataset to scratch */
 save $tmp/mort_states, replace
-
