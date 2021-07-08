@@ -1,8 +1,7 @@
-master,district,state
-y.s.r.,y.s.r kadapa,andhra pradesh
-y.s.r.,ysr kadapa,andhra pradesh
+master,lgd_district_name,lgd_state_name
+dohad,dahod,gujarat
+east nimar,khandwa,madhya pradesh
 y.s.r.,y.s.r. kadapa,andhra pradesh
-y.s.r.,y s r,andhra pradesh
 spsr nellore,s.p.s. nellore,andhra pradesh
 spsr nellore,sri potti sriramulu nellore,andhra pradesh
 dibang valley,upper dibang valley,arunachal pradesh
@@ -63,4 +62,4 @@ mahrajganj,maharajganj,uttar pradesh
 kheri,lakhimpur kheri,uttar pradesh
 barabanki,bara banki,uttar pradesh
 medinipur east,purba medinipur,west bengal
-
+tuticorin,thoothukkudi,tamil nadu

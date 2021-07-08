@@ -1,13 +1,27 @@
-
 from bs4 import BeautifulSoup
 import datetime
 import json
 import pandas as pd
+import io
 import os
 import urllib.request
 import requests
 from collections import Counter
 
+
+def retrieve_covid19india_vaccination(url, output_fp):
+    """
+    url: http://api.covid19india.org/csv/latest/cowin_vaccine_data_districtwise.csv
+    """
+    # pull in data from the url
+    s = requests.get(url).content
+
+    # read in the data to a dataframe, decoding the utf-8 encoding 
+    df = pd.read_csv(io.StringIO(s.decode('utf-8')))
+
+    # save as a csv to the outputpath
+    df.to_csv(os.path.join(output_fp, "covid19india_vaccination_data.csv"), index=False)
+    
 def retrieve_covid19india_case_data(url, output_fp):
     """
     url = specific url to api provided by covid19india (ex. "https://api.covid19india.org/raw_data.json")
@@ -56,6 +70,17 @@ def retrieve_covid19india_deaths_data(url, output_fp):
 
     # write the dataframe out as a csv
     df.to_csv(os.path.join(output_fp, "covid19india_old_deaths.csv"))
+
+
+def retrieve_covid19india_all_district_csv(url, output_fp):
+    """
+    03/16/21: in checking the API again, data is now released in csv format for april 26 onwards
+    at the district level. this function pulls and stores the data from that csv.
+    url: "https://api.covid19india.org/csv/latest/districts.csv"
+    """
+    with urllib.request.urlopen(url) as _url:
+        df = pd.read_csv(_url)
+    df.to_csv(os.path.join(output_fp, "covid19india_district_data_new.csv"), index=False)
 
 
 def retrieve_covid19india_district_data(url, output_fp):

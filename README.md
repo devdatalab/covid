@@ -1,5 +1,8 @@
 # Covid-19 Data Resources
 
+:rotating_light: Mortality data now available in `mortality/`! See [this medium post](https://devdatalab.medium.com/making-sense-of-excess-mortality-f26cffe3643e) for a full announcement and preliminary analysis. :rotating_light:
+
+
 This repository aims to provide a backbone of high geographic
 resolution administrative data to support analysis of and the policy response to the COVID-19
 pandemic in India.
@@ -30,6 +33,16 @@ continue to provide and develop this service. If you are interested in
 funding more rapid development of this data platform, please contact
 us at covid@devdatalab.org.
 
+Please cite these data as the "SHRUG COVID platform", referring to the SHRUG paper:   
+```
+@unpublished{ almn2020,
+author = {Asher, Sam and Lunt, Tobias and Matsuura, Ryu and Novosad, Paul},
+  note = {World Bank Economic Review (Revise and Resubmit)},
+  title = {{The Socioeconomic High-resolution Rural-Urban Geographic Dataset on India (SHRUG)}},
+  year = {2020}
+  }
+```
+
 <p align="center"><a target="_blank" href="https://www.dropbox.com/sh/y949ncp39towulf/AABs8_dECTzr38GdS7BneTH7a?dl=0"><img src="https://raw.githubusercontent.com/devdatalab/covid/master/assets/download_button.png"/></a></p>
 
 ## Data Folder Structure and Metadata
@@ -39,14 +52,15 @@ in a `csv/` subfolder in each path, while PC11 identified data are in a `pc11/` 
 
 | Folder      | Description                                                                       | Data Files                                   | Metadata                                                                                                                                         |
 | ----------- | -----------                                                                       | ----------                                   | --------                                                                                                                                         |
-| covid/      | Number of confirmed cases and deaths by date, district                            | `covid/covid_infected_deaths`                | [Link](https://docs.google.com/spreadsheets/d/e/2PACX-1vTKTuciRsUd6pk5kWhlMyhF85Iv5x04b0njSrWzCkaN5IeEZpBwwvmSdw-mUJOp215jBgv2NPMeTHXK/pubhtml)  |
+| mortality/  | Total deaths by district and state, aggregated by month and year                  | `mortality/district_mort_month`, `mortality/district_mort_year`, `mortality/state_mort_month`, `mortality/state_mort_year` | [Link](https://docs.google.com/spreadsheets/d/e/2PACX-1vRfpW3nFD2V9f-F4hnHEMRVVpZIN87G5hSwHUYpMpqBtiYgiQdfP41BjqvYROivIodiPPgXRoHRCkQe/pubhtml#)
+| covid/      | Number of confirmed cases and deaths, and cumulative vaccination data by date, district       | `covid/covid_infected_deaths`,  `covid/covid_vaccination`                | [Link](https://docs.google.com/spreadsheets/d/e/2PACX-1vTKTuciRsUd6pk5kWhlMyhF85Iv5x04b0njSrWzCkaN5IeEZpBwwvmSdw-mUJOp215jBgv2NPMeTHXK/pubhtml) , [Link](https://docs.google.com/spreadsheets/d/1xGf0Gc5__sj8xu-sU_bvZjc_dGBgbN86Ab7YRQols2s/edit#gid=1957719207) |
 | demography/ | Age pyramid of every district and subdistrict                                     | `demography/age_bins_(sub)district_t`        | [Link](https://docs.google.com/spreadsheets/d/e/2PACX-1vSyQghmU8rKxC_1NWAUKMa1-DwjT95XmmmQO5b1nuzj48Tjmq8cDvZRaN1C59JgY7eRapMHtnmYY3_k/pubhtml)  |
 |             | (Sub)district level slum populations, pop density, urbanization rates (PC)        | `demography/pc11_demographics_(sub)district` | [Link](https://docs.google.com/spreadsheets/d/e/2PACX-1vRX8_Qog9_KBasIRa6jjPoCPXJW5H-GHhJfCAXMotwcaAhbVQOWDxrjzBKY2m675keKVwK_2FQhTiKZ/pubhtml)  |
 | estimates/  | Modeled district hospital/clinic bed and doctor counts (EC,PC,DLHS)               | `estimates/hospitals_dist`                   | [Link](https://docs.google.com/spreadsheets/d/e/2PACX-1vQL3zu-_LMCV3gIjk1NOGWJVwDwcspl2lI7lvvRUuUgRN3I-X9QFe9BUhdr3dhROpTItTiiUxP_-kU9/pubhtml)  |
 |             | Modeled age-structured based fatality rate predictions                            | `estimates/(sub)district_age_dist_cfr`       |                                                                                                                                                  |
 | hospitals/  | District-level public hospital/clinic bed and doctor counts from DLHS             | `hospitals/dlhs4_hospitals_dist`             | [Link](https://docs.google.com/spreadsheets/d/e/2PACX-1vR8pkaS86ZlwcSe0ljKyL6wR_YOGE380JrHgAhG5Z66Oq1WtD4xtsJCsdCt-yAv8Qw0X74twBeIQ9of/pubhtml#) |
 |             | (Sub)district-level public hospital/clinic bed and doctor counts from Pop Census  | `hospitals/pc_hospitals_(sub)dist`           | [Link](https://docs.google.com/spreadsheets/d/e/2PACX-1vTpGgFszhHhMlzh-ePv3tRj5Arpv7uyicPPDgkCS7-Ms3nE6OvofQWBFuOxOWBPtELzSmBFttxvLc20/pubhtml)  |
-|             | District- and town/village-level hospital public/private hospital employment (EC) | `hospitals/ec_hospitals_(dist,tv)`           | [Link](https://docs.google.com/spreadsheets/d/e/2PACX-1vTpGgFszhHhMlzh-ePv3tRj5Arpv7uyicPPDgkCS7-Ms3nE6OvofQWBFuOxOWBPtELzSmBFttxvLc20/pubhtml)  |
+|             | District- and town/village-level hospital public/private hospital employment (EC) | `hospitals/ec_hospitals_(dist,tv)`           | [Link](https://docs.google.com/spreadsheets/d/1h6G4vYL3lvy4Bi8DTY3pMT2-5aVWOBoxAm3plx4M7qQ/edit?usp=sharing)  |
 | migration/  | District-level temporary and permanent migration data             | `migration/district_migration`             | [Link](https://docs.google.com/spreadsheets/d/e/2PACX-1vTu79uiVKSFv8c1oZvx7WARrWXSfbwfLakiukoezDaH0spMM_MQalkm5fr4bnkBQVNRs2aiU7x41oi3/pubhtml)|
 |             | District-level temporary and permanent migration data (PC11 identified)  | `migration/pc11/district_migration_pc11`           | [Link](https://docs.google.com/spreadsheets/d/e/2PACX-1vTu79uiVKSFv8c1oZvx7WARrWXSfbwfLakiukoezDaH0spMM_MQalkm5fr4bnkBQVNRs2aiU7x41oi3/pubhtml)  |
 | agmark/  | Farm product data reported by different Mandis (Markets) across India.             | `agmark/agmark_clean`             | [Link](https://docs.google.com/spreadsheets/d/e/2PACX-1vSL5i735NyXaopzylr31_UjjS7NRUYWgcdNZi41Kvw8wUuHF1gDkyPKxA-tYMFnGTTOWdB-zPjJT6T3/pubhtml)|
@@ -114,6 +128,11 @@ outputs, like the hospital bed estimates.
 You can download the data here:
 
 [![Download Data](assets/download_button.png)](https://www.dropbox.com/sh/y949ncp39towulf/AABs8_dECTzr38GdS7BneTH7a?dl=0)
+
+### Programmatic Downloading
+
+While we don't have a real API for these data (yet), you can access all files and directories programmatically using `curl` or `wget`. To do this, follow the dropbox links and right-click on the file or folder you wish to access, and copy the link location. Use this link location with `curl` or `wget`, e.g. ```curl -L https://www.dropbox.com/sh/y949ncp39towulf/AADbSeZWSG1xjPHXNMTyhmoba/covid?dl=0 > download.zip```
+
 
 ## Bugs / Requests
 

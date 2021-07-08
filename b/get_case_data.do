@@ -173,12 +173,14 @@ save $tmp/all_old_covid19_key, replace
 cd $ddl/covid
 
 /* define the url and pull the data files from covid19india */
-pyfunc retrieve_covid19india_all_district_data("https://api.covid19india.org/v4/data-all.json", "$tmp"), i(from retrieve_case_data import retrieve_covid19india_all_district_data) f("$ddl/covid/b")
-
-//shell python -c "from b.retrieve_case_data import retrieve_covid19india_all_district_data; retrieve_covid19india_all_district_data('https://api.covid19india.org/v4/data-all.json', '$tmp')"
+pyfunc retrieve_covid19india_all_district_csv("https://api.covid19india.org/csv/latest/districts.csv", "$tmp"), i(from retrieve_case_data import retrieve_covid19india_all_district_csv) f("$ddl/covid/b")
+// pyfunc retrieve_covid19india_all_district_csv("https://api.covid19india.org/v4/data-all.json", "$tmp"), i(from retrieve_case_data import retrieve_covid19india_all_district_data) f("$ddl/covid/b")
 
 /* read in the data */
 insheet using $tmp/covid19india_district_data_new.csv, clear
+
+/* replace delhi district with missing because this is really state level data */
+replace district = "" if state == "Delhi" & district == "Delhi"
 
 /* create date object from date string */
 gen date2 = date(date, "YMD")
@@ -203,8 +205,9 @@ replace state = "" if state == "un"
 drop if state == "tt"
 
 /* fix Daman and Diu State names */
-replace state = "daman and diu" if (district == "daman") & (state == "dadra and nagar haveli")
-replace state = "daman and diu" if (district == "diu") & (state == "dadra and nagar haveli")
+replace state = "daman and diu" if (district == "daman") & (state == "dadra and nagar haveli and daman and diu")
+replace state = "daman and diu" if (district == "diu") & (state == "dadra and nagar haveli and daman and diu")
+replace state = "dadra and nagar haveli" if (district == "dadra and nagar haveli") & (state == "dadra and nagar haveli and daman and diu")
 
 /* replace unknown or unclassified districts with missing */
 replace district = "" if district == "unknown"
@@ -349,17 +352,44 @@ use $tmp/all_old_covid19_data, clear
 
 /* merge in lgd states */
 ren state lgd_state_name
-merge m:1 lgd_state_name using $keys/lgd_state_key.dta, keep(match master)
+merge m:1 lgd_state_name using $keys/lgd_state_key, keep(match master)
 replace lgd_state_name = "not reported" if mi(lgd_state_name)
 drop _merge
 
 /* merge in lgd districts */
 ren district covid_district_name
 merge m:1 lgd_state_id covid_district_name using $tmp/old_covid19_lgd_district_key, keep(match master) keepusing(lgd_state_id lgd_district_id lgd_district_name)
+
+/* check that all districts not matched from the source data are missing */
+qui count if _merge == 1 & !mi(lgd_district_name)
+local unmatched_districts = `r(N)'
+if `unmatched_districts' > 0 {
+  disp_nice "`unmatched_districts' districts unmatched in the pre-April 27 case data. These districts must be matched to LGD before proceeding."
+  exit 9
+}
 drop _merge
 
 /* clarify missing districts as not reported */
 replace lgd_district_name = "not reported" if mi(lgd_district_name)
+
+/* make it square */
+egen dgroup = group(lgd_state_name lgd_district_name)
+fillin date dgroup 
+
+/* set as time series with dgroup */
+sort dgroup date
+by dgroup: egen day_number = seq()
+
+/* fill in state, district, lgd names within dgroup 
+   to install xfill: net install xfill */
+xfill lgd_state_name lgd_district_name lgd_state_id lgd_district_id, i(dgroup)
+
+/* create cumulative sums of deaths and infections */
+sort dgroup day_number
+
+/* fill in missing total death and total cases with 0- these are days preceding the first reports for a given district */
+replace cases_total = 0 if mi(cases_total)
+replace death_total = 0 if mi(death_total)
 
 /* save old covid19 data */
 save $tmp/old_covid19_matched_data, replace
@@ -376,11 +406,38 @@ drop _merge
 /* merge in lgd districts */
 ren district covid_district_name
 merge m:1 lgd_state_id covid_district_name using $tmp/covid19india_lgd_district_key, keep(match master) keepusing(lgd_state_id lgd_district_id lgd_district_name)
+
+/* check that all districts not matched from the source data are missing */
+qui count if _merge == 1 & !mi(lgd_district_name)
+local unmatched_districts = `r(N)'
+if `unmatched_districts' > 0 {
+  disp_nice "`unmatched_districts' districts unmatched in the post-April 27 case data. These districts must be matched to LGD before proceeding."
+  exit 9
+}
 drop _merge
 
 /* clarify missing districts as not reported 
    note: two reported districts in jammu and kashmir are not represented in LGD (muzaffarabad and mirpir), for now we put them under "not reported" */
 replace lgd_district_name = "not reported" if mi(lgd_district_name)
+
+/* make it square */
+egen dgroup = group(lgd_state_name lgd_district_name)
+fillin date dgroup 
+
+/* set as time series with dgroup */
+sort dgroup date
+by dgroup: egen day_number = seq()
+
+/* fill in state, district, lgd names within dgroup 
+   to install xfill: net install xfill */
+xfill lgd_state_name lgd_district_name lgd_state_id lgd_district_id, i(dgroup)
+
+/* create cumulative sums of deaths and infections */
+sort dgroup day_number
+
+/* fill in missing total death and total cases with 0- these are days preceding the first reports for a given district */
+replace cases_total = 0 if mi(cases_total)
+replace death_total = 0 if mi(death_total)
 
 /* append covindia data */
 append using $tmp/old_covid19_matched_data
@@ -414,10 +471,6 @@ xfill lgd_state_name lgd_district_name lgd_state_id lgd_district_id, i(dgroup)
 
 /* create cumulative sums of deaths and infections */
 sort dgroup day_number
-
-/* fill in missing total death and total cases with 0- these are days preceding the first reports for a given district */
-replace cases_total = 0 if mi(cases_total)
-replace death_total = 0 if mi(death_total)
 
 /* only save the cumulative counts */
 drop dgroup _fillin day_number

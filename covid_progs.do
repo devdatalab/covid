@@ -234,3 +234,68 @@ prog def lgd_dist_match
 end    
 /* *********** END program lgd_dist_match ***************************************** */
 
+/**********************************************************************/
+/* program str_month: convert months in numeric to string (lowercase) */
+/* months should range from 1 to 12                                   */
+/**********************************************************************/
+
+cap prog drop str_month
+prog def str_month
+
+  syntax, float(string) string(string)
+
+  assert (`float' >= 1 & `float' <= 12) 
+
+  qui {
+    gen `string' = "january" if `float' == 1
+    replace `string' = "february" if `float' == 2
+    replace `string' = "march" if `float' == 3
+    replace `string' = "april" if `float' == 4
+    replace `string' = "may" if `float' == 5
+    replace `string' = "june" if `float' == 6
+    replace `string' = "july" if `float' == 7
+    replace `string' = "august" if `float' == 8
+    replace `string' = "september" if `float' == 9
+    replace `string' = "october" if `float' == 10
+    replace `string' = "november" if `float' == 11
+    replace `string' = "december" if `float' == 12
+
+    drop `float'
+
+    ren `string' `float'
+
+  }
+
+end
+
+/** END program str_month ***********/
+
+/*************************************************************************/
+/* program float_month: convert months in string (lowercase) to numeric  */
+/*************************************************************************/
+cap prog drop float_month
+prog def float_month
+
+  syntax, string(string)
+  
+  qui {
+    replace `string' = "1" if `string' == "january" 	 
+    replace `string' = "2" if `string' == "february"	 
+    replace `string' = "3" if `string' == "march" 		 
+    replace `string' = "4" if `string' == "april" 		 
+    replace `string' = "5" if `string' == "may" 		 
+    replace `string' = "6" if `string' == "june" 		 
+    replace `string' = "7" if `string' == "july" 		 
+    replace `string' = "8" if `string' == "august" 
+    replace `string' = "9" if `string' == "september"	 
+    replace `string' = "10" if `string' == "october" 	 
+    replace `string' = "11" if `string' == "november" 	 
+    replace `string' = "12" if `string' == "december" 	 
+    
+    destring `string', replace
+    
+    assert (`string' >= 1 & `string' <= 12)
+  }
+  
+end
+/** END program float_month ***********/

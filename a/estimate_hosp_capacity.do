@@ -71,6 +71,11 @@ gen dlhs_perk_pubpriv_beds = dlhs_perk_gov_beds / (1 - ec_priv_hosp_share)
 gen pc_perk_pubpriv_clinic_beds = pc_perk_gov_clinic_beds / (1 - ec_priv_hosp_share)
 gen pc_perk_pubpriv_hosp_beds = pc_perk_gov_hosp_beds / (1 - ec_priv_hosp_share)
 
+/* scale up non-per-1000 pop variables */
+gen dlhs_pubpriv_beds = dlhs_gov_beds / (1 - ec_priv_hosp_share)
+gen pc_pubpriv_clinic_beds = pc_gov_clinic_beds / (1 - ec_priv_hosp_share)
+gen pc_pubpriv_hosp_beds = pc_gov_hosp_beds / (1 - ec_priv_hosp_share)
+
 /* generate rankings */
 foreach y in dlhs_perk_pubpriv_beds pc_perk_pubpriv_hosp_beds {
   egen rank_`y' = rank(`y')
