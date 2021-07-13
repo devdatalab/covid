@@ -48,6 +48,9 @@ do $ccode/b/clean_up_mort
 /* Odisha */
 do $ccode/b/clean_odisha_mort
 
+/* Rajasthan */
+do $ccode/b/clean_rajasthan_mort
+
 /* 1(b). State-level */
 
 /* clean data for Karnataka, Kerala and Tamil Nadu */
@@ -60,7 +63,7 @@ do $ccode/b/clean_state_mort
 clear
 
 /* append all processed data in PART I - use force option to resolve any string-float inconsistencies */
-foreach i in mort_ap mort_assam mort_bbmp mort_bihar mort_chennai mort_ghmc mort_kolkata mort_mp mort_up {
+foreach i in mort_ap mort_assam mort_bbmp mort_bihar mort_chennai mort_ghmc mort_kolkata mort_mp mort_up mort_rajasthan {
 
   append using $tmp/`i'.dta, force
 

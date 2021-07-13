@@ -209,3 +209,28 @@ eststo ed_add_5: reghdfe excess_deaths urban_p cons_pc pov_rate high_ed cases if
 
 esttab ed_add_* using $out/ed_reg_add.html, r2 label replace
 
+/***************************/
+/* Additional Analysis -2  */
+/***************************/
+
+/* take the inverse hyperbolic sine transformation for excess deaths and covid deaths */
+foreach i in excess_deaths covid_deaths {
+  gen ihs_`i' = asinh(`i')
+}
+
+la var ihs_excess_deaths "IHS (Excess Deaths)"
+la var ihs_covid_deaths "IHS (COVID Deaths)"
+
+/* plot a twoway scatter */
+
+/* notes:
+1. All the 0 covid deaths are for Assam districts since they don't report district-wise disaggregated deaths
+2. UP districts have negative excess deaths
+*/
+twoway scatter ihs_excess_deaths ihs_covid_deaths
+graphout ihs_excess_covid
+
+/* replot the twoway scatter after dropping outliers */
+twoway (scatter ihs_excess_deaths ihs_covid_deaths) (lfit ihs_excess_deaths ihs_covid_deaths) if covid_deaths > 0 & state != "Uttar Pradesh", legend(pos(6) col(2)) ytitle("IHS (Excess Deaths)")
+graphout ihs_excess_covid_2
+
