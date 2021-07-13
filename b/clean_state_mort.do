@@ -7,6 +7,7 @@
 /* 1. Kerala                                                */
 /* 2. Karnataka                                             */
 /* 3. Tamil Nadu                                            */
+/* 4. Chhatisgarh                                           */
 /************************************************************/
 
 /****************/
@@ -99,6 +100,35 @@ note deaths: Source data for Tamil Nadu provided by Rukmini S
 /* save clean data to scratch */
 save $tmp/mort_tn, replace
 
+/*********************/
+/* Clean Chhatisgarh */
+/*********************/
+
+/* import raw data */
+import excel "$covidpub/private/mortality/raw/chattisgarh.xlsx", sheet("Sheet1") cellrange(A4:E15) clear
+
+/* rename variables for reshape */
+ren A month
+ren B deaths2018
+ren C deaths2019
+ren D deaths2020
+ren E deaths2021
+
+/* reshape from wide to long on deaths */
+reshape long deaths, i(month) j(year)
+
+/* drop missing data */
+drop if mi(deaths)
+
+/* generate state variable */
+gen state = "Chhattisgarh"
+
+/* add contributor */
+note deaths: Source data for Chhatisgarh provided by Hindu
+
+/* save clean data to scratch */
+save $tmp/mort_ch, replace
+
 /*************************/
 /* Append all state data */
 /*************************/
@@ -108,6 +138,9 @@ append using $tmp/mort_kerala
 
 /* append karnataka */
 append using $tmp/mort_karnataka
+
+/* append Tamil Nadu */
+append using $tmp/mort_tn
 
 /**********************************/
 /* Link to LGD + PC11 identifiers */
