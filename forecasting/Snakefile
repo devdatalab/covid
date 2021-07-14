@@ -6,6 +6,7 @@
 
 # imports
 import os
+from pathlib import Path
 
 # set master config file with paths and globals
 configfile: 'config/config.yaml'
@@ -26,6 +27,14 @@ TMP=os.path.expanduser(os.environ['TMP'])
 IEC=os.path.expanduser(os.environ['IEC'])
 IEC1=os.path.expanduser(os.environ['IEC1'])
 
+# prep output log files if they don't exist - necessary for rule all
+# to work. hardcode log filelist for now...rules.all.input doesn't
+# work as the rule has not been specified at this stage
+logfiles = [f'{TMP}/tileset_push.log',f'{TMP}/push_pred_metadata.log',f'{TMP}/push_pred_data.log',f'{TMP}/test_merged_data.log']
+for log in logfiles:
+    if not os.path.isfile(log):
+        Path(log).touch()
+
 
 #########
 # RULES #
@@ -34,14 +43,15 @@ IEC1=os.path.expanduser(os.environ['IEC1'])
 # master rule to define the final output
 rule all:
     input:
-        f'{TMP}/tileset_push.log',
 #        f'{TMP}/covid_data.mbtiles',
+#        rules.push_vector_tileset.log,
 #        rules.push_pred_metadata.log,
 #        rules.push_pred_data.log,
 #        rules.test_merged_data.log,
+        f'{TMP}/tileset_push.log',
         f'{TMP}/push_pred_metadata.log',
+        f'{TMP}/push_pred_data.log',
         f'{TMP}/test_merged_data.log',
-        f'{TMP}/push_pred_data.log'
 
 # pull predicted data from google cloud
 # rerun_indicator gets `touch`ed from cronjob to trigger pipeline execution
@@ -67,7 +77,7 @@ rule process_predicted_data:
         f'{DATA}/pred_data_district.csv',
         f'{DATA}/pred_data_state.csv',
         f'{DATA}/pred_data_rt_choropleth.dta',
-    shell: f'stata -b {CODE}/b/process_predicted_data.do '
+    shell: f'stata -b {CODE}/b/process_predicted_data.do'
 
 # create data tables for all other DDL covid data to display in district popups
 rule process_ddl_data:
@@ -86,7 +96,7 @@ rule merge_ddl_pred_data:
         f'{CODE}/b/merge_ddl_pred_data.do'
     output:
         f'{DATA}/merged_data_district.dta',
-    shell: f'stata -b {CODE}/b/merge_ddl_pred_data.do '
+    shell: f'stata -b {CODE}/b/merge_ddl_pred_data.do'
 
 # creation of geojson from full tabular district data (all dates X rt, etc) for the plots
 rule dist_data_to_geojson:
