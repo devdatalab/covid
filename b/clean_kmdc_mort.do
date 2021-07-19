@@ -3,7 +3,7 @@
 /***************************************************************/
 
 /* read in raw csv data (source: https://github.com/thejeshgn/KMCDeathRecords) */
-import delimited "$covidpub/mortality/raw/death_records_kolkata.csv", clear
+import delimited "$covidpub/private/mortality/raw/death_records_kolkata.csv", clear
 
 /* drop empty variables */
 drop dateofregistration deathdate crematoriumcode regnno recordssourcerawdatafile yearofregistration

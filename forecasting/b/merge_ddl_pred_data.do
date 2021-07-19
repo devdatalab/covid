@@ -29,8 +29,8 @@ foreach var of varlist rt_* *cases* {
   replace `var' = round(`var', .01)
 }
 
-/* drop extraneous vars */
-drop t_*
+/* confirm drop of extraneous modeling vars */
+cap drop t_*
 
 /* save to permadir */
 save $cdata/merged_data_district, replace

@@ -3,7 +3,7 @@
 /*****************************************/
 
 /* import raw data */
-import excel "$covidpub/mortality/raw/ghmc_certificates.xlsx", sheet("Sheet1") cellrange(A3:G14) clear
+import excel "$covidpub/private/mortality/raw/ghmc_certificates.xlsx", sheet("Sheet1") cellrange(A3:G14) clear
 
 /* rename vars for reshape */
 ren A month

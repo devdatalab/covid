@@ -19,7 +19,7 @@ foreach j in $year {
   foreach i in $month {
 
     /* import raw data */
-    import excel "$covidpub/mortality/raw/bihar/`j'_`i'.xlsx", sheet("Monitoring Report") cellrange(A4:P45) clear
+    import excel "$covidpub/private/mortality/raw/bihar/`j'_`i'.xlsx", sheet("Monitoring Report") cellrange(A4:P45) clear
 
     /* basic cleaning - keep relevant vars and rename */
     keep A B E F G

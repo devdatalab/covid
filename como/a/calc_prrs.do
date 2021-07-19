@@ -182,7 +182,7 @@ replace en_deaths = $sim_n * 693/5683 / 10 if inrange(age, 60, 69)
 replace en_deaths = $sim_n * 1560/5683  / 10 if inrange(age, 70, 79)
 replace en_deaths = $sim_n * 2941/5683  / 20 if inrange(age, 80, 99)
 
-/* save a data file for figure generateion */
+/* save a data file for figure generation */
 save $tmp/mort_density_full, replace
 
 /******************************************/

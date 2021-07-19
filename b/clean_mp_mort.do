@@ -18,7 +18,7 @@ foreach j in $year {
   foreach i in $month {
 
 /* import raw data */
-    import excel "$covidpub/mortality/raw/madhya_pradesh/`j'/`i'`j'.xlsx", sheet("Monitoring Report") firstrow clear
+    import excel "$covidpub/private/mortality/raw/madhya_pradesh/`j'/`i'`j'.xlsx", sheet("Monitoring Report") firstrow clear
 
 /* rename vars and drop redundant obs */
     ren SlNo id

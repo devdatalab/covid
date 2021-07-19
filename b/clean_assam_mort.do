@@ -9,7 +9,7 @@ global year "2018 2019 2020"
 foreach j in $year {
 
   /* import raw data */
-  import excel "$covidpub/mortality/raw/assam/`j'.xlsx", sheet("D-4") cellrange(A5:P364) firstrow clear
+  import excel "$covidpub/private/mortality/raw/assam/`j'.xlsx", sheet("D-4") cellrange(A5:P364) firstrow clear
   drop if C == ""
 
   /* fill missing values */

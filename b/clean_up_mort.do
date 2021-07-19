@@ -3,7 +3,7 @@
 /***************************/
 
 /* import raw data */
-import excel "$covidpub/mortality/raw/UP RTI- Death Certificates Issued.xlsx", sheet("Year-wise original") cellrange(A9:P308) clear
+import excel "$covidpub/private/mortality/raw/UP RTI- Death Certificates Issued.xlsx", sheet("Year-wise original") cellrange(A9:P308) clear
 
 /* preliminary cleaning */
 replace B = B[_n-1] if mi(B)

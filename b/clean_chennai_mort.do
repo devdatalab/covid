@@ -3,7 +3,7 @@
 /********************************/
 
 /* import raw data */
-import excel "$covidpub/mortality/raw/chennai.xlsx", sheet("Sheet2") cellrange(A1:M13) clear firstrow
+import excel "$covidpub/private/mortality/raw/chennai.xlsx", sheet("Sheet2") cellrange(A1:M13) clear firstrow
 
 /* rename vars for reshape */
 ren Month month
