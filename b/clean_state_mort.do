@@ -9,6 +9,7 @@
 /* 3. Tamil Nadu                                            */
 /* 4. Chhatisgarh                                           */
 /* 5. Haryana                                               */
+/* 6. Chandigarh                                            */
 /************************************************************/
 
 /****************/
@@ -130,6 +131,33 @@ note deaths: Source data for Chhatisgarh provided by Hindu
 /* save clean data to scratch */
 save $tmp/mort_ch, replace
 
+/********************/
+/* Clean Chandigarh */
+/********************/
+
+/* import raw data from statsofindia repo */
+import delimited "https://raw.githubusercontent.com/statsofindia/india-mortality/master/Chandigarh.csv" , clear
+
+/* create variables for month and day of death */
+gen year = substr(date, 1, 4)
+gen month = substr(date, 6, 2)
+gen day = substr(date, 9, 2)
+destring year month day, replace
+
+/* generate state var */
+gen state = "Chandigarh"
+
+/* collapse on date of death, state and gender */
+collapse (sum) deaths, by(state year month)
+
+/* convert months from float to string for consistency */
+str_month, float(month) string(str_month)
+
+/* re-order variables */
+order state state deaths year month 
+
+save $tmp/mort_chandigarh.dta, replace
+
 /*************************/
 /* Append all state data */
 /*************************/
@@ -142,6 +170,9 @@ append using $tmp/mort_karnataka
 
 /* append Tamil Nadu */
 append using $tmp/mort_tn
+
+/* append Chhattisgarh */
+append using $tmp/mort_ch
 
 /**********************************/
 /* Link to LGD + PC11 identifiers */
