@@ -41,6 +41,14 @@ gen tmp  = string(lgd_district_id,"%03.0f")
 drop lgd_district_id
 ren tmp lgd_district_id 
 
+/* HACK - get rid of duplicates on date */
+count
+local pre_drop `r(N)'
+ddrop lgd_state_id lgd_district_id dates
+count
+local post_drop `r(N)'
+assert `post_drop' / `pre_drop' > 0.999
+
 /* assert there are no duplicate entries for any district at any date */
 distinct lgd_state_id lgd_district_id dates, joint
 assert `r(ndistinct)' == `r(N)'
