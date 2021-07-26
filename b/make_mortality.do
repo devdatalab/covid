@@ -20,6 +20,7 @@ $covidpub -- processed data used as inputs for COVID variable construction
 
 /* West Bengal (district level data only available for Kolkata (KMDC)) */
 do $ccode/b/clean_kmdc_mort
+do $ccode/b/clean_wb_mort
 
 /* Karnataka (district level data only available for Bangalore (BBMP)) */
 do $ccode/b/clean_bbmp_mort
@@ -69,7 +70,7 @@ do $ccode/b/clean_state_mort
 clear
 
 /* append all processed data in PART I - use force option to resolve any string-float inconsistencies */
-foreach i in mort_ap mort_assam mort_bbmp mort_bihar mort_chennai mort_ghmc mort_kolkata mort_mp mort_up mort_rajasthan mort_haryana mort_hp {
+foreach i in mort_ap mort_assam mort_bbmp mort_bihar mort_chennai mort_ghmc mort_kolkata mort_mp mort_up mort_rajasthan mort_haryana mort_hp mort_wb {
 
   append using $tmp/`i'.dta, force
 
