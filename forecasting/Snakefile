@@ -11,12 +11,12 @@ from pathlib import Path
 # set master config file with paths and globals
 configfile: 'config/config.yaml'
 
-# pull paths from ENV vars
-envvars:
-    'IEC',
-    'IEC1',
-    'TMP',
-    'MBTOKEN_TILE'
+## pull paths from ENV vars
+#envvars:
+#    'IEC',
+#    'IEC1',
+#    'TMP',
+#    'MBTOKEN_TILE'
     
 # set paths, leveraging settings in the config file
 CODE=os.path.expanduser(config['globals']['ccode'])
@@ -30,7 +30,7 @@ IEC1=os.path.expanduser(os.environ['IEC1'])
 # prep output log files if they don't exist - necessary for rule all
 # to work. hardcode log filelist for now...rules.all.input doesn't
 # work as the rule has not been specified at this stage
-logfiles = [f'{TMP}/tileset_push.log',f'{TMP}/push_pred_metadata.log',f'{TMP}/push_pred_data.log',f'{TMP}/test_merged_data.log']
+logfiles = [f'{TMP}/tileset_push.log',f'{TMP}/push_pred_metadata.log',f'{TMP}/push_pred_data.log',f'{TMP}/test_merged_data.log',f'{TMP}/data_pull.log']
 for log in logfiles:
     if not os.path.isfile(log):
         Path(log).touch()
@@ -188,3 +188,5 @@ rule push_vector_tileset:
 # running on Discovery cluster - SLURM
 # depends on profile set in ~/.config/snakemake/slurm/config.yaml (contact Toby for help)
 # snakemake --profile slurm
+# or manual command:
+# snakemake --use-conda --cluster "sbatch -t 00:30:00 -p standard -N 1 -J foo" --jobs 10
