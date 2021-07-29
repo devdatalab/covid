@@ -11,29 +11,24 @@ from pathlib import Path
 # set master config file with paths and globals
 configfile: 'config/config.yaml'
 
-## pull paths from ENV vars
-#envvars:
-#    'IEC',
-#    'IEC1',
-#    'TMP',
-#    'MBTOKEN_TILE'
-    
-# set paths, leveraging settings in the config file
-CODE=os.path.expanduser(config['globals']['ccode'])
-DATA=os.path.expanduser(config['globals']['cdata'])
-TILESET_NAME=config['globals']['tileset_name']
+# this section ONLY ASSERTS the existence of these environment
+# variables, it does not assign them to objects
+envvars:
+    "IEC",
+    "IEC1",
+    "TMP",
+    "MBTOKEN_TILE"
+
+# assign env vars to objects for use in the snakefile
 MBTOKEN_TILE=os.environ['MBTOKEN_TILE']
 TMP=os.path.expanduser(os.environ['TMP'])
 IEC=os.path.expanduser(os.environ['IEC'])
 IEC1=os.path.expanduser(os.environ['IEC1'])
 
-# prep output log files if they don't exist - necessary for rule all
-# to work. hardcode log filelist for now...rules.all.input doesn't
-# work as the rule has not been specified at this stage
-logfiles = [f'{TMP}/tileset_push.log',f'{TMP}/push_pred_metadata.log',f'{TMP}/push_pred_data.log',f'{TMP}/test_merged_data.log',f'{TMP}/data_pull.log']
-for log in logfiles:
-    if not os.path.isfile(log):
-        Path(log).touch()
+# set paths, leveraging settings in the config file
+CODE=os.path.expanduser(config['globals']['ccode'])
+DATA=os.path.expanduser(config['globals']['cdata'])
+TILESET_NAME=config['globals']['tileset_name']
 
 
 #########
@@ -43,16 +38,11 @@ for log in logfiles:
 # master rule to define the final output
 rule all:
     input:
-#        f'{TMP}/covid_data.mbtiles',
-#        rules.push_vector_tileset.log,
-#        rules.push_pred_metadata.log,
-#        rules.push_pred_data.log,
-#        rules.test_merged_data.log,
-        f'{TMP}/tileset_push.log',
-        f'{TMP}/push_pred_metadata.log',
-        f'{TMP}/push_pred_data.log',
-        f'{TMP}/test_merged_data.log',
-
+        f'{TMP}/covid_data.mbtiles',
+        f'{TMP}/tileset_push.tkn',
+        f'{TMP}/push_pred_data.tkn',
+        f'{TMP}/test_merged_data.tkn'
+        
 # pull predicted data from google cloud
 # rerun_indicator gets `touch`ed from cronjob to trigger pipeline execution
 rule pull_predicted_data:
@@ -61,15 +51,15 @@ rule pull_predicted_data:
         f'{CODE}/b/pull_predicted_data.sh',
         f'{CODE}/b/pull_predicted_data_helper.py'
     conda: 'config/forecasting.yaml'
-    log: f'{TMP}/data_pull.log'
-    shell: f'source {CODE}/b/pull_predicted_data.sh {CODE}/predictions_credential.json {CODE}/b/pull_predicted_data_helper.py {DATA}/all_rt_estimates > {{log}}'
+    output: f'{TMP}/data_pull.tkn'
+    shell: f'source {CODE}/b/pull_predicted_data.sh {CODE}/predictions_credential.json {CODE}/b/pull_predicted_data_helper.py {DATA}/all_rt_estimates > {{output}}'
 
 # create tabular data tables of predicted variables (from Anup et al), identified to pc11 dists
 # UPDATE TO WILDCARD CSVS
 rule process_predicted_data:
     input:
+        rules.pull_predicted_data.output,        
         f'{DATA}/all_rt_estimates/WB_district_Rt.csv',
-        f'{TMP}/data_pull.log',
         f'{CODE}/b/process_predicted_data.do'
     output:
         f'{DATA}/pred_data_district.dta',
@@ -126,20 +116,20 @@ rule test_merged_data:
         rules.merge_ddl_pred_data.output,        
         rules.dist_data_to_geojson.output,        
         f'{CODE}/b/test_merged_data.py'
-    log:
-        f'{TMP}/test_merged_data.log'
+    output:
+        f'{TMP}/test_merged_data.tkn'
     conda: 'config/forecasting_spatial.yaml'
-    shell: f'python {CODE}/b/test_merged_data.py > {{log}}'
+    shell: f'python {CODE}/b/test_merged_data.py > {{output}}'
 
 # push data for public access
 rule push_public_data:
     input:
         rules.merge_ddl_pred_data.output,        
-        rules.test_merged_data.log,        
+        rules.test_merged_data.output,        
         f'{CODE}/b/merge_ddl_pred_data.do'
-    log:
-        f'{TMP}/push_pred_data.log'
-    shell: f'source {CODE}/b/push_public_data.sh > {{log}}'
+    output:
+        f'{TMP}/push_pred_data.tkn'
+    shell: f'source {CODE}/b/push_public_data.sh > {{output}}'
 
 # creation of vector tileset from geojson
 rule create_vector_tileset:
@@ -157,36 +147,6 @@ rule push_vector_tileset:
         rules.create_vector_tileset.output,
         f'{CODE}/b/push_vector_tileset.py'
     conda: 'config/forecasting.yaml'
-    log: f'{TMP}/tileset_push.log'
-    shell: f'python {CODE}/b/push_vector_tileset.py --file {rules.create_vector_tileset.output} --token {MBTOKEN_TILE} --tilesetname {TILESET_NAME} > {{log}}'
+    output: f'{TMP}/tileset_push.tkn'
+    shell: f'python {CODE}/b/push_vector_tileset.py --file {rules.create_vector_tileset.output} --token {MBTOKEN_TILE} --tilesetname {TILESET_NAME} > {{output}}'
 
-           
-
-############
-# COMMANDS #
-############
-
-# running
-#snakemake --cores 4 --use-conda
-#snakemake --cores 4
-
-# dry run:
-#snakemake -n
-
-# run a single job
-#snakemake -R --until pull_predicted_data --cores 4 --use-conda
-
-# viewing DAG:
-#snakemake --dag | dot -Tpdf > ~/public_html/png/dag.pdf
-#snakemake --forceall --rulegraph | dot -Tpdf > ~/public_html/png/dag.pdf
-# viewable here: https://caligari.dartmouth.edu/~lunt/png/dag.pdf
-
-# Report
-# note: snakemake --report ~/public_html/report.html
-# viewable here: https://caligari.dartmouth.edu/~lunt/report.html
-
-# running on Discovery cluster - SLURM
-# depends on profile set in ~/.config/snakemake/slurm/config.yaml (contact Toby for help)
-# snakemake --profile slurm
-# or manual command:
-# snakemake --use-conda --cluster "sbatch -t 00:30:00 -p standard -N 1 -J foo" --jobs 10
