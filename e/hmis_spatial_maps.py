@@ -117,3 +117,63 @@ cbar.ax.set_ylabel("Adult Deaths per 10000 Population (normalized 0-100)", label
 
 # save figure
 plt.savefig(os.path.expanduser("~/public_html/png/hmis_deaths_2021.png"), bbox_inches="tight", dpi=400)
+
+# Maternal deaths
+
+geodist_2020 = geodist_2020[geodist_2020['mdeath_per_10000'] < 0.4] # drop outliers
+
+# set up figure
+fu, axu = plt.subplots(figsize=[10,10])
+
+# plot data for Jan - May 2021
+geodist_2020.plot(ax=axu, column="mdeath_per_10000", 
+             cmap = cmap, missing_kwds = dict(color = "whitesmoke", linewidth = 1.3), alpha = 2.4)
+geostate.plot(ax = axu, color = "none", linewidth = 0.2, alpha = 0.9)
+
+# axis settings
+axu.set_aspect("equal")
+axu.grid(True)
+axu.yaxis.grid(color='gray', linewidth=0.25, linestyle="--")
+axu.xaxis.grid(color='gray', linewidth=0.25, linestyle="--")
+axu.grid(zorder=0)
+axu.set_title("Maternal Deaths per 10000 Population between January to May 2020")
+
+# add custom colorbar
+# l:left, b:bottom, w:width, h:height; in normalized unit (0-1)
+cax = fu.add_axes([0.94, 0.2, 0.025, 0.6])
+sm = plt.cm.ScalarMappable(cmap=cmap, norm=plt.Normalize(vmin=0, vmax=100))
+sm._A = []
+cbar = fu.colorbar(sm, cax=cax)
+cbar.ax.set_ylabel("Maternal Deaths per 10000 Population (normalized 0-100)", labelpad=20, fontsize=14, rotation=270)
+
+# save figure
+plt.savefig(os.path.expanduser("~/public_html/png/hmis_maternal_deaths_2020.png"), bbox_inches="tight", dpi=400)
+
+geodist_2021 = geodist_2021[geodist_2021['mdeath_per_10000'] < 0.4] # drop outliers
+
+# set up figure
+fu, axu = plt.subplots(figsize=[10,10])
+
+# plot data for Jan - May 2021
+geodist_2021.plot(ax=axu, column="mdeath_per_10000", 
+             cmap = cmap, missing_kwds = dict(color = "whitesmoke", linewidth = 1.3), alpha = 2.4)
+geostate.plot(ax = axu, color = "none", linewidth = 0.2, alpha = 0.9)
+
+# axis settings
+axu.set_aspect("equal")
+axu.grid(True)
+axu.yaxis.grid(color='gray', linewidth=0.25, linestyle="--")
+axu.xaxis.grid(color='gray', linewidth=0.25, linestyle="--")
+axu.grid(zorder=0)
+axu.set_title("Maternal Deaths per 10000 Population between January to May 2021")
+
+# add custom colorbar
+# l:left, b:bottom, w:width, h:height; in normalized unit (0-1)
+cax = fu.add_axes([0.94, 0.2, 0.025, 0.6])
+sm = plt.cm.ScalarMappable(cmap=cmap, norm=plt.Normalize(vmin=0, vmax=100))
+sm._A = []
+cbar = fu.colorbar(sm, cax=cax)
+cbar.ax.set_ylabel("Maternal Deaths per 10000 Population (normalized 0-100)", labelpad=20, fontsize=14, rotation=270)
+
+# save figure
+plt.savefig(os.path.expanduser("~/public_html/png/hmis_maternal_deaths_2021.png"), bbox_inches="tight", dpi=400)
