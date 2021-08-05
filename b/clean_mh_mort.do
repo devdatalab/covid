@@ -1,9 +1,5 @@
-/************************************/
-/* Clean West Bengal Mortality Data */
-/************************************/
-
 /* import raw data from statsofindia repo */
-import delimited "https://raw.githubusercontent.com/statsofindia/india-mortality/master/district-level/West%20Bengal-districts.csv", clear
+import delimited "https://raw.githubusercontent.com/statsofindia/india-mortality/master/district-level/Maharashtra-districts.csv" , clear
 
 /* create variables for month and day of death */
 gen year = substr(date, 1, 4)
@@ -18,12 +14,9 @@ collapse (sum) deaths, by(district year month)
 str_month, float(month) string(str_month)
 
 /* generate state var */
-gen state = "West Bengal"
-
-/* drop Kolkata from the dataset since we already have data for the district */
-drop if district == "Kolkata"
+gen state = "Maharashtra"
 
 /* re-order variables */
 order state district deaths year month 
 
-save $tmp/mort_wb.dta, replace
+save $tmp/mort_maha.dta, replace
