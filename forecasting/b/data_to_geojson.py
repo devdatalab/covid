@@ -7,13 +7,13 @@
 # Preamble #
 ############
 
-# hack to get tools imported...
 import sys, os, importlib
-sys.path.insert(0, os.path.expanduser("~/ddl/tools/py"))
-from geospatialtools.utils import import_vector_data
 import geopandas as gpd
 import pandas as pd
 import argparse
+
+# import ddlpy utils
+from ddlpy.geospatialtools.utils import import_vector_data
 
 # initialize args
 parser = argparse.ArgumentParser()

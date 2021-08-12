@@ -4,10 +4,9 @@ import pandas as pd
 from pathlib import Path
 import shutil
 
-# import our configs - depends on 'process_yaml_config' utility in ddl/tools/py/tools.py
+# import our configs
 import sys, os
-sys.path.insert(0, os.path.expanduser("~/ddl/tools/py"))
-from tools import process_yaml_config
+from ddlpy.utils.tools import process_yaml_config
 config = process_yaml_config('~/ddl/covid/forecasting/config/config.yaml')
 
 # shorten path globals
