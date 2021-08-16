@@ -119,7 +119,7 @@ rule test_merged_data:
     output:
         f'{TMP}/test_merged_data.tkn'
     conda: 'config/forecasting_spatial.yaml'
-    shell: f'python {CODE}/b/test_merged_data.py > {{output}}'
+    shell: f'python {CODE}/b/test_merged_data.py &> {{output}}'
 
 # push data for public access
 rule push_public_data:
