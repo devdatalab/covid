@@ -47,7 +47,8 @@ local pre_drop `r(N)'
 ddrop lgd_state_id lgd_district_id dates
 count
 local post_drop `r(N)'
-assert `post_drop' / `pre_drop' > 0.999
+di "`post_drop' / `pre_drop'"
+assert `post_drop' / `pre_drop' > 0.998
 
 /* assert there are no duplicate entries for any district at any date */
 distinct lgd_state_id lgd_district_id dates, joint
