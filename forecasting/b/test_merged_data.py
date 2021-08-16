@@ -6,6 +6,7 @@ import shutil
 
 # import our configs
 import sys, os
+sys.path.insert(0, os.path.expanduser("~/ddl/tools/py"))
 from ddlpy.utils.tools import process_yaml_config
 config = process_yaml_config('~/ddl/covid/forecasting/config/config.yaml')
 
