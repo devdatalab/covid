@@ -17,7 +17,7 @@ cd /scratch/`whoami`
 
 # run update script with basic error handling
 printf "\nbegin update build: ~/ddl/covid/forecasting/Snakemake\n"
-if snakemake --directory $HOME/ddl/covid/forecasting/ --snakefile $HOME/ddl/covid/forecasting/Snakefile --cores 4 --use-conda; then
+if snakemake --conda-not-block-search-path-envvars --directory $HOME/ddl/covid/forecasting/ --snakefile $HOME/ddl/covid/forecasting/Snakefile --cores 4 --use-conda; then
 
   # if we don't have an error, send a slack
   curl -X POST -H 'Content-type: application/json' --data '{"text":":not-a-dumpster-fire: Successful update of forecasting data!"}' https://hooks.slack.com/services/$SLACKKEY

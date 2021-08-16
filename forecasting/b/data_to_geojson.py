@@ -13,7 +13,6 @@ import pandas as pd
 import argparse
 
 # import ddlpy utils
-sys.path.insert(0, os.path.expanduser("~/ddl/tools/py"))
 from ddlpy.geospatialtools.utils import import_vector_data
 
 # initialize args
