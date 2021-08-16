@@ -7,9 +7,5 @@ globals:
     cdata: ~/iec/covid/forecasting
     tileset_name: covid-forecasting
 
-# list folders with Python functions to be added to the python path for easy use
-python: 
-    ~/ddl/tools/py/geospatialtools
-
     
 
