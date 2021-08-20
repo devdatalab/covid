@@ -54,14 +54,11 @@ assert `post_drop' / `pre_drop' > 0.998
 distinct lgd_state_id lgd_district_id dates, joint
 assert `r(ndistinct)' == `r(N)'
 
-/* final output for dist data */
+/* final output for dist data - save to tmp as we'll be merging back districts we want to keep */
 drop state district
 order lgd* dates, first
 drop t_*
-save $cdata/pred_data_district, replace
-
-/* CSV version */
-outsheet using $cdata/pred_data_district.csv, comma replace
+save $tmp/pred_data_all_dists, replace
 
 /* new data file with single entry of latest date for each district -
 used for choropleth */
@@ -77,14 +74,29 @@ bysort lgd_district_id lgd_state_id : gen order = _n
 by lgd_district_id lgd_state_id: gen latest = _n == _N
 keep if latest
 
-/* clean up */
-drop order latest
+/* DROP IF OVER A MONTH OUT OF DATE */
+
+/* create a var for the lag between today and the most recent date */
+gen lag = sdate - daily("`c(current_date)'", "DMY")
+
+/* drop if over 30 days out of date */
+drop if lag < -30
 
 /* create 100xed Rt for scaling (MB only allows interpolated fills with integer stops...) */
 gen rt_pred_100x = 100 * rt_pred
 
+/* merge back to district data */
+preserve
+keep lgd_district_id lgd_state_id 
+merge 1:m lgd_district_id lgd_state_id using $tmp/pred_data_all_dists, keep(match) nogen
+
+/* DTA and CSV versions */
+save $cdata/pred_data_district, replace
+outsheet using $cdata/pred_data_district.csv, comma replace
+restore
+
 /* keep only bare minimum of variables */
-ren lgd_district_id lgd_d_id 
+ren lgd_district_id lgd_d_id
 keep lgd_d_id rt_pred_100x
 
 /* save for adding to tileset */
