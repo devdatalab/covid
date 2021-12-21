@@ -1,3 +1,5 @@
+[![DOI](https://zenodo.org/badge/253523397.svg)](https://zenodo.org/badge/latestdoi/253523397)
+
 # Covid-19 Data Resources
 
 :rotating_light: Mortality data now available in `mortality/`! See [this medium post](https://devdatalab.medium.com/making-sense-of-excess-mortality-f26cffe3643e) for a full announcement and preliminary analysis. :rotating_light:
