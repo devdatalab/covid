@@ -63,6 +63,12 @@ if `num_days' < 97 {
   exit 9
 }
 
-/* rclone just the two data files to dropbox */
+/* rclone needed data files to dropbox. CSV first */
 shell rclone copyto --progress ~/iec/covid/covid/csv/covid_infected_deaths.csv my_remote:SamPaul/covid_data/covid/csv/covid_infected_deaths.csv
+shell rclone copyto --progress ~/iec/covid/covid/csv/covid_infected_deaths_pc11.csv my_remote:SamPaul/covid_data/covid/csv/covid_infected_deaths_pc11.csv
 shell rclone copyto --progress ~/iec/covid/covid/csv/covid_vaccination.csv my_remote:SamPaul/covid_data/covid/csv/covid_vaccination.csv
+
+/* now dta */
+shell rclone copyto --progress ~/iec/covid/covid/covid_infected_deaths.dta my_remote:SamPaul/covid_data/covid/covid_infected_deaths.dta
+shell rclone copyto --progress ~/iec/covid/covid/covid_infected_deaths_pc11.dta my_remote:SamPaul/covid_data/covid/covid_infected_deaths_pc11.dta
+shell rclone copyto --progress ~/iec/covid/covid/covid_vaccination.dta my_remote:SamPaul/covid_data/covid/covid_vaccination.dta
