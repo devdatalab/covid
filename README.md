@@ -2,9 +2,6 @@
 
 # Covid-19 Data Resources
 
-:rotating_light: Mortality data now available in `mortality/`! See [this medium post](https://devdatalab.medium.com/making-sense-of-excess-mortality-f26cffe3643e) for a full announcement and preliminary analysis. :rotating_light:
-
-
 This repository aims to provide a backbone of high geographic
 resolution administrative data to support analysis of and the policy response to the COVID-19
 pandemic in India.
